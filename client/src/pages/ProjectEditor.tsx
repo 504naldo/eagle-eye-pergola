@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check } from "lucide-react";
-import { calculateQTO, PergolaParams } from "@shared/geometry";
+import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem } from "@shared/geometry";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusion",
@@ -107,8 +107,20 @@ export default function ProjectEditor() {
     ledLighting: form.ledLighting,
   };
 
-  const qtoItems = calculateQTO(pergolaParams);
+  const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
+
+  const qtoItemsBase = calculateQTO(pergolaParams);
+  const qtoItems: QTOItem[] = qtoItemsBase.map(item => {
+    const key = item.description;
+    const overrideStr = rateOverrides[key];
+    if (overrideStr !== undefined) {
+      const rate = parseFloat(overrideStr) || 0;
+      return { ...item, unitRate: rate, lineTotal: Math.round(item.qty * rate * 100) / 100 };
+    }
+    return item;
+  });
   const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
+  const grandTotal = calculateGrandTotal(qtoItems);
 
   const handleExportPDF = async () => {
     setExportLoading(true);
@@ -312,12 +324,15 @@ export default function ProjectEditor() {
           {/* ── QTO Tab ── */}
           <TabsContent value="qto">
             <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
-                <h2 className="font-semibold text-gray-900">Preliminary Quantity Takeoff</h2>
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                  <h2 className="font-semibold text-gray-900">Preliminary Quantity Takeoff</h2>
+                </div>
+                <div className="text-xs text-gray-500 italic">Unit rates are editable — click any rate to override</div>
               </div>
               <p className="text-xs text-red-600 mb-5 bg-red-50 border border-red-200 rounded p-2">
-                ⚠ All quantities are preliminary and for estimating purposes only. Subject to field verification and licensed review prior to fabrication.
+                ⚠ All quantities and costs are preliminary estimates only (CAD). Subject to field verification, supplier quotes, and licensed review prior to fabrication.
               </p>
               {qtoCategories.map(cat => (
                 <div key={cat} className="mb-6">
@@ -329,24 +344,47 @@ export default function ProjectEditor() {
                     <thead>
                       <tr className="bg-[#111111] text-white">
                         <th className="text-left py-2 px-3 text-xs font-medium rounded-tl">Description</th>
-                        <th className="text-center py-2 px-3 text-xs font-medium w-16">Unit</th>
-                        <th className="text-center py-2 px-3 text-xs font-medium w-16">Qty</th>
-                        <th className="text-left py-2 px-3 text-xs font-medium rounded-tr">Basis</th>
+                        <th className="text-center py-2 px-3 text-xs font-medium w-14">Unit</th>
+                        <th className="text-center py-2 px-3 text-xs font-medium w-14">Qty</th>
+                        <th className="text-right py-2 px-3 text-xs font-medium w-28">Unit Rate (CAD)</th>
+                        <th className="text-right py-2 px-3 text-xs font-medium w-28 rounded-tr">Line Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {qtoItems.filter(i => i.category === cat).map((item, idx) => (
                         <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          <td className="py-2 px-3 text-gray-800 border-b border-gray-100">{item.description}</td>
+                          <td className="py-2 px-3 text-gray-800 border-b border-gray-100 text-xs">{item.description}</td>
                           <td className="py-2 px-3 text-center text-gray-600 border-b border-gray-100 font-mono text-xs">{item.unit}</td>
-                          <td className="py-2 px-3 text-center font-semibold border-b border-gray-100" style={{ color: "#C9A84C" }}>{item.qty}</td>
-                          <td className="py-2 px-3 text-gray-400 text-xs border-b border-gray-100">{item.basis}</td>
+                          <td className="py-2 px-3 text-center font-semibold border-b border-gray-100 text-xs" style={{ color: "#C9A84C" }}>{item.qty}</td>
+                          <td className="py-1 px-2 border-b border-gray-100 text-right">
+                            <input
+                              type="number"
+                              min={0}
+                              step={10}
+                              value={rateOverrides[item.description] ?? item.unitRate}
+                              onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
+                              className="w-24 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
+                            />
+                          </td>
+                          <td className="py-2 px-3 text-right font-semibold border-b border-gray-100 text-xs text-gray-900">
+                            ${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               ))}
+              {/* Grand Total */}
+              <div className="mt-4 flex justify-end">
+                <div className="bg-[#111111] rounded-lg px-6 py-4 min-w-64">
+                  <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
+                  <div className="text-white text-2xl font-bold">
+                    ${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-gray-400 text-xs mt-1">CAD — Concept Only, Not For Construction</div>
+                </div>
+              </div>
             </div>
           </TabsContent>
 

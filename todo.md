@@ -51,3 +51,10 @@
 
 ## Seed Data
 - [x] Seed Milestones Grill + Bar project with all correct parameters
+
+## Cost Estimate Feature
+- [x] Add unitRate and lineTotal fields to QTO calculation logic
+- [x] Add editable unit rate column to QTO UI table
+- [x] Show line totals and grand total in QTO table
+- [x] Update PDF export to include cost columns and grand total
+- [x] Add disclaimer: "Preliminary Budget Estimate Only"

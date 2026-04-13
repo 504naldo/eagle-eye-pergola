@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { getProjectById, getProjectParams, getChecklistItems, getScopeItems } from "./db";
-import { calculateQTO, getDrawingDimensions, PergolaParams } from "../shared/geometry";
+import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663398513099/NsQTkUPS5UugDCK5DHs6bC/eagle-eye-logo_d71264bc.jpg";
 const GOLD = "#C9A84C";
@@ -215,6 +215,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     const dims = getDrawingDimensions(pergolaParams);
     const qtoItems = calculateQTO(pergolaParams);
     const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
+    const grandTotal = calculateGrandTotal(qtoItems);
 
     const svgPlan = buildSVGPlanView(dims);
     const svgFront = buildSVGFrontElevation(dims);
@@ -416,23 +417,31 @@ export async function handlePDFExport(req: Request, res: Response) {
   </div>
   <div class="content">
     <div class="sheet-title"><div class="sheet-title-bar"></div><h2>Preliminary Quantity Takeoff</h2><span class="sheet-num">SHEET A</span></div>
-    <div class="disclaimer">⚠ All quantities are preliminary and for estimating purposes only. Subject to field verification and licensed structural review prior to fabrication.</div>
+    <div class="disclaimer">⚠ All quantities and costs are preliminary estimates only (CAD). Subject to field verification, supplier quotes, and licensed structural review prior to fabrication.</div>
     ${qtoCategories.map(cat => `
       <div class="cat-header">${cat}</div>
       <table>
-        <thead><tr><th>Description</th><th style="width:50px;text-align:center;">Unit</th><th style="width:50px;text-align:center;">Qty</th><th>Basis</th></tr></thead>
+        <thead><tr><th>Description</th><th style="width:40px;text-align:center;">Unit</th><th style="width:40px;text-align:center;">Qty</th><th style="width:90px;text-align:right;">Unit Rate (CAD)</th><th style="width:90px;text-align:right;">Line Total</th></tr></thead>
         <tbody>
           ${qtoItems.filter(i => i.category === cat).map(item => `
             <tr>
               <td>${item.description}</td>
               <td class="unit-val">${item.unit}</td>
               <td class="qty-val">${item.qty}</td>
-              <td class="basis-val">${item.basis}</td>
+              <td style="text-align:right;color:#374151;font-size:9px;">$${item.unitRate.toLocaleString('en-CA', {minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+              <td style="text-align:right;font-weight:700;color:#111111;font-size:9px;">$${item.lineTotal.toLocaleString('en-CA', {minimumFractionDigits:2,maximumFractionDigits:2})}</td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     `).join("")}
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <div style="background:#111111;border-radius:8px;padding:14px 24px;min-width:260px;">
+        <div style="color:#C9A84C;font-size:8px;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:4px;">Preliminary Budget Estimate (CAD)</div>
+        <div style="color:white;font-size:22px;font-weight:700;">$${grandTotal.toLocaleString('en-CA', {minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div style="color:#9CA3AF;font-size:8px;margin-top:4px;">Concept Only — Not For Construction — Rates Subject to Supplier Confirmation</div>
+      </div>
+    </div>
   </div>
   <div class="brand-footer"><span>© 2025 Eagle Eye Management Services</span><span class="prepared">Prepared by: Ranaldo Daniels</span><span>Concept Only — Not For Construction</span></div>
 </div>
