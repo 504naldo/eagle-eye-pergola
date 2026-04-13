@@ -66,3 +66,9 @@
 - [x] Build Notes tab in ProjectEditor with textarea and AI Generate button
 - [x] Show AI generation loading state and stream result into textarea
 - [x] Include project notes/summary on PDF cover page
+
+## Seed Previous Package Data
+- [x] Seed full Milestones project with all parameters (58'×15'8", 5 front posts, lean-to, Lumin glass)
+- [x] Seed 24-item field verification checklist (5 categories)
+- [x] Seed 31 scope items (inclusions, exclusions, assumptions, by-others)
+- [x] Seed project summary / cover letter narrative
