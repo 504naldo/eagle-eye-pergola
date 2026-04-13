@@ -72,3 +72,6 @@
 - [x] Seed 24-item field verification checklist (5 categories)
 - [x] Seed 31 scope items (inclusions, exclusions, assumptions, by-others)
 - [x] Seed project summary / cover letter narrative
+
+## Bug Fixes
+- [x] Fix PDF export failure — switched from Puppeteer to WeasyPrint (Python subprocess), using /usr/local/bin/weasyprint with clean env to avoid Python version conflicts
