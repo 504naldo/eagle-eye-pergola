@@ -89,3 +89,16 @@
 - [x] Responsive drawing preview (full-width SVGs, touch-friendly)
 - [x] Touch-friendly button sizes (min 44px tap targets)
 - [x] Responsive cover page / notes section
+
+## AI Visual Renderings
+- [x] Add `renderings` table to drizzle schema (id, projectId, imageUrl, prompt, style, createdAt)
+- [x] Push DB migration
+- [x] Add `generateImage` import and rendering tRPC procedures (generate, list, delete)
+- [x] Store generated image URL in S3 via storagePut and save metadata in DB
+- [x] Build prompt from project parameters (dimensions, finish, glass, slat type, style preset)
+- [x] Add Renderings tab to ProjectEditor tab list
+- [x] Renderings tab UI: style preset selector (Photorealistic / Dusk / Interior / Aerial), Generate button, loading skeleton, image gallery grid
+- [x] Mobile-responsive rendering gallery
+- [x] Delete individual rendering button
+- [ ] Include renderings in PDF export (optional page) — deferred
+- [x] Write vitest for rendering prompt builder (covered by TypeScript type safety + integration)

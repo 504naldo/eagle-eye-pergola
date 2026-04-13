@@ -15,6 +15,13 @@
       "when": 1776060089322,
       "tag": "0001_productive_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776069738215,
+      "tag": "0002_dapper_forge",
+      "breakpoints": true
     }
   ]
 }

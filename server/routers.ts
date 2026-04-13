@@ -8,8 +8,10 @@ import {
   getProjectParams, upsertProjectParams,
   getChecklistItems, seedChecklistItems, updateChecklistItem,
   getScopeItems, seedScopeItems, updateScopeItem, addScopeItem, deleteScopeItem,
+  getRenderingsByProject, createRendering, deleteRendering,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
+import { generateImage } from "./_core/imageGeneration";
 
 const ProjectStatusEnum = z.enum(["draft", "in_review", "approved", "archived"]);
 const SlatTypeEnum = z.enum(["fixed", "operable"]);
@@ -276,6 +278,107 @@ The summary should cover: (1) project overview and intent, (2) structural system
       .mutation(async ({ input }) => {
         await deleteScopeItem(input.id);
         return { success: true };
+      }),
+  }),
+
+  // ─── AI Visual Renderings ────────────────────────────────────────────────────────────────────────────────────
+  renderings: router({
+    list: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        return getRenderingsByProject(input.projectId);
+      }),
+
+    generate: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        style: z.enum(["photorealistic", "dusk", "interior", "aerial"]),
+        // Project params for prompt building
+        widthFt: z.string().optional(),
+        depthFt: z.string().optional(),
+        heightFt: z.string().optional(),
+        postCount: z.number().optional(),
+        slatType: z.string().optional(),
+        glassFront: z.boolean().optional(),
+        glassLeft: z.boolean().optional(),
+        glassRight: z.boolean().optional(),
+        finishColor: z.string().optional(),
+        ledLighting: z.boolean().optional(),
+        clientName: z.string().optional(),
+        location: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+
+        const width = parseFloat(input.widthFt ?? "58") || 58;
+        const depth = parseFloat(input.depthFt ?? "15.67") || 15.67;
+        const height = parseFloat(input.heightFt ?? "10") || 10;
+        const posts = input.postCount ?? 5;
+        const finish = input.finishColor ?? "Matte Black";
+        const slatDesc = input.slatType === "operable" ? "motorized operable aluminum louver slats" : "fixed aluminum slats";
+        const glassZones = [
+          input.glassFront ? "front" : null,
+          input.glassLeft ? "left side" : null,
+          input.glassRight ? "right side" : null,
+        ].filter(Boolean);
+        const glassDesc = glassZones.length > 0
+          ? `Lumin frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
+          : "no glass enclosure panels";
+        const ledDesc = input.ledLighting ? "integrated LED strip lighting along the beams" : "no LED lighting";
+        const locationDesc = input.location ? ` located at ${input.location}` : "";
+
+        // Style-specific photography direction
+        const stylePrompts: Record<string, string> = {
+          photorealistic: `Bright midday sun, clear blue sky, photorealistic architectural photography, shot from a 3/4 angle at eye level showing the front and one side of the pergola. Commercial restaurant patio setting${locationDesc}. People dining in background, soft bokeh.`,
+          dusk: `Golden hour dusk lighting, warm amber sky, long shadows. The ${ledDesc} glowing softly. Atmospheric, moody architectural photography. Commercial patio${locationDesc}. Shot from a low 3/4 angle.`,
+          interior: `Interior view looking outward from under the pergola canopy. Showing the ${slatDesc} overhead, ${glassDesc} on the sides. Warm interior lighting, tables and chairs visible. Photorealistic interior architectural photography.`,
+          aerial: `Aerial bird's-eye view from above and slightly in front, showing the full ${width} ft wide by ${depth} ft deep pergola footprint. Clearly showing the ${slatDesc} roof pattern, ${posts} front posts (no rear posts — wall-mounted lean-to), ${glassDesc}. Photorealistic aerial architectural rendering.`,
+        };
+
+        const prompt = `Photorealistic architectural rendering of a premium commercial aluminum pergola / patio enclosure system.
+
+Structure: ${width} ft wide x ${depth} ft deep x ${height} ft clear height. Wall-mounted lean-to configuration — ${posts} front posts only, NO rear posts (attached to building wall at rear via concealed ledger). Roof system: ${slatDesc}. ${glassDesc}. Finish: ${finish} powder coat aluminum. ${ledDesc}. Modern, high-end commercial restaurant patio aesthetic.
+
+IMPORTANT: Do NOT include any rear posts or back beams. The rear of the structure is attached directly to the building wall.
+
+${stylePrompts[input.style]}
+
+High resolution, 16:9 aspect ratio, professional architectural visualization quality.`;
+
+        const styleLabels: Record<string, string> = {
+          photorealistic: "Photorealistic Day View",
+          dusk: "Dusk / Evening View",
+          interior: "Interior View",
+          aerial: "Aerial Overview",
+        };
+
+        const { url: imageUrl } = await generateImage({ prompt });
+        if (!imageUrl) throw new Error("Image generation returned no URL");
+
+        // The imageGeneration helper already uploads to S3 and returns the URL
+        // Use the URL path as the file key for reference
+        const fileKey = `renderings/${input.projectId}/${input.style}-${Date.now()}.png`;
+
+        const id = await createRendering({
+          projectId: input.projectId,
+          imageUrl,
+          fileKey,
+          prompt,
+          style: input.style,
+          label: styleLabels[input.style],
+        });
+
+        return { id, imageUrl, style: input.style, label: styleLabels[input.style] };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const deleted = await deleteRendering(input.id);
+        return { success: !!deleted };
       }),
   }),
 });

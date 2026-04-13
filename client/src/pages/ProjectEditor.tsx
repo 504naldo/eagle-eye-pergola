@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, ChevronLeft, Plus, Trash2, Check } from "lucide-react";
+import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
 import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem } from "@shared/geometry";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
@@ -108,6 +108,48 @@ export default function ProjectEditor() {
   };
 
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
+
+  // Renderings
+  const { data: renderingsList, isLoading: renderingsLoading } = trpc.renderings.list.useQuery({ projectId });
+  const [renderingStyle, setRenderingStyle] = useState<"photorealistic" | "dusk" | "interior" | "aerial">("photorealistic");
+  const [generatingStyle, setGeneratingStyle] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  const generateRendering = trpc.renderings.generate.useMutation({
+    onSuccess: () => {
+      utils.renderings.list.invalidate({ projectId });
+      setGeneratingStyle(null);
+      toast.success("Rendering generated!");
+    },
+    onError: (err) => {
+      setGeneratingStyle(null);
+      toast.error("Rendering failed: " + err.message);
+    },
+  });
+
+  const deleteRendering = trpc.renderings.delete.useMutation({
+    onSuccess: () => utils.renderings.list.invalidate({ projectId }),
+  });
+
+  const handleGenerateRendering = () => {
+    setGeneratingStyle(renderingStyle);
+    generateRendering.mutate({
+      projectId,
+      style: renderingStyle,
+      widthFt: form.widthFt,
+      depthFt: form.depthFt,
+      heightFt: form.heightFt,
+      postCount: form.postCount,
+      slatType: form.slatType,
+      glassFront: form.glassFront,
+      glassLeft: form.glassLeft,
+      glassRight: form.glassRight,
+      finishColor: form.finishColor,
+      ledLighting: form.ledLighting,
+      clientName: project?.clientName ?? undefined,
+      location: project?.location ?? undefined,
+    });
+  };
 
   // Notes / Cover Letter
   const { data: notesData } = trpc.notes.get.useQuery({ projectId });
@@ -241,6 +283,7 @@ export default function ProjectEditor() {
                 { value: "scope", label: "Inclusions / Exclusions", shortLabel: "Scope" },
                 { value: "details", label: "Connection Details", shortLabel: "Details" },
                 { value: "notes", label: "Project Summary", shortLabel: "Notes" },
+                { value: "renderings", label: "AI Renderings", shortLabel: "Renders" },
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm whitespace-nowrap">
                   <span className="hidden sm:inline">{tab.label}</span>
@@ -716,7 +759,139 @@ export default function ProjectEditor() {
               )}
             </div>
           </TabsContent>
+          {/* ── AI Renderings Tab ── */}
+          <TabsContent value="renderings">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                <h2 className="font-semibold text-gray-900">AI Visual Renderings</h2>
+                <span className="ml-auto text-xs text-gray-400">Powered by Eagle Eye AI</span>
+              </div>
+
+              {/* Generator controls */}
+              <div className="bg-[#111111] rounded-xl p-4 mb-6">
+                <div className="text-[#C9A84C] text-xs uppercase tracking-widest font-semibold mb-3">Generate New Rendering</div>
+                <div className="text-gray-400 text-xs mb-4">AI generates a photorealistic rendering of your pergola based on the current project parameters. Each generation takes 10–20 seconds.</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                  {([
+                    { value: "photorealistic", label: "Day View", icon: "☀️" },
+                    { value: "dusk", label: "Dusk View", icon: "🌆" },
+                    { value: "interior", label: "Interior", icon: "🏛️" },
+                    { value: "aerial", label: "Aerial", icon: "🛩️" },
+                  ] as const).map(s => (
+                    <button
+                      key={s.value}
+                      onClick={() => setRenderingStyle(s.value)}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg border text-xs font-medium transition-all touch-manipulation ${
+                        renderingStyle === s.value
+                          ? "border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]"
+                          : "border-gray-700 text-gray-400 hover:border-gray-500"
+                      }`}
+                    >
+                      <span className="text-lg">{s.icon}</span>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleGenerateRendering}
+                  disabled={!!generatingStyle}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm transition-all disabled:opacity-60 touch-manipulation"
+                  style={{ backgroundColor: "#C9A84C", color: "#111111" }}
+                >
+                  {generatingStyle ? (
+                    <>
+                      <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                      Generating {generatingStyle === "photorealistic" ? "Day View" : generatingStyle === "dusk" ? "Dusk View" : generatingStyle === "interior" ? "Interior" : "Aerial"} Rendering...
+                    </>
+                  ) : (
+                    <><Sparkles size={16} /> Generate Rendering</>
+                  )}
+                </button>
+              </div>
+
+              {/* Gallery */}
+              {renderingsLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="aspect-video bg-gray-100 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : renderingsList && renderingsList.length > 0 ? (
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-3">{renderingsList.length} Rendering{renderingsList.length !== 1 ? "s" : ""}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {renderingsList.map(r => (
+                      <div key={r.id} className="group relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                        <img
+                          src={r.imageUrl}
+                          alt={r.label ?? r.style}
+                          className="w-full aspect-video object-cover cursor-pointer"
+                          onClick={() => setLightboxUrl(r.imageUrl)}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                          <ZoomIn size={28} className="text-white drop-shadow" />
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <div className="text-xs font-semibold text-gray-800">{r.label ?? r.style}</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">{new Date(r.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</div>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <a
+                              href={r.imageUrl}
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-400 transition-all touch-manipulation"
+                              title="Download"
+                            >
+                              <Download size={13} />
+                            </a>
+                            <button
+                              onClick={() => deleteRendering.mutate({ id: r.id })}
+                              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-300 transition-all touch-manipulation"
+                              title="Delete"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Sparkles size={36} className="text-gray-300 mb-3" />
+                  <div className="text-sm font-medium text-gray-500">No renderings yet</div>
+                  <div className="text-xs text-gray-400 mt-1">Select a view style above and click Generate to create your first AI rendering.</div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all touch-manipulation"
+              onClick={() => setLightboxUrl(null)}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Rendering preview"
+              className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+        )}
       </div>
     </EagleEyeLayout>
   );

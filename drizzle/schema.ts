@@ -99,3 +99,19 @@ export const scopeItems = mysqlTable("scope_items", {
 
 export type ScopeItem = typeof scopeItems.$inferSelect;
 export type InsertScopeItem = typeof scopeItems.$inferInsert;
+
+// ─── AI Visual Renderings ────────────────────────────────────────────────────────────────────────────────────
+
+export const renderings = mysqlTable("renderings", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  prompt: text("prompt").notNull(),
+  style: varchar("style", { length: 100 }).notNull().default("photorealistic"),
+  label: varchar("label", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Rendering = typeof renderings.$inferSelect;
+export type InsertRendering = typeof renderings.$inferInsert;
