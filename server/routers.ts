@@ -9,6 +9,7 @@ import {
   getChecklistItems, seedChecklistItems, updateChecklistItem,
   getScopeItems, seedScopeItems, updateScopeItem, addScopeItem, deleteScopeItem,
 } from "./db";
+import { invokeLLM } from "./_core/llm";
 
 const ProjectStatusEnum = z.enum(["draft", "in_review", "approved", "archived"]);
 const SlatTypeEnum = z.enum(["fixed", "operable"]);
@@ -161,6 +162,86 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await updateChecklistItem(input.id, { fieldNote: input.fieldNote });
         return { success: true };
+      }),
+  }),
+
+  // ─── Notes / Cover Letter ──────────────────────────────────────────────────
+  notes: router({
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        return { notes: project.notes ?? "" };
+      }),
+
+    save: protectedProcedure
+      .input(z.object({ projectId: z.number(), notes: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await updateProject(input.projectId, { notes: input.notes });
+        return { success: true };
+      }),
+
+    generateAI: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        projectName: z.string(),
+        clientName: z.string().optional(),
+        location: z.string().optional(),
+        widthFt: z.string().optional(),
+        depthFt: z.string().optional(),
+        heightFt: z.string().optional(),
+        postCount: z.number().optional(),
+        slatType: z.string().optional(),
+        glassFront: z.boolean().optional(),
+        glassLeft: z.boolean().optional(),
+        glassRight: z.boolean().optional(),
+        finishColor: z.string().optional(),
+        ledLighting: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+
+        const glassZones = [
+          input.glassFront ? "front" : null,
+          input.glassLeft ? "left side" : null,
+          input.glassRight ? "right side" : null,
+        ].filter(Boolean).join(", ");
+
+        const prompt = `You are a professional architectural estimating consultant writing a project summary for a pre-fabrication concept package.
+
+Write a concise, professional project summary (3–4 paragraphs) for the following pergola/patio enclosure project. The tone should be formal, client-ready, and suitable for a concept package cover letter. Do not use bullet points. Write in complete paragraphs.
+
+Project Details:
+- Project Name: ${input.projectName}
+- Client: ${input.clientName || "Not specified"}
+- Location: ${input.location || "Not specified"}
+- Patio Dimensions: ${input.widthFt || "58"} ft wide × ${input.depthFt || "15.67"} ft deep
+- Clear Height: ${input.heightFt || "10"} ft
+- Post Configuration: ${input.postCount || 5} front posts only (wall-mounted lean-to — no rear posts)
+- Roof System: Aluminum ${input.slatType === "operable" ? "operable louver" : "fixed slat"} canopy, connected to building wall via concealed ledger
+- Lumin Glass Enclosure: Vertical glass panels on ${glassZones || "all sides"}, top rail integrated with fascia beam
+- Finish: ${input.finishColor || "Matte Black"} powder coat
+- LED Lighting: ${input.ledLighting ? "Included" : "Not included"}
+- Prepared by: Ranaldo Daniels, Eagle Eye Management Services
+
+The summary should cover: (1) project overview and intent, (2) structural system description, (3) enclosure and glazing system, (4) next steps and disclaimers.`;
+
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a professional architectural estimating consultant. Write formal, client-ready project summaries for pre-fabrication concept packages." },
+            { role: "user", content: prompt },
+          ],
+        });
+
+        const rawContent = response.choices?.[0]?.message?.content ?? "";
+        const summary = typeof rawContent === "string" ? rawContent : "";
+        // Auto-save to project notes
+        await updateProject(input.projectId, { notes: summary });
+        return { summary };
       }),
   }),
 

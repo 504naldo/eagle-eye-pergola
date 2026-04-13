@@ -328,6 +328,16 @@ export async function handlePDFExport(req: Request, res: Response) {
       <div class="cover-info-item"><div class="cover-info-label">Finish</div><div class="cover-info-value">${pergolaParams.finishColor}</div></div>
       <div class="cover-info-item"><div class="cover-info-label">Status</div><div class="cover-info-value" style="color:#C9A84C;">${project.status.replace("_", " ").toUpperCase()}</div></div>
     </div>
+    ${project.notes ? `
+    <div style="width:100%;max-width:560px;margin-bottom:24px;border:1px solid #2A2A2A;border-radius:8px;overflow:hidden;">
+      <div style="background:#1A1A1A;padding:8px 14px;border-bottom:1px solid #C9A84C;">
+        <div style="color:#C9A84C;font-size:8px;text-transform:uppercase;letter-spacing:0.15em;font-weight:700;">Project Summary</div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="color:#D1D5DB;font-size:10px;line-height:1.7;white-space:pre-wrap;font-family:'Playfair Display',serif;">${project.notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      </div>
+    </div>
+    ` : ""}
     <div class="cover-disclaimer">
       Concept Only — Not For Construction — Not Engineered — Subject to Field Verification<br/>
       Prepared by: Ranaldo Daniels &nbsp;|&nbsp; Eagle Eye Management Services &nbsp;|&nbsp; ${new Date().toLocaleDateString("en-CA")}

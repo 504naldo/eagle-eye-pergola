@@ -58,3 +58,11 @@
 - [x] Show line totals and grand total in QTO table
 - [x] Update PDF export to include cost columns and grand total
 - [x] Add disclaimer: "Preliminary Budget Estimate Only"
+
+## Project Notes / Cover Letter + AI Summary
+- [x] Add projectNotes column to projects table in schema
+- [x] Add tRPC procedure: notes.get and notes.save
+- [x] Add tRPC procedure: notes.generateAI (LLM-powered summary from project params)
+- [x] Build Notes tab in ProjectEditor with textarea and AI Generate button
+- [x] Show AI generation loading state and stream result into textarea
+- [x] Include project notes/summary on PDF cover page

@@ -109,6 +109,50 @@ export default function ProjectEditor() {
 
   const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
 
+  // Notes / Cover Letter
+  const { data: notesData } = trpc.notes.get.useQuery({ projectId });
+  const [notesText, setNotesText] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  useEffect(() => {
+    if (notesData?.notes !== undefined) setNotesText(notesData.notes);
+  }, [notesData]);
+
+  const saveNotes = trpc.notes.save.useMutation({
+    onSuccess: () => toast.success("Project summary saved"),
+    onError: () => toast.error("Failed to save summary"),
+  });
+
+  const generateAI = trpc.notes.generateAI.useMutation({
+    onSuccess: (data) => {
+      setNotesText(data.summary);
+      utils.notes.get.invalidate({ projectId });
+      toast.success("AI summary generated and saved");
+    },
+    onError: () => toast.error("AI generation failed. Please try again."),
+    onSettled: () => setAiGenerating(false),
+  });
+
+  const handleGenerateAI = () => {
+    setAiGenerating(true);
+    generateAI.mutate({
+      projectId,
+      projectName: project?.projectName ?? "",
+      clientName: project?.clientName ?? undefined,
+      location: project?.location ?? undefined,
+      widthFt: form.widthFt,
+      depthFt: form.depthFt,
+      heightFt: form.heightFt,
+      postCount: form.postCount,
+      slatType: form.slatType,
+      glassFront: form.glassFront,
+      glassLeft: form.glassLeft,
+      glassRight: form.glassRight,
+      finishColor: form.finishColor,
+      ledLighting: form.ledLighting,
+    });
+  };
+
   const qtoItemsBase = calculateQTO(pergolaParams);
   const qtoItems: QTOItem[] = qtoItemsBase.map(item => {
     const key = item.description;
@@ -195,6 +239,7 @@ export default function ProjectEditor() {
               { value: "checklist", label: `Checklist (${checkedCount}/${totalCount})` },
               { value: "scope", label: "Inclusions / Exclusions" },
               { value: "details", label: "Connection Details" },
+              { value: "notes", label: "Project Summary" },
             ].map(tab => (
               <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 {tab.label}
@@ -562,6 +607,82 @@ export default function ProjectEditor() {
                   </div>
                 ))}
               </div>
+            </div>
+          </TabsContent>
+
+          {/* ── Project Summary Tab ── */}
+          <TabsContent value="notes">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                <h2 className="font-semibold text-gray-900">Project Summary / Cover Letter</h2>
+              </div>
+              <p className="text-xs text-gray-500 mb-5">
+                Write or generate a professional project summary. This text will appear on the cover page of the exported PDF package.
+              </p>
+
+              {/* AI Generate Button */}
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={handleGenerateAI}
+                  disabled={aiGenerating}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-60"
+                  style={{ backgroundColor: "#111111", color: "#C9A84C", border: "1px solid #C9A84C" }}
+                >
+                  {aiGenerating ? (
+                    <>
+                      <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      Generating AI Summary...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                      </svg>
+                      Generate AI Summary
+                    </>
+                  )}
+                </button>
+                <span className="text-xs text-gray-400">Auto-generates from your project parameters. You can edit the result below.</span>
+              </div>
+
+              {/* Textarea */}
+              <Textarea
+                value={notesText}
+                onChange={e => setNotesText(e.target.value)}
+                placeholder="Write a professional project summary here, or click 'Generate AI Summary' to auto-draft one from your project parameters..."
+                className="min-h-[320px] text-sm leading-relaxed font-sans resize-y"
+              />
+
+              {/* Word count + Save */}
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs text-gray-400">{notesText.split(/\s+/).filter(Boolean).length} words</span>
+                <Button
+                  size="sm"
+                  className="gap-1.5 font-semibold"
+                  style={{ backgroundColor: "#C9A84C", color: "#111111" }}
+                  onClick={() => saveNotes.mutate({ projectId, notes: notesText })}
+                  disabled={saveNotes.isPending}
+                >
+                  <Check size={13} /> {saveNotes.isPending ? "Saving..." : "Save Summary"}
+                </Button>
+              </div>
+
+              {/* Preview */}
+              {notesText.trim() && (
+                <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-[#111111] px-4 py-2 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-[#C9A84C] rounded-full" />
+                    <span className="text-[#C9A84C] text-xs uppercase tracking-widest font-semibold">PDF Preview</span>
+                  </div>
+                  <div className="p-5 bg-white">
+                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Project Summary</div>
+                    <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-serif">{notesText}</div>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
