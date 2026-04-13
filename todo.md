@@ -76,3 +76,16 @@
 ## Bug Fixes
 - [x] Fix PDF export failure — switched from Puppeteer to WeasyPrint (Python subprocess), using /usr/local/bin/weasyprint with clean env to avoid Python version conflicts
 - [x] Fix Export PDF button — replaced WeasyPrint (system dep, not in deployed env) with PDFKit (pure Node.js, works everywhere)
+
+## Mobile Optimization
+- [x] Collapsible sidebar with hamburger menu on mobile
+- [x] Responsive EagleEyeLayout header (compact on mobile)
+- [x] Responsive Dashboard project cards (stack on mobile)
+- [x] Responsive ProjectEditor top bar and tabs (scrollable tabs on mobile)
+- [x] Responsive parameter form (single-column on mobile)
+- [x] Responsive QTO table (horizontal scroll or card layout on mobile)
+- [x] Responsive checklist layout (single-column on mobile)
+- [x] Responsive scope sheet (single-column on mobile)
+- [x] Responsive drawing preview (full-width SVGs, touch-friendly)
+- [x] Touch-friendly button sizes (min 44px tap targets)
+- [x] Responsive cover page / notes section

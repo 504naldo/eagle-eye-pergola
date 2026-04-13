@@ -59,20 +59,20 @@ export default function DrawingPreview() {
     <EagleEyeLayout title="Drawing Preview">
       <div className="max-w-5xl mx-auto">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <button onClick={() => navigate(`/project/${projectId}`)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-            <ChevronLeft size={16} /> Back to Editor
+        <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
+          <button onClick={() => navigate(`/project/${projectId}`)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors touch-manipulation flex-shrink-0">
+            <ChevronLeft size={16} /> <span className="hidden xs:inline">Back to Editor</span><span className="xs:hidden">Back</span>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
             {project && (
-              <div className="text-sm text-gray-600">
+              <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">
                 <span className="font-medium text-gray-900">{project.projectName}</span>
                 {project.clientName && <span className="text-gray-400"> — {project.clientName}</span>}
               </div>
             )}
             <Button
               size="sm"
-              className="gap-1.5 font-semibold"
+              className="gap-1 sm:gap-1.5 font-semibold text-xs sm:text-sm px-2 sm:px-3"
               style={{ backgroundColor: "#C9A84C", color: "#111111" }}
               onClick={handleExportPDF}
               disabled={exportLoading}
@@ -90,8 +90,10 @@ export default function DrawingPreview() {
               <span className="text-white text-sm font-medium">Sheet 03 — Plan View</span>
               <span className="text-[#C9A84C] text-xs">Scale: NTS</span>
             </div>
-            <div className="p-4 overflow-x-auto">
-              <PlanView dims={dims} width={760} height={440} />
+            <div className="p-2 sm:p-4 overflow-x-auto">
+              <div className="min-w-[320px]">
+                <PlanView dims={dims} width={760} height={440} />
+              </div>
             </div>
           </div>
 
@@ -102,8 +104,10 @@ export default function DrawingPreview() {
                 <span className="text-white text-sm font-medium">Sheet 04 — Front Elevation</span>
                 <span className="text-[#C9A84C] text-xs">Scale: NTS</span>
               </div>
-              <div className="p-3 overflow-x-auto">
-                <FrontElevation dims={dims} width={480} height={320} />
+              <div className="p-2 sm:p-3 overflow-x-auto">
+                <div className="min-w-[280px]">
+                  <FrontElevation dims={dims} width={480} height={320} />
+                </div>
               </div>
             </div>
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -111,8 +115,10 @@ export default function DrawingPreview() {
                 <span className="text-white text-sm font-medium">Sheet 05 — Side Elevation</span>
                 <span className="text-[#C9A84C] text-xs">Scale: NTS</span>
               </div>
-              <div className="p-3 overflow-x-auto">
-                <SideElevation dims={dims} width={480} height={320} />
+              <div className="p-2 sm:p-3 overflow-x-auto">
+                <div className="min-w-[280px]">
+                  <SideElevation dims={dims} width={480} height={320} />
+                </div>
               </div>
             </div>
           </div>
@@ -123,8 +129,10 @@ export default function DrawingPreview() {
               <span className="text-white text-sm font-medium">Sheet 06 — Section A–A</span>
               <span className="text-[#C9A84C] text-xs">Scale: NTS</span>
             </div>
-            <div className="p-4 overflow-x-auto">
-              <SectionView dims={dims} width={760} height={380} />
+            <div className="p-2 sm:p-4 overflow-x-auto">
+              <div className="min-w-[320px]">
+                <SectionView dims={dims} width={760} height={380} />
+              </div>
             </div>
           </div>
         </div>

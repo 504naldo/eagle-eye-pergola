@@ -193,63 +193,66 @@ export default function ProjectEditor() {
     <EagleEyeLayout title={project?.projectName ?? "Loading..."}>
       <div className="max-w-5xl mx-auto">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
-            <ChevronLeft size={16} /> Dashboard
+        <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
+          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors touch-manipulation flex-shrink-0">
+            <ChevronLeft size={16} /> <span className="hidden xs:inline">Dashboard</span>
           </button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate(`/project/${projectId}/preview`)}>
-              <Eye size={14} /> Preview Drawings
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-end">
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate(`/project/${projectId}/preview`)}>
+              <Eye size={14} /> <span className="hidden sm:inline">Preview</span><span className="sm:hidden">View</span>
             </Button>
             <Button
               size="sm"
-              className="gap-1.5 font-semibold"
+              className="gap-1 sm:gap-1.5 font-semibold text-xs sm:text-sm px-2 sm:px-3"
               style={{ backgroundColor: "#C9A84C", color: "#111111" }}
               onClick={handleExportPDF}
               disabled={exportLoading}
             >
-              <Download size={14} /> {exportLoading ? "Generating PDF..." : "Export PDF"}
+              <Download size={14} /> {exportLoading ? <span className="hidden sm:inline">Generating...</span> : <><span className="hidden sm:inline">Export </span>PDF</>}
             </Button>
           </div>
         </div>
 
         {/* Project info banner */}
         {project && (
-          <div className="bg-[#111111] rounded-lg p-4 mb-5 flex items-center gap-6 flex-wrap">
+          <div className="bg-[#111111] rounded-lg p-3 sm:p-4 mb-4 sm:mb-5 grid grid-cols-3 sm:flex sm:items-center sm:gap-6 gap-2">
             <div>
-              <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-0.5">Client</div>
-              <div className="text-white text-sm font-medium">{project.clientName || "—"}</div>
+              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Client</div>
+              <div className="text-white text-xs sm:text-sm font-medium truncate">{project.clientName || "—"}</div>
             </div>
             <div>
-              <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-0.5">Location</div>
-              <div className="text-white text-sm font-medium">{project.location || "—"}</div>
+              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Location</div>
+              <div className="text-white text-xs sm:text-sm font-medium truncate">{project.location || "—"}</div>
             </div>
             <div>
-              <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-0.5">Status</div>
-              <div className="text-white text-sm font-medium capitalize">{project.status.replace("_", " ")}</div>
+              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Status</div>
+              <div className="text-white text-xs sm:text-sm font-medium capitalize">{project.status.replace("_", " ")}</div>
             </div>
           </div>
         )}
 
         <Tabs defaultValue="params">
-          <TabsList className="mb-4 bg-gray-100 p-1 rounded-lg flex-wrap h-auto gap-1">
-            {[
-              { value: "params", label: "Parameters" },
-              { value: "qto", label: "Quantity Takeoff" },
-              { value: "checklist", label: `Checklist (${checkedCount}/${totalCount})` },
-              { value: "scope", label: "Inclusions / Exclusions" },
-              { value: "details", label: "Connection Details" },
-              { value: "notes", label: "Project Summary" },
-            ].map(tab => (
-              <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="mb-4 overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+            <TabsList className="bg-gray-100 p-1 rounded-lg h-auto gap-1 inline-flex min-w-max sm:flex-wrap sm:min-w-0 sm:w-full">
+              {[
+                { value: "params", label: "Parameters", shortLabel: "Params" },
+                { value: "qto", label: "Quantity Takeoff", shortLabel: "QTO" },
+                { value: "checklist", label: `Checklist (${checkedCount}/${totalCount})`, shortLabel: `Check (${checkedCount}/${totalCount})` },
+                { value: "scope", label: "Inclusions / Exclusions", shortLabel: "Scope" },
+                { value: "details", label: "Connection Details", shortLabel: "Details" },
+                { value: "notes", label: "Project Summary", shortLabel: "Notes" },
+              ].map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm whitespace-nowrap">
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* ── Parameters Tab ── */}
           <TabsContent value="params">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
                 <h2 className="font-semibold text-gray-900">Project Parameters</h2>
@@ -368,7 +371,7 @@ export default function ProjectEditor() {
 
           {/* ── QTO Tab ── */}
           <TabsContent value="qto">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
@@ -385,44 +388,71 @@ export default function ProjectEditor() {
                     <div className="w-2 h-2 rounded-full bg-[#C9A84C]" />
                     <h3 className="text-sm font-semibold text-gray-800">{cat}</h3>
                   </div>
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="bg-[#111111] text-white">
-                        <th className="text-left py-2 px-3 text-xs font-medium rounded-tl">Description</th>
-                        <th className="text-center py-2 px-3 text-xs font-medium w-14">Unit</th>
-                        <th className="text-center py-2 px-3 text-xs font-medium w-14">Qty</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium w-28">Unit Rate (CAD)</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium w-28 rounded-tr">Line Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {qtoItems.filter(i => i.category === cat).map((item, idx) => (
-                        <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                          <td className="py-2 px-3 text-gray-800 border-b border-gray-100 text-xs">{item.description}</td>
-                          <td className="py-2 px-3 text-center text-gray-600 border-b border-gray-100 font-mono text-xs">{item.unit}</td>
-                          <td className="py-2 px-3 text-center font-semibold border-b border-gray-100 text-xs" style={{ color: "#C9A84C" }}>{item.qty}</td>
-                          <td className="py-1 px-2 border-b border-gray-100 text-right">
-                            <input
-                              type="number"
-                              min={0}
-                              step={10}
-                              value={rateOverrides[item.description] ?? item.unitRate}
-                              onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
-                              className="w-24 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
-                            />
-                          </td>
-                          <td className="py-2 px-3 text-right font-semibold border-b border-gray-100 text-xs text-gray-900">
-                            ${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
+                  {/* Mobile: card layout; Desktop: table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="bg-[#111111] text-white">
+                          <th className="text-left py-2 px-3 text-xs font-medium rounded-tl">Description</th>
+                          <th className="text-center py-2 px-3 text-xs font-medium w-14">Unit</th>
+                          <th className="text-center py-2 px-3 text-xs font-medium w-14">Qty</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium w-28">Unit Rate (CAD)</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium w-28 rounded-tr">Line Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {qtoItems.filter(i => i.category === cat).map((item, idx) => (
+                          <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                            <td className="py-2 px-3 text-gray-800 border-b border-gray-100 text-xs">{item.description}</td>
+                            <td className="py-2 px-3 text-center text-gray-600 border-b border-gray-100 font-mono text-xs">{item.unit}</td>
+                            <td className="py-2 px-3 text-center font-semibold border-b border-gray-100 text-xs" style={{ color: "#C9A84C" }}>{item.qty}</td>
+                            <td className="py-1 px-2 border-b border-gray-100 text-right">
+                              <input
+                                type="number"
+                                min={0}
+                                step={10}
+                                value={rateOverrides[item.description] ?? item.unitRate}
+                                onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
+                                className="w-24 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
+                              />
+                            </td>
+                            <td className="py-2 px-3 text-right font-semibold border-b border-gray-100 text-xs text-gray-900">
+                              ${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Mobile card layout */}
+                  <div className="sm:hidden space-y-2">
+                    {qtoItems.filter(i => i.category === cat).map((item, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-xs font-medium text-gray-800 flex-1 pr-2">{item.description}</p>
+                          <span className="text-xs font-bold text-gray-900 whitespace-nowrap">${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-gray-500">{item.qty} {item.unit}</span>
+                          <span className="text-[10px] text-gray-400">&times;</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={10}
+                            value={rateOverrides[item.description] ?? item.unitRate}
+                            onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
+                            className="w-20 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
+                          />
+                          <span className="text-[10px] text-gray-400">CAD/{item.unit}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
               {/* Grand Total */}
               <div className="mt-4 flex justify-end">
-                <div className="bg-[#111111] rounded-lg px-6 py-4 min-w-64">
+                <div className="bg-[#111111] rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
                   <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
                   <div className="text-white text-2xl font-bold">
                     ${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -435,7 +465,7 @@ export default function ProjectEditor() {
 
           {/* ── Checklist Tab ── */}
           <TabsContent value="checklist">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
@@ -455,7 +485,7 @@ export default function ProjectEditor() {
                         <div key={item.id} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${item.checked ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}>
                           <button
                             onClick={() => toggleChecklist.mutate({ id: item.id, checked: !item.checked })}
-                            className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${item.checked ? "bg-green-500 border-green-500" : "border-gray-300 bg-white"}`}
+                            className={`mt-0.5 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors touch-manipulation ${item.checked ? "bg-green-500 border-green-500" : "border-gray-300 bg-white"}`}
                           >
                             {item.checked && <Check size={12} className="text-white" />}
                           </button>
@@ -474,7 +504,7 @@ export default function ProjectEditor() {
 
           {/* ── Scope Tab ── */}
           <TabsContent value="scope">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
                 <h2 className="font-semibold text-gray-900">Inclusions / Exclusions / Assumptions</h2>
@@ -515,9 +545,9 @@ export default function ProjectEditor() {
               {/* Add new item */}
               <div className="border-t pt-4 mt-4">
                 <h3 className="text-xs font-semibold text-gray-500 mb-3">Add New Item</h3>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={newScopeType} onValueChange={v => setNewScopeType(v as any)}>
-                    <SelectTrigger className="w-36 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-36 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {(["inclusion", "exclusion", "assumption", "by_others"] as const).map(t => (
                         <SelectItem key={t} value={t}>{SCOPE_TYPE_LABELS[t]}</SelectItem>
@@ -528,15 +558,16 @@ export default function ProjectEditor() {
                     placeholder="Enter scope item text..."
                     value={newScopeText}
                     onChange={e => setNewScopeText(e.target.value)}
-                    className="flex-1 text-sm min-w-48"
+                    className="flex-1 text-sm"
                   />
                   <Button
                     size="sm"
+                    className="w-full sm:w-auto"
                     style={{ backgroundColor: "#C9A84C", color: "#111111" }}
                     onClick={() => addScope.mutate({ projectId, type: newScopeType, text: newScopeText })}
                     disabled={!newScopeText.trim()}
                   >
-                    <Plus size={14} />
+                    <Plus size={14} /> Add
                   </Button>
                 </div>
               </div>
@@ -545,7 +576,7 @@ export default function ProjectEditor() {
 
           {/* ── Connection Details Tab ── */}
           <TabsContent value="details">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
                 <h2 className="font-semibold text-gray-900">Connection & Detail Intent</h2>
@@ -553,7 +584,7 @@ export default function ProjectEditor() {
               <p className="text-xs text-gray-500 mb-5 bg-amber-50 border border-amber-200 rounded p-2">
                 ⚠ Concept details only — not engineered, not for construction. For estimating intent only. All connections subject to licensed structural review.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {[
                   {
                     title: "① Wall Ledger to Building",
@@ -612,7 +643,7 @@ export default function ProjectEditor() {
 
           {/* ── Project Summary Tab ── */}
           <TabsContent value="notes">
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
                 <h2 className="font-semibold text-gray-900">Project Summary / Cover Letter</h2>

@@ -126,11 +126,11 @@ export default function Dashboard() {
                     </p>
                   </div>
                   {/* Actions */}
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="default"
-                      className="gap-1.5 flex-1 text-xs font-medium"
+                      className="gap-1.5 flex-1 text-xs font-medium min-h-[40px] touch-manipulation"
                       style={{ backgroundColor: "#C9A84C", color: "#111111" }}
                       onClick={() => navigate(`/project/${project.id}`)}
                     >
@@ -139,7 +139,7 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 text-xs"
+                      className="gap-1.5 text-xs flex-1 min-h-[40px] touch-manipulation"
                       onClick={() => navigate(`/project/${project.id}/preview`)}
                     >
                       <Eye size={13} /> Preview
@@ -147,16 +147,18 @@ export default function Dashboard() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 text-xs"
+                      className="gap-1.5 text-xs min-h-[40px] min-w-[40px] touch-manipulation"
                       onClick={() => duplicateMutation.mutate({ id: project.id })}
+                      title="Duplicate project"
                     >
                       <Copy size={13} />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 text-xs text-red-500 hover:text-red-600"
+                      className="gap-1.5 text-xs text-red-500 hover:text-red-600 min-h-[40px] min-w-[40px] touch-manipulation"
                       onClick={() => setDeleteId(project.id)}
+                      title="Delete project"
                     >
                       <Trash2 size={13} />
                     </Button>
