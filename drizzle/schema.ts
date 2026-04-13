@@ -1,17 +1,17 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  boolean,
+  decimal,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -25,4 +25,77 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+export const projects = mysqlTable("projects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  projectName: varchar("projectName", { length: 255 }).notNull(),
+  clientName: varchar("clientName", { length: 255 }),
+  location: varchar("location", { length: 500 }),
+  status: mysqlEnum("status", ["draft", "in_review", "approved", "archived"]).default("draft").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = typeof projects.$inferInsert;
+
+// ─── Project Parameters ───────────────────────────────────────────────────────
+
+export const projectParams = mysqlTable("project_params", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  // Patio dimensions (in feet, stored as decimal)
+  widthFt: decimal("widthFt", { precision: 8, scale: 2 }).default("58.00"),
+  depthFt: decimal("depthFt", { precision: 8, scale: 2 }).default("15.67"),
+  heightFt: decimal("heightFt", { precision: 8, scale: 2 }).default("10.00"),
+  // Post configuration
+  postCount: int("postCount").default(5),
+  postSpacingFt: decimal("postSpacingFt", { precision: 8, scale: 2 }).default("14.50"),
+  // Slat system
+  slatType: mysqlEnum("slatType", ["fixed", "operable"]).default("fixed").notNull(),
+  slatSpacingIn: decimal("slatSpacingIn", { precision: 6, scale: 2 }).default("4.00"),
+  // Lumin glass enclosure
+  glassFront: boolean("glassFront").default(true),
+  glassLeft: boolean("glassLeft").default(true),
+  glassRight: boolean("glassRight").default(true),
+  // Connection type
+  connectionType: mysqlEnum("connectionType", ["wall_mounted_lean_to"]).default("wall_mounted_lean_to").notNull(),
+  // Finish & extras
+  finishColor: varchar("finishColor", { length: 100 }).default("Matte Black"),
+  ledLighting: boolean("ledLighting").default(true),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectParams = typeof projectParams.$inferSelect;
+export type InsertProjectParams = typeof projectParams.$inferInsert;
+
+// ─── Field Verification Checklist ────────────────────────────────────────────
+
+export const checklistItems = mysqlTable("checklist_items", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  label: varchar("label", { length: 500 }).notNull(),
+  checked: boolean("checked").default(false),
+  fieldNote: text("fieldNote"),
+  sortOrder: int("sortOrder").default(0),
+});
+
+export type ChecklistItem = typeof checklistItems.$inferSelect;
+export type InsertChecklistItem = typeof checklistItems.$inferInsert;
+
+// ─── Inclusions / Exclusions / Assumptions ───────────────────────────────────
+
+export const scopeItems = mysqlTable("scope_items", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  type: mysqlEnum("type", ["inclusion", "exclusion", "assumption", "by_others"]).notNull(),
+  text: text("text").notNull(),
+  sortOrder: int("sortOrder").default(0),
+});
+
+export type ScopeItem = typeof scopeItems.$inferSelect;
+export type InsertScopeItem = typeof scopeItems.$inferInsert;
