@@ -48,3 +48,6 @@
 - [x] Vitest unit tests for SVG geometry logic (15 tests passing)
 - [x] Final UI polish and responsive layout
 - [x] Checkpoint and delivery
+
+## Seed Data
+- [x] Seed Milestones Grill + Bar project with all correct parameters
