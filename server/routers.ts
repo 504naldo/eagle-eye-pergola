@@ -48,13 +48,16 @@ export const appRouter = router({
         clientName: z.string().optional(),
         location: z.string().optional(),
         notes: z.string().optional(),
+        scopeType: z.enum(["pergola", "canopy", "enclosure"]).default("pergola"),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await createProject({ ...input, userId: ctx.user.id, status: "draft" });
-        // Seed default params, checklist, and scope
-        await upsertProjectParams({ projectId: id });
-        await seedChecklistItems(id);
-        await seedScopeItems(id);
+        // Pergola: seed default params, checklist, and scope
+        if (input.scopeType === "pergola") {
+          await upsertProjectParams({ projectId: id });
+          await seedChecklistItems(id);
+          await seedScopeItems(id);
+        }
         return { id };
       }),
 
@@ -89,22 +92,41 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const project = await getProjectById(input.id);
         if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
-        const params = await getProjectParams(input.id);
         const newId = await createProject({
           userId: ctx.user.id,
           projectName: `${project.projectName} (Copy)`,
           clientName: project.clientName,
           location: project.location,
           notes: project.notes,
+          scopeType: project.scopeType,
+          inputsJson: project.inputsJson,
           status: "draft",
         });
-        if (params) {
-          const { id: _id, ...paramsData } = params;
-          await upsertProjectParams({ ...paramsData, projectId: newId });
+        if (project.scopeType === "pergola") {
+          const params = await getProjectParams(input.id);
+          if (params) {
+            const { id: _id, ...paramsData } = params;
+            await upsertProjectParams({ ...paramsData, projectId: newId });
+          }
+          await seedChecklistItems(newId);
+          await seedScopeItems(newId);
         }
-        await seedChecklistItems(newId);
-        await seedScopeItems(newId);
         return { id: newId };
+      }),
+  }),
+
+  // ─── Generic Inputs (Canopy / Enclosure) ─────────────────────────────────
+  inputs: router({
+    save: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        inputsJson: z.record(z.string(), z.unknown()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await updateProject(input.projectId, { inputsJson: input.inputsJson });
+        return { success: true };
       }),
   }),
 

@@ -33,6 +33,10 @@ export const projects = mysqlTable("projects", {
   projectName: varchar("projectName", { length: 255 }).notNull(),
   clientName: varchar("clientName", { length: 255 }),
   location: varchar("location", { length: 500 }),
+  // Multi-scope: pergola | canopy | enclosure
+  scopeType: mysqlEnum("scopeType", ["pergola", "canopy", "enclosure"]).default("pergola").notNull(),
+  // Generic JSON inputs for canopy/enclosure modules (pergola still uses project_params)
+  inputsJson: json("inputsJson"),
   status: mysqlEnum("status", ["draft", "in_review", "approved", "archived"]).default("draft").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -115,3 +119,19 @@ export const renderings = mysqlTable("renderings", {
 
 export type Rendering = typeof renderings.$inferSelect;
 export type InsertRendering = typeof renderings.$inferInsert;
+
+// ─── Project Files (photo/document uploads) ───────────────────────────────────────────────────────────────────────────────
+
+export const projectFiles = mysqlTable("project_files", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  mimeType: varchar("mimeType", { length: 100 }).notNull(),
+  sizeBytes: int("sizeBytes").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = typeof projectFiles.$inferInsert;

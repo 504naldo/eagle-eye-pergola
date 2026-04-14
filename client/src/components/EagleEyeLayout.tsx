@@ -49,7 +49,7 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
               <span className="hidden sm:inline">Eagle Eye Management Services</span>
               <span className="sm:hidden">Eagle Eye</span>
             </div>
-            <div className="text-[#C9A84C] text-[10px] sm:text-xs tracking-widest uppercase">Pergola Estimating</div>
+            <div className="text-[#C9A84C] text-[10px] sm:text-xs tracking-widest uppercase">Estimating Platform</div>
           </div>
         </div>
         {isAuthenticated && user && (

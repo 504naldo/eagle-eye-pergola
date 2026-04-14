@@ -1,7 +1,10 @@
-import { Request, Response } from "express";
 import PDFDocument from "pdfkit";
+import type { Request, Response } from "express";
 import { getProjectById, getProjectParams, getChecklistItems, getScopeItems } from "./db";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
+import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
+import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
+import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS } from "../shared/scopeTypes";
 
 const GOLD = "#C9A84C";
 const BLACK = "#111111";
@@ -302,6 +305,115 @@ function drawTableRow(doc: PDFKit.PDFDocument, cells: { text: string; x: number;
   return y + rowH;
 }
 
+// ─── Scoped PDF generator for Canopy and Enclosure ────────────────────────────
+
+async function handleScopedPDFExport(
+  _req: Request,
+  res: Response,
+  project: Awaited<ReturnType<typeof getProjectById>>,
+  scope: "canopy" | "enclosure"
+) {
+  const doc = new PDFDocument({ size: [PW, PH], layout: "landscape", margin: 0, autoFirstPage: false });
+  const chunks: Buffer[] = [];
+  doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+  const pdfReady = new Promise<Buffer>((resolve, reject) => {
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+  });
+
+  const savedInputs = (project?.inputsJson as Record<string, unknown>) ?? {};
+  const scopeLabel = scope === "canopy" ? "CANOPY" : "ENCLOSURE";
+  const projectName = project?.projectName ?? "Untitled";
+
+  // ── COVER PAGE ──
+  doc.addPage();
+  doc.rect(0, 0, PW, PH).fill(BLACK);
+  doc.rect(0, 0, PW, 52).fill(BLACK);
+  doc.rect(0, 52, PW, 3).fill(GOLD);
+  doc.circle(30, 26, 18).stroke(GOLD).strokeColor(GOLD).lineWidth(2);
+  doc.fontSize(9).fillColor(GOLD).font("Helvetica-Bold").text("EE", 22, 20);
+  doc.fontSize(13).fillColor("white").font("Helvetica-Bold").text("Eagle Eye Management Services", 56, 12);
+  doc.fontSize(8).fillColor(GOLD).font("Helvetica").text(`${scopeLabel} ESTIMATING PACKAGE`, 56, 30);
+  const cx = PW / 2;
+  doc.circle(cx, 160, 44).stroke(GOLD).strokeColor(GOLD).lineWidth(3);
+  doc.fontSize(22).fillColor(GOLD).font("Helvetica-Bold").text("EE", cx - 14, 146);
+  doc.fontSize(22).fillColor("white").font("Helvetica-Bold").text("Eagle Eye Management Services", 0, 220, { align: "center", width: PW });
+  doc.fontSize(10).fillColor(GOLD).font("Helvetica").text(`${scopeLabel} CONCEPT PACKAGE`, 0, 248, { align: "center", width: PW });
+  doc.rect(cx - 36, 268, 72, 2).fill(GOLD);
+  doc.fontSize(18).fillColor("white").font("Helvetica-Bold").text(projectName, 0, 280, { align: "center", width: PW });
+  if (project?.clientName) doc.fontSize(11).fillColor(GRAY).font("Helvetica").text(project.clientName, 0, 304, { align: "center", width: PW });
+  if (project?.location) doc.fontSize(11).fillColor(GRAY).font("Helvetica").text(project.location, 0, 320, { align: "center", width: PW });
+
+  // ── QTO PAGE ──
+  doc.addPage();
+  drawPageHeader(doc, projectName, "Sheet A — QTO");
+  drawPageFooter(doc);
+  const contentTop = 62;
+  drawSectionTitle(doc, "Preliminary Quantity Takeoff", "SHEET A", contentTop + 6);
+  drawDisclaimer(doc, "All quantities and costs are preliminary estimates only (CAD). Subject to field verification and licensed structural review.",
+    MARGIN, contentTop + 34, PW - MARGIN * 2);
+
+  let qtoItems: QTOItem[];
+  let grandTotal: number;
+  if (scope === "canopy") {
+    const p = { ...DEFAULT_CANOPY_PARAMS, ...savedInputs };
+    qtoItems = calculateCanopyQTO(p) as QTOItem[];
+    grandTotal = calculateCanopyGrandTotal(qtoItems);
+  } else {
+    const p = { ...DEFAULT_ENCLOSURE_PARAMS, ...savedInputs };
+    qtoItems = calculateEnclosureQTO(p) as QTOItem[];
+    grandTotal = calculateEnclosureGrandTotal(qtoItems);
+  }
+
+  const qtoCategories = Array.from(new Set(qtoItems.map((i: QTOItem) => i.category)));
+  const colW = { desc: 420, unit: 60, qty: 60, rate: 100, total: 110 };
+  const colX = {
+    desc: MARGIN + 2,
+    unit: MARGIN + colW.desc + 2,
+    qty: MARGIN + colW.desc + colW.unit + 2,
+    rate: MARGIN + colW.desc + colW.unit + colW.qty + 2,
+    total: MARGIN + colW.desc + colW.unit + colW.qty + colW.rate + 2,
+  };
+  let qtoY = contentTop + 62;
+  qtoCategories.forEach(cat => {
+    doc.rect(MARGIN, qtoY, PW - MARGIN * 2, 18).fill(LIGHT_GRAY);
+    doc.rect(MARGIN, qtoY, 3, 18).fill(GOLD);
+    doc.fontSize(9).fillColor("#374151").font("Helvetica-Bold").text(cat, MARGIN + 8, qtoY + 5);
+    qtoY += 18;
+    qtoY = drawTableHeader(doc, [
+      { label: "Description", x: colX.desc, w: colW.desc },
+      { label: "Unit", x: colX.unit, w: colW.unit, align: "center" },
+      { label: "Qty", x: colX.qty, w: colW.qty, align: "center" },
+      { label: "Unit Rate (CAD)", x: colX.rate, w: colW.rate, align: "right" },
+      { label: "Line Total", x: colX.total, w: colW.total, align: "right" },
+    ], qtoY, 16);
+    qtoItems.filter((i: QTOItem) => i.category === cat).forEach((item: QTOItem, idx: number) => {
+      qtoY = drawTableRow(doc, [
+        { text: item.description, x: colX.desc, w: colW.desc },
+        { text: item.unit, x: colX.unit, w: colW.unit, align: "center", color: GRAY },
+        { text: String(item.qty), x: colX.qty, w: colW.qty, align: "center", color: GOLD, bold: true },
+        { text: `$${item.unitRate.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, x: colX.rate, w: colW.rate, align: "right" },
+        { text: `$${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, x: colX.total, w: colW.total, align: "right", bold: true },
+      ], qtoY, 16, idx % 2 === 1 ? LIGHT_GRAY : undefined);
+    });
+    qtoY += 4;
+  });
+  const gtBoxW = 280;
+  const gtBoxX = PW - MARGIN - gtBoxW;
+  const gtBoxY = qtoY + 8;
+  doc.rect(gtBoxX, gtBoxY, gtBoxW, 56).fill(BLACK);
+  doc.fontSize(7.5).fillColor(GOLD).font("Helvetica").text("PRELIMINARY BUDGET ESTIMATE (CAD)", gtBoxX + 12, gtBoxY + 10);
+  doc.fontSize(22).fillColor("white").font("Helvetica-Bold").text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, gtBoxX + 12, gtBoxY + 24);
+
+  doc.end();
+  const pdfBuffer = await pdfReady;
+  const filename = `${projectName.replace(/[^a-z0-9]/gi, "_")}_${scope}_package.pdf`;
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Length", pdfBuffer.length);
+  res.send(pdfBuffer);
+}
+
 // ─── Main export handler ─────────────────────────────────────────────────────
 
 export async function handlePDFExport(req: Request, res: Response) {
@@ -311,6 +423,12 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     const project = await getProjectById(projectId);
     if (!project) return res.status(404).json({ error: "Project not found" });
+
+    // Dispatch to scope-specific generator for canopy and enclosure
+    const scope = project.scopeType ?? "pergola";
+    if (scope === "canopy" || scope === "enclosure") {
+      return handleScopedPDFExport(req, res, project, scope);
+    }
 
     const params = await getProjectParams(projectId);
     const checklist = await getChecklistItems(projectId);
