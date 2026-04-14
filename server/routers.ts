@@ -9,6 +9,7 @@ import {
   getChecklistItems, seedChecklistItems, updateChecklistItem,
   getScopeItems, seedScopeItems, updateScopeItem, addScopeItem, deleteScopeItem,
   getRenderingsByProject, createRendering, deleteRendering,
+  getFilesByProject, createProjectFile, deleteProjectFile,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -403,6 +404,49 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
         return { success: !!deleted };
       }),
   }),
-});
 
+  // ─── Project Files ─────────────────────────────────────────────────────
+  files: router({
+    list: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        return getFilesByProject(input.projectId);
+      }),
+
+    upload: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        fileUrl: z.string().url(),
+        fileKey: z.string(),
+        fileName: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        const id = await createProjectFile({
+          projectId: input.projectId,
+          fileUrl: input.fileUrl,
+          fileKey: input.fileKey,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
+          sizeBytes: input.fileSize ?? 0,
+        });
+        return { id, fileUrl: input.fileUrl, fileName: input.fileName, mimeType: input.mimeType };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify ownership before deleting
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        const deleted = await deleteProjectFile(input.id);
+        return { success: !!deleted };
+      }),
+  }),
+});
 export type AppRouter = typeof appRouter;

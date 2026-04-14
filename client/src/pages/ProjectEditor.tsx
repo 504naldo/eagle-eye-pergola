@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
 import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem } from "@shared/geometry";
+import FilesTab from "@/components/FilesTab";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusion",
@@ -284,6 +285,7 @@ export default function ProjectEditor() {
                 { value: "details", label: "Connection Details", shortLabel: "Details" },
                 { value: "notes", label: "Project Summary", shortLabel: "Notes" },
                 { value: "renderings", label: "AI Renderings", shortLabel: "Renders" },
+                { value: "files", label: "Files", shortLabel: "Files" },
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm whitespace-nowrap">
                   <span className="hidden sm:inline">{tab.label}</span>
@@ -868,6 +870,17 @@ export default function ProjectEditor() {
                   <div className="text-xs text-gray-400 mt-1">Select a view style above and click Generate to create your first AI rendering.</div>
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="files">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                <h2 className="text-sm font-semibold text-gray-900">Project Files</h2>
+                <span className="text-xs text-gray-400">— Photos, drawings, documents</span>
+              </div>
+              {project && <FilesTab projectId={project.id} />}
             </div>
           </TabsContent>
         </Tabs>

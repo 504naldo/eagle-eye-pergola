@@ -7,6 +7,7 @@ import {
   checklistItems, InsertChecklistItem, ChecklistItem,
   scopeItems, InsertScopeItem, ScopeItem,
   renderings, InsertRendering, Rendering,
+  projectFiles, InsertProjectFile, ProjectFile,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -250,6 +251,29 @@ export async function deleteRendering(id: number): Promise<Rendering | undefined
   const existing = await db.select().from(renderings).where(eq(renderings.id, id)).limit(1);
   if (existing.length > 0) {
     await db.delete(renderings).where(eq(renderings.id, id));
+    return existing[0];
+  }
+  return undefined;
+}
+
+// ─── Project Files ────────────────────────────────────────────────────────────
+export async function getFilesByProject(projectId: number): Promise<ProjectFile[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectFiles).where(eq(projectFiles.projectId, projectId)).orderBy(desc(projectFiles.createdAt));
+}
+export async function createProjectFile(data: InsertProjectFile): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(projectFiles).values(data);
+  return (result[0] as any).insertId as number;
+}
+export async function deleteProjectFile(id: number): Promise<ProjectFile | undefined> {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(projectFiles).where(eq(projectFiles.id, id)).limit(1);
+  if (existing.length > 0) {
+    await db.delete(projectFiles).where(eq(projectFiles.id, id));
     return existing[0];
   }
   return undefined;

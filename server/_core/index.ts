@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handlePDFExport } from "../pdfExport";
+import { multerMiddleware, handleFileUpload } from "../fileUpload";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // PDF Export route
   app.get("/api/export/pdf/:id", handlePDFExport);
+  // File upload route (server-side S3 via storagePut)
+  app.post("/api/upload/:projectId", multerMiddleware, handleFileUpload);
 
   // tRPC API
   app.use(

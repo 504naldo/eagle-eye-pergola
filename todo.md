@@ -136,8 +136,8 @@
 ### Phase 6: File/Photo Upload
 - [x] Add `project_files` table (id, projectId, fileUrl, fileKey, fileName, mimeType, createdAt) — schema added
 - [x] Push DB migration
-- [ ] tRPC procedures: files.upload, files.list, files.delete
-- [ ] Files tab in all editors: drag-and-drop upload, thumbnail grid, delete button
+- [x] tRPC procedures: files.upload, files.list, files.delete
+- [x] Files tab in all editors: drag-and-drop upload, thumbnail grid, delete button (all 3 editors: Pergola, Canopy, Enclosure)
 
 ### Phase 7: Seed Data & Tests
 - [x] Vitest: canopy QTO calculation tests (4 tests)

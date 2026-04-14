@@ -15,6 +15,7 @@ import {
   type EnclosureFrameLayout,
   type EnclosurePanelOption,
 } from "@shared/scopeTypes";
+import FilesTab from "@/components/FilesTab";
 import {
   calculateEnclosureQTO,
   calculateEnclosureGrandTotal,
@@ -138,9 +139,9 @@ export default function EnclosureEditor({ projectId }: Props) {
 
       <Tabs defaultValue="params">
         <TabsList className="flex overflow-x-auto whitespace-nowrap gap-0.5 mb-4 h-auto p-1 bg-gray-100 rounded-lg">
-          {["params", "drawings", "qto", "renderings", "notes"].map(tab => (
+          {["params", "drawings", "qto", "renderings", "notes", "files"].map(tab => (
             <TabsTrigger key={tab} value={tab} className="text-xs px-3 py-1.5 capitalize flex-shrink-0">
-              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab === "files" ? "Files" : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -424,6 +425,17 @@ export default function EnclosureEditor({ projectId }: Props) {
               placeholder="Add project notes, scope clarifications, or client requirements here…"
               defaultValue={project?.notes ?? ""}
             />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="files">
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+              <h2 className="text-sm font-semibold text-gray-900">Project Files</h2>
+              <span className="text-xs text-gray-400">— Photos, drawings, documents</span>
+            </div>
+            {projectId && <FilesTab projectId={projectId} />}
           </div>
         </TabsContent>
       </Tabs>
