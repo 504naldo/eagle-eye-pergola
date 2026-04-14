@@ -106,48 +106,39 @@
 ## Multi-Scope Platform Refactor (Canopy + Enclosure modules)
 
 ### Phase 1: Architecture & DB
-- [ ] Add `scopeType` enum to projects table: pergola | canopy | enclosure
-- [ ] Add `inputsJson` JSON column to projects table (replaces per-scope param tables)
-- [ ] Keep `project_params` for pergola backward compat; new scopes use inputsJson
-- [ ] Push DB migration
-- [ ] Create shared/types.ts with ScopeType enum and per-module input interfaces
-- [ ] Create shared/modules.ts registry mapping ScopeType → label, icon, description
+- [x] Add `scopeType` enum to projects table: pergola | canopy | enclosure
+- [x] Add `inputsJson` JSON column to projects table (replaces per-scope param tables)
+- [x] Keep `project_params` for pergola backward compat; new scopes use inputsJson
+- [x] Push DB migration
+- [x] Create shared/scopeTypes.ts with ScopeType enum and per-module input interfaces
+- [x] Create shared/canopyGeometry.ts and shared/enclosureGeometry.ts
 
 ### Phase 2: Project Creation Flow
-- [ ] Update "New Project" modal to include scope type selector (3 cards: Pergola, Canopy, Enclosure)
-- [ ] Route to correct editor based on scopeType after project creation
-- [ ] Dashboard shows scope type badge on each project card
+- [x] Update "New Project" modal to include scope type selector (3 cards: Pergola, Canopy, Enclosure)
+- [x] Route to correct editor based on scopeType after project creation (scope-aware ProjectRouter in App.tsx)
+- [x] Dashboard shows scope type badge on each project card
 
 ### Phase 3: Canopy Module
-- [ ] shared/canopy.ts: CanopyParams interface + calculateCanopyQTO() function
-- [ ] shared/canopyGeometry.ts: SVG drawing functions (plan, front elevation, side elevation, section)
-- [ ] CanopyEditor.tsx: parameter form (width, projection, height, support type, fascia style, slope, finish, lighting)
-- [ ] CanopyDrawingPreview.tsx: 4-view SVG preview page
-- [ ] Canopy QTO, checklist, scope tabs (reuse shared components)
+- [x] shared/canopyGeometry.ts: CanopyParams interface + calculateCanopyQTO() + SVG drawing functions
+- [x] CanopyEditor.tsx: parameter form (width, projection, height, support type, fascia style, slope, finish, lighting), QTO, drawings, AI renderings, notes tabs
+- [ ] CanopyDrawingPreview.tsx: standalone 4-view SVG preview page (deferred — drawings are inline in editor)
 
 ### Phase 4: Simple Enclosure Module
-- [ ] shared/enclosure.ts: EnclosureParams interface + calculateEnclosureQTO() function
-- [ ] shared/enclosureGeometry.ts: SVG drawing functions (plan, front elevation, side elevation, section)
-- [ ] EnclosureEditor.tsx: parameter form (width, depth, height, enclosure selection, frame layout, panel/glass, door toggle, finish)
-- [ ] EnclosureDrawingPreview.tsx: 4-view SVG preview page
-- [ ] Enclosure QTO, checklist, scope tabs (reuse shared components)
+- [x] shared/enclosureGeometry.ts: EnclosureParams interface + calculateEnclosureQTO() + SVG drawing functions
+- [x] EnclosureEditor.tsx: parameter form (width, depth, height, face toggles, frame layout, panel/glass, door toggle, finish), QTO, drawings, AI renderings, notes tabs
+- [ ] EnclosureDrawingPreview.tsx: standalone 4-view SVG preview page (deferred — drawings are inline in editor)
 
 ### Phase 5: Shared Package Builder & PDF
-- [ ] Refactor pdfExport.ts into shared packageBuilder.ts that dispatches by scopeType
-- [ ] Each module exports a buildSheets(params) function returning sheet data
-- [ ] PDF cover sheet shows scope type label
-- [ ] All 3 modules produce same PDF structure (cover, summary, dims, drawings, QTO, scope)
+- [x] pdfExport.ts dispatches by scopeType: pergola uses full 8-page package, canopy/enclosure use handleScopedPDFExport (cover + QTO)
+- [x] PDF cover sheet shows scope type label (CANOPY / ENCLOSURE / PERGOLA ESTIMATING PACKAGE)
+- [ ] Add drawings pages to canopy/enclosure PDF (currently only cover + QTO)
 
 ### Phase 6: File/Photo Upload
-- [ ] Add `project_files` table (id, projectId, fileUrl, fileKey, fileName, mimeType, createdAt)
-- [ ] Push DB migration
+- [x] Add `project_files` table (id, projectId, fileUrl, fileKey, fileName, mimeType, createdAt) — schema added
+- [x] Push DB migration
 - [ ] tRPC procedures: files.upload, files.list, files.delete
 - [ ] Files tab in all editors: drag-and-drop upload, thumbnail grid, delete button
-- [ ] S3 storage via storagePut
 
 ### Phase 7: Seed Data & Tests
-- [ ] Seed sample Canopy project (e.g. "Retail Entry Canopy — Main St")
-- [ ] Seed sample Enclosure project (e.g. "Outdoor Dining Enclosure — Harbourside")
-- [ ] Vitest: canopy QTO calculation tests
-- [ ] Vitest: enclosure QTO calculation tests
-- [ ] Vitest: shared package builder dispatch tests
+- [x] Vitest: canopy QTO calculation tests (4 tests)
+- [x] Vitest: enclosure QTO calculation tests (5 tests)
