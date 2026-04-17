@@ -5,7 +5,7 @@
 
 // ─── Scope Types ─────────────────────────────────────────────────────────────
 
-export type ScopeType = "pergola" | "canopy" | "enclosure";
+export type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing";
 
 export const SCOPE_MODULE_META: Record<ScopeType, { label: string; description: string; icon: string }> = {
   pergola: {
@@ -22,6 +22,11 @@ export const SCOPE_MODULE_META: Record<ScopeType, { label: string; description: 
     label: "Simple Enclosure",
     description: "Aluminium-framed glass or panel enclosure system",
     icon: "square",
+  },
+  fencing: {
+    label: "Fencing / Security Enclosure",
+    description: "Steel SHS-framed welded wire mesh fencing with gate and base plate anchoring",
+    icon: "fence",
   },
 };
 
@@ -72,6 +77,42 @@ export interface EnclosureParams {
   doorWidthFt: number;
   finishColor: string;
 }
+
+// ─── Fencing Module ──────────────────────────────────────────────────────────
+
+export type FencingMeshType = "welded_wire_50x50" | "welded_wire_75x75" | "chain_link" | "solid_panel";
+export type FencingAnchorMethod = "base_plate_epoxy" | "core_drill_set" | "surface_mount";
+export type FencingFinish = "black_pc" | "galvanised" | "custom_pc";
+
+export interface FencingParams {
+  runLengthFt: number;       // total fence run length
+  heightFt: number;          // fence height above slab
+  postSpacingFt: number;     // centre-to-centre post spacing
+  meshType: FencingMeshType;
+  frameSectionMm: number;    // SHS section size e.g. 75 = 75×75×3 SHS
+  hasGate: boolean;
+  gateWidthFt: number;
+  gateHeightFt: number;
+  finish: FencingFinish;
+  anchorMethod: FencingAnchorMethod;
+  location: string;          // e.g. "Parkade Level B1"
+  clientName: string;
+}
+
+export const DEFAULT_FENCING_PARAMS: FencingParams = {
+  runLengthFt: 24,
+  heightFt: 8,
+  postSpacingFt: 4,
+  meshType: "welded_wire_50x50",
+  frameSectionMm: 75,
+  hasGate: true,
+  gateWidthFt: 4,
+  gateHeightFt: 8,
+  finish: "black_pc",
+  anchorMethod: "base_plate_epoxy",
+  location: "",
+  clientName: "",
+};
 
 export const DEFAULT_ENCLOSURE_PARAMS: EnclosureParams = {
   widthFt: 20,

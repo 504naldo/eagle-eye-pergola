@@ -50,7 +50,7 @@ export const appRouter = router({
         clientName: z.string().optional(),
         location: z.string().optional(),
         notes: z.string().optional(),
-        scopeType: z.enum(["pergola", "canopy", "enclosure"]).default("pergola"),
+        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing"]).default("pergola"),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await createProject({ ...input, userId: ctx.user.id, status: "draft" });

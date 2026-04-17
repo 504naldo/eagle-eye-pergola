@@ -6,7 +6,8 @@ import http from "http";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
-import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS } from "../shared/scopeTypes";
+import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS, DEFAULT_FENCING_PARAMS } from "../shared/scopeTypes";
+import { calculateFencingQTO } from "../shared/fencingGeometry";
 
 const GOLD = "#C9A84C";
 const BLACK = "#111111";
@@ -395,7 +396,7 @@ async function handleScopedPDFExport(
   _req: Request,
   res: Response,
   project: Awaited<ReturnType<typeof getProjectById>>,
-  scope: "canopy" | "enclosure"
+  scope: "canopy" | "enclosure" | "fencing"
 ) {
   const doc = new PDFDocument({ size: [PW, PH], layout: "landscape", margin: 0, autoFirstPage: false });
   const chunks: Buffer[] = [];
@@ -406,7 +407,7 @@ async function handleScopedPDFExport(
   });
 
   const savedInputs = (project?.inputsJson as Record<string, unknown>) ?? {};
-  const scopeLabel = scope === "canopy" ? "CANOPY" : "ENCLOSURE";
+  const scopeLabel = scope === "canopy" ? "CANOPY" : scope === "fencing" ? "FENCING" : "ENCLOSURE";
   const projectName = project?.projectName ?? "Untitled";
   const rateOverrides = await getRateOverrides(project?.id ?? 0);
   const projectRenderings = await getRenderingsByProject(project?.id ?? 0);
@@ -445,6 +446,12 @@ async function handleScopedPDFExport(
     const p = { ...DEFAULT_CANOPY_PARAMS, ...savedInputs };
     qtoItems = calculateCanopyQTO(p, rateOverrides) as QTOItem[];
     grandTotal = calculateCanopyGrandTotal(qtoItems);
+  } else if (scope === "fencing") {
+    const p = { ...DEFAULT_FENCING_PARAMS, ...savedInputs };
+    const fencingItems = calculateFencingQTO(p, rateOverrides);
+    // FencingQTOItem uses `group` instead of `category` — remap for PDF rendering
+    qtoItems = fencingItems.map(i => ({ ...i, category: i.group })) as QTOItem[];
+    grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
   } else {
     const p = { ...DEFAULT_ENCLOSURE_PARAMS, ...savedInputs };
     qtoItems = calculateEnclosureQTO(p, rateOverrides) as QTOItem[];
@@ -515,7 +522,7 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // Dispatch to scope-specific generator for canopy and enclosure
     const scope = project.scopeType ?? "pergola";
-    if (scope === "canopy" || scope === "enclosure") {
+    if (scope === "canopy" || scope === "enclosure" || scope === "fencing") {
       return handleScopedPDFExport(req, res, project, scope);
     }
 

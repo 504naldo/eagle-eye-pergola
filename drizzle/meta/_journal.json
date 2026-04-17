@@ -36,6 +36,13 @@
       "when": 1776452770840,
       "tag": "0004_curly_unicorn",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1776465255807,
+      "tag": "0005_naive_spirit",
+      "breakpoints": true
     }
   ]
 }

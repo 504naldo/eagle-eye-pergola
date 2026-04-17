@@ -167,3 +167,14 @@
 - [x] Label each image with its style (Aerial Overview / Interior View / Dusk View / Photorealistic Day View)
 - [x] fetchImageBuffer helper using Node.js https/http (no external deps)
 - [x] 36 vitest tests passing, 0 TypeScript errors
+
+## Fencing Module
+- [x] Add 'fencing' to scopeType enum in drizzle/schema.ts and push DB migration
+- [x] Add FencingParams interface to shared/scopeTypes.ts
+- [x] Create shared/fencingGeometry.ts: FencingParams, calculateFencingQTO(), getFencingDefaultRates(), SVG drawing functions (plan, front elevation, side elevation, section/detail)
+- [x] Create client/src/pages/FencingEditor.tsx: parameter form (run length, height, post spacing, mesh type, frame section, gate toggle, gate width, finish, anchoring method), QTO tab, Drawings tab, AI Renderings tab, Unit Rates tab, Files tab, Notes tab
+- [x] Update Dashboard.tsx: add Fencing card to scope type selector in New Project modal
+- [x] Update client/src/App.tsx: add fencing route to ProjectRouter
+- [x] Extend server/pdfExport.ts: add fencing case to handleScopedPDFExport (cover + QTO + drawings, no site photos)
+- [x] Vitest: fencing QTO calculation tests (9 tests, 45 total passing)
+- [x] Save checkpoint

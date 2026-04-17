@@ -40,9 +40,16 @@ const SCOPE_META: Record<string, { label: string; color: string; bg: string; des
     description: "Aluminium-framed glass or panel enclosure system",
     placeholder: "e.g. Outdoor Dining Enclosure — Harbourside",
   },
+  fencing: {
+    label: "Fencing / Security",
+    color: "#F97316",
+    bg: "#431407",
+    description: "SHS-framed welded wire mesh or chain link security fencing with optional gate",
+    placeholder: "e.g. Parkade Bicycle Room — Level B1",
+  },
 };
 
-type ScopeType = "pergola" | "canopy" | "enclosure";
+type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing";
 
 export default function Dashboard() {
   const { isAuthenticated, loading } = useAuth();
@@ -142,7 +149,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                       <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: meta.color + "33", color: meta.color }}>
-                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : "Enclosure"}
+                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : "Enclosure"}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium status-${project.status}`}>
                         {STATUS_LABELS[project.status]}
@@ -221,7 +228,7 @@ export default function Dashboard() {
             {/* Scope type selector */}
             <div>
               <Label className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2 block">Project Type</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {(Object.entries(SCOPE_META) as [ScopeType, typeof SCOPE_META[ScopeType]][]).map(([type, meta]) => (
                   <button
                     key={type}
@@ -239,7 +246,7 @@ export default function Dashboard() {
                     <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: selectedScope === type ? meta.color + "30" : "#F3F4F6" }}>
                       <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: selectedScope === type ? meta.color : "#9CA3AF" }} />
                     </div>
-                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : "Enclosure"}</span>
+                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : type === "fencing" ? "Fencing" : "Enclosure"}</span>
                   </button>
                 ))}
               </div>

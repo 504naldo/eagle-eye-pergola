@@ -1,0 +1,1 @@
+ALTER TABLE `projects` MODIFY COLUMN `scopeType` enum('pergola','canopy','enclosure','fencing') NOT NULL DEFAULT 'pergola';
