@@ -158,3 +158,12 @@
 - [x] onRatesSaved callback updates live QTO totals in all three editors
 - [x] 36 vitest tests passing
 - [x] PDF export uses overridden rates in QTO table — pdfExport.ts now calls getRateOverrides(projectId) and passes the result into calculateQTO / calculateCanopyQTO / calculateEnclosureQTO before rendering the PDF.
+
+## AI Renderings in PDF Export
+- [x] Add getRenderingsByProject import to pdfExport.ts
+- [x] Fetch renderings for project in handlePDFExport (pergola) and handleScopedPDFExport (canopy/enclosure)
+- [x] Add Sheet R — AI Renderings page: 2x2 grid, up to 4 images, gold label bar per image
+- [x] Skip the renderings page if the project has no generated renderings
+- [x] Label each image with its style (Aerial Overview / Interior View / Dusk View / Photorealistic Day View)
+- [x] fetchImageBuffer helper using Node.js https/http (no external deps)
+- [x] 36 vitest tests passing, 0 TypeScript errors

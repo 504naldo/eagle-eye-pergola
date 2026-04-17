@@ -1,6 +1,8 @@
 import PDFDocument from "pdfkit";
 import type { Request, Response } from "express";
-import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides } from "./db";
+import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject } from "./db";
+import https from "https";
+import http from "http";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
@@ -305,6 +307,88 @@ function drawTableRow(doc: PDFKit.PDFDocument, cells: { text: string; x: number;
   return y + rowH;
 }
 
+// ─── Image download helper ────────────────────────────────────────────────────
+
+function fetchImageBuffer(url: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith("https") ? https : http;
+    client.get(url, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () => resolve(Buffer.concat(chunks)));
+      res.on("error", reject);
+    }).on("error", reject);
+  });
+}
+
+// ─── Renderings page helper ─────────────────────────────────────────────────
+
+async function drawRenderingsPage(
+  doc: PDFKit.PDFDocument,
+  projectName: string,
+  renderings: Array<{ imageUrl: string; label?: string | null; style: string }>
+) {
+  if (!renderings.length) return;
+
+  doc.addPage();
+  drawPageHeader(doc, projectName, "Sheet R — AI Renderings");
+  drawPageFooter(doc);
+
+  const contentTop = 62;
+  drawSectionTitle(doc, "AI Visual Renderings", "SHEET R", contentTop + 6);
+
+  // Disclaimer
+  doc.fontSize(7.5).fillColor(GRAY).font("Helvetica").text(
+    "AI-generated concept images for visualisation purposes only. Not for construction or regulatory submission.",
+    MARGIN, contentTop + 34, { width: PW - MARGIN * 2 }
+  );
+
+  // Layout: up to 4 images in a 2×2 grid
+  const gridTop = contentTop + 58;
+  const gridBottom = PH - 40; // above footer
+  const gridH = gridBottom - gridTop;
+  const cellW = (PW - MARGIN * 2 - 12) / 2;
+  const cellH = (gridH - 12) / 2;
+  const imgPad = 6;
+
+  const positions = [
+    { x: MARGIN, y: gridTop },
+    { x: MARGIN + cellW + 12, y: gridTop },
+    { x: MARGIN, y: gridTop + cellH + 12 },
+    { x: MARGIN + cellW + 12, y: gridTop + cellH + 12 },
+  ];
+
+  const toRender = renderings.slice(0, 4);
+
+  await Promise.all(toRender.map(async (r, i) => {
+    const pos = positions[i];
+    // Draw cell background
+    doc.rect(pos.x, pos.y, cellW, cellH).fill("#111111");
+
+    try {
+      const imgBuf = await fetchImageBuffer(r.imageUrl);
+      // Fit image within cell with padding
+      doc.image(imgBuf, pos.x + imgPad, pos.y + imgPad, {
+        width: cellW - imgPad * 2,
+        height: cellH - imgPad * 2 - 18,
+        fit: [cellW - imgPad * 2, cellH - imgPad * 2 - 18],
+        align: "center",
+        valign: "center",
+      });
+    } catch {
+      // If image fails to load, show placeholder text
+      doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("Image unavailable", pos.x + imgPad, pos.y + cellH / 2 - 6, { width: cellW - imgPad * 2, align: "center" });
+    }
+
+    // Label bar at bottom of cell
+    const labelY = pos.y + cellH - 18;
+    doc.rect(pos.x, labelY, cellW, 18).fill(BLACK);
+    doc.rect(pos.x, labelY, 3, 18).fill(GOLD);
+    const label = r.label ?? r.style.charAt(0).toUpperCase() + r.style.slice(1);
+    doc.fontSize(8).fillColor(GOLD).font("Helvetica-Bold").text(label, pos.x + 8, labelY + 5, { width: cellW - 12 });
+  }));
+}
+
 // ─── Scoped PDF generator for Canopy and Enclosure ────────────────────────────
 
 async function handleScopedPDFExport(
@@ -325,6 +409,7 @@ async function handleScopedPDFExport(
   const scopeLabel = scope === "canopy" ? "CANOPY" : "ENCLOSURE";
   const projectName = project?.projectName ?? "Untitled";
   const rateOverrides = await getRateOverrides(project?.id ?? 0);
+  const projectRenderings = await getRenderingsByProject(project?.id ?? 0);
 
   // ── COVER PAGE ──
   doc.addPage();
@@ -406,6 +491,9 @@ async function handleScopedPDFExport(
   doc.fontSize(7.5).fillColor(GOLD).font("Helvetica").text("PRELIMINARY BUDGET ESTIMATE (CAD)", gtBoxX + 12, gtBoxY + 10);
   doc.fontSize(22).fillColor("white").font("Helvetica-Bold").text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, gtBoxX + 12, gtBoxY + 24);
 
+  // ── RENDERINGS PAGE (if any exist) ──
+  await drawRenderingsPage(doc, projectName, projectRenderings);
+
   doc.end();
   const pdfBuffer = await pdfReady;
   const filename = `${projectName.replace(/[^a-z0-9]/gi, "_")}_${scope}_package.pdf`;
@@ -434,6 +522,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     const params = await getProjectParams(projectId);
     const checklist = await getChecklistItems(projectId);
     const scopeItems = await getScopeItems(projectId);
+    const pergolaRenderings = await getRenderingsByProject(projectId);
 
     const pergolaParams: PergolaParams = {
       widthFt: parseFloat(params?.widthFt ?? "58") || 58,
@@ -801,6 +890,9 @@ export async function handlePDFExport(req: Request, res: Response) {
         doc.fontSize(9).fillColor("#374151").font("Helvetica-Bold").text(d.title, dx + 8, dy + 7, { width: detColW - 12 });
         doc.fontSize(8.5).fillColor(GRAY).font("Helvetica").text(d.desc, dx + 8, dy + 30, { width: detColW - 16 });
     });
+
+    // ── RENDERINGS PAGE (if any exist) ──
+    await drawRenderingsPage(doc, project.projectName, pergolaRenderings);
 
     // Finalize PDF
     doc.end();
