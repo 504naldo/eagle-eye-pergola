@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
 import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
+import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
@@ -128,6 +129,9 @@ export default function ProjectEditor() {
   const [generatingStyle, setGeneratingStyle] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  // Reference photos (used to guide AI rendering generation)
+  const { data: referencePhotos = [] } = trpc.referencePhotos.list.useQuery({ projectId }, { enabled: !!projectId });
+
   const generateRendering = trpc.renderings.generate.useMutation({
     onSuccess: () => {
       utils.renderings.list.invalidate({ projectId });
@@ -161,6 +165,7 @@ export default function ProjectEditor() {
       ledLighting: form.ledLighting,
       clientName: project?.clientName ?? undefined,
       location: project?.location ?? undefined,
+      referenceImageUrls: referencePhotos.map(p => p.imageUrl),
     });
   };
 
@@ -288,6 +293,7 @@ export default function ProjectEditor() {
                 { value: "details", label: "Connection Details", shortLabel: "Details" },
                 { value: "notes", label: "Project Summary", shortLabel: "Notes" },
                 { value: "renderings", label: "AI Renderings", shortLabel: "Renders" },
+                { value: "reference", label: "Reference Photos", shortLabel: "Ref Photos" },
                 { value: "rates", label: "Unit Rates", shortLabel: "Rates" },
                 { value: "files", label: "Files", shortLabel: "Files" },
               ].map(tab => (
@@ -874,6 +880,12 @@ export default function ProjectEditor() {
                   <div className="text-xs text-gray-400 mt-1">Select a view style above and click Generate to create your first AI rendering.</div>
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reference">
+            <div className="p-3 sm:p-4">
+              <ReferencePhotosTab projectId={projectId} />
             </div>
           </TabsContent>
 

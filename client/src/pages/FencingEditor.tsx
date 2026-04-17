@@ -20,6 +20,7 @@ import {
 // Extend FencingParams with index signature for saveInputs mutation
 type FencingParamsRecord = FencingParams & Record<string, unknown>;
 import FilesTab from "@/components/FilesTab";
+import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import {
   calculateFencingQTO,
@@ -82,6 +83,9 @@ export default function FencingEditor({ projectId }: Props) {
       setRateOverrides(savedRates);
     }
   }, [savedRates]);
+
+  // Reference photos (used to guide AI rendering generation)
+  const { data: referencePhotos = [] } = trpc.referencePhotos.list.useQuery({ projectId }, { enabled: !!projectId });
 
   // Renderings
   const { data: renderings, isLoading: renderingsLoading } = trpc.renderings.list.useQuery({ projectId });
@@ -150,6 +154,8 @@ export default function FencingEditor({ projectId }: Props) {
       // Pass mesh/finish info via slatType/finishColor
       slatType: params.meshType,
       finishColor: params.finish === "black_pc" ? "Powder Coat Black" : params.finish === "galvanised" ? "Hot-Dip Galvanised" : "Custom Powder Coat",
+      // Pass reference photo URLs to guide the rendering
+      referenceImageUrls: referencePhotos.map(p => p.imageUrl),
     });
   }, [projectId, params, renderingStyle, generateRenderingMutation]);
 
@@ -231,6 +237,7 @@ export default function FencingEditor({ projectId }: Props) {
             { value: "drawings", label: "Drawings" },
             { value: "qto", label: "QTO" },
             { value: "renderings", label: "AI Renderings" },
+            { value: "reference", label: "Reference Photos" },
             { value: "rates", label: "Unit Rates" },
             { value: "files", label: "Files" },
             { value: "notes", label: "Notes" },
@@ -584,6 +591,11 @@ export default function FencingEditor({ projectId }: Props) {
             }))}
             onRatesSaved={setRateOverrides}
           />
+        </TabsContent>
+
+        {/* ── Reference Photos Tab ─────────────────────────────────────────── */}
+        <TabsContent value="reference" className="flex-1 overflow-auto p-4">
+          <ReferencePhotosTab projectId={projectId} />
         </TabsContent>
 
         {/* ── Files Tab ───────────────────────────────────────────────────────── */}

@@ -145,3 +145,15 @@ export const rateOverrides = mysqlTable("rate_overrides", {
 });
 export type RateOverride = typeof rateOverrides.$inferSelect;
 export type InsertRateOverride = typeof rateOverrides.$inferInsert;
+
+// ─── Reference Photos (used as style references for AI rendering generation) ──
+export const referencePhotos = mysqlTable("reference_photos", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ReferencePhoto = typeof referencePhotos.$inferSelect;
+export type InsertReferencePhoto = typeof referencePhotos.$inferInsert;

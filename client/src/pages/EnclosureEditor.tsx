@@ -16,6 +16,7 @@ import {
   type EnclosurePanelOption,
 } from "@shared/scopeTypes";
 import FilesTab from "@/components/FilesTab";
+import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import {
   calculateEnclosureQTO,
@@ -69,6 +70,9 @@ export default function EnclosureEditor({ projectId }: Props) {
       } catch { /* ignore */ }
     }
   }, [project?.inputsJson]);
+
+  // Reference photos
+  const { data: referencePhotos = [] } = trpc.referencePhotos.list.useQuery({ projectId }, { enabled: !!projectId });
 
   const { data: renderings, isLoading: renderingsLoading } = trpc.renderings.list.useQuery({ projectId });
   const generateRenderingMutation = trpc.renderings.generate.useMutation({
@@ -153,9 +157,9 @@ export default function EnclosureEditor({ projectId }: Props) {
 
       <Tabs defaultValue="params">
         <TabsList className="flex overflow-x-auto whitespace-nowrap gap-0.5 mb-4 h-auto p-1 bg-gray-100 rounded-lg">
-          {["params", "drawings", "qto", "renderings", "notes", "rates", "files"].map(tab => (
+          {["params", "drawings", "qto", "renderings", "reference", "notes", "rates", "files"].map(tab => (
             <TabsTrigger key={tab} value={tab} className="text-xs px-3 py-1.5 capitalize flex-shrink-0">
-              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab === "files" ? "Files" : tab === "rates" ? "Unit Rates" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab === "reference" ? "Reference Photos" : tab === "files" ? "Files" : tab === "rates" ? "Unit Rates" : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -368,6 +372,7 @@ export default function EnclosureEditor({ projectId }: Props) {
                   finishColor: params.finishColor,
                   location: project?.location ?? undefined,
                   clientName: project?.clientName ?? undefined,
+                  referenceImageUrls: referencePhotos.map(p => p.imageUrl),
                 })}
                 disabled={generateRenderingMutation.isPending}
                 className="gap-2 font-semibold"
@@ -439,6 +444,12 @@ export default function EnclosureEditor({ projectId }: Props) {
               placeholder="Add project notes, scope clarifications, or client requirements here…"
               defaultValue={project?.notes ?? ""}
             />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reference">
+          <div className="p-4">
+            <ReferencePhotosTab projectId={projectId} />
           </div>
         </TabsContent>
 

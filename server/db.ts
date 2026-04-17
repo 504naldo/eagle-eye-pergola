@@ -9,6 +9,7 @@ import {
   renderings, InsertRendering, Rendering,
   projectFiles, InsertProjectFile, ProjectFile,
   rateOverrides,
+  referencePhotos, InsertReferencePhoto, ReferencePhoto,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -293,6 +294,29 @@ export async function deleteProjectFile(id: number): Promise<ProjectFile | undef
   const existing = await db.select().from(projectFiles).where(eq(projectFiles.id, id)).limit(1);
   if (existing.length > 0) {
     await db.delete(projectFiles).where(eq(projectFiles.id, id));
+    return existing[0];
+  }
+  return undefined;
+}
+
+// ─── Reference Photos ─────────────────────────────────────────────────────────────────────────────────
+export async function getReferencePhotosByProject(projectId: number): Promise<ReferencePhoto[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(referencePhotos).where(eq(referencePhotos.projectId, projectId)).orderBy(desc(referencePhotos.createdAt));
+}
+export async function createReferencePhoto(data: InsertReferencePhoto): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(referencePhotos).values(data);
+  return (result[0] as any).insertId as number;
+}
+export async function deleteReferencePhoto(id: number): Promise<ReferencePhoto | undefined> {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(referencePhotos).where(eq(referencePhotos.id, id)).limit(1);
+  if (existing.length > 0) {
+    await db.delete(referencePhotos).where(eq(referencePhotos.id, id));
     return existing[0];
   }
   return undefined;

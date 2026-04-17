@@ -11,6 +11,7 @@ import {
   getRenderingsByProject, createRendering, deleteRendering,
   getFilesByProject, createProjectFile, deleteProjectFile,
   getRateOverrides, upsertRateOverrides,
+  getReferencePhotosByProject, createReferencePhoto, deleteReferencePhoto,
 } from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -332,6 +333,8 @@ The summary should cover: (1) project overview and intent, (2) structural system
         ledLighting: z.boolean().optional(),
         clientName: z.string().optional(),
         location: z.string().optional(),
+        // Reference images to guide the rendering style
+        referenceImageUrls: z.array(z.string().url()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const project = await getProjectById(input.projectId);
@@ -379,7 +382,16 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
           aerial: "Aerial Overview",
         };
 
-        const { url: imageUrl } = await generateImage({ prompt });
+        // Build originalImages array from reference photos if provided
+        const originalImages = (input.referenceImageUrls ?? []).slice(0, 4).map(url => ({
+          url,
+          mimeType: "image/jpeg" as const,
+        }));
+        const { url: imageUrl } = await generateImage(
+          originalImages.length > 0
+            ? { prompt, originalImages }
+            : { prompt }
+        );
         if (!imageUrl) throw new Error("Image generation returned no URL");
 
         // The imageGeneration helper already uploads to S3 and returns the URL
@@ -449,6 +461,48 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
         return { success: !!deleted };
       }),
   }),
+  // ─── Reference Photos ────────────────────────────────────────────────────────
+  referencePhotos: router({
+    list: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        return getReferencePhotosByProject(input.projectId);
+      }),
+
+    upload: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        imageUrl: z.string().url(),
+        fileKey: z.string(),
+        fileName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        // Enforce max 4 reference photos per project
+        const existing = await getReferencePhotosByProject(input.projectId);
+        if (existing.length >= 4) throw new Error("Maximum 4 reference photos allowed per project");
+        const id = await createReferencePhoto({
+          projectId: input.projectId,
+          imageUrl: input.imageUrl,
+          fileKey: input.fileKey,
+          fileName: input.fileName,
+        });
+        return { id, imageUrl: input.imageUrl, fileName: input.fileName };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Forbidden");
+        const deleted = await deleteReferencePhoto(input.id);
+        return { success: !!deleted };
+      }),
+  }),
+
   // ─── Rate Overrides ──────────────────────────────────────────────────────────
   rates: router({
     get: protectedProcedure

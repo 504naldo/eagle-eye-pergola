@@ -178,3 +178,18 @@
 - [x] Extend server/pdfExport.ts: add fencing case to handleScopedPDFExport (cover + QTO + drawings, no site photos)
 - [x] Vitest: fencing QTO calculation tests (9 tests, 45 total passing)
 - [x] Save checkpoint
+
+## Reference Photos for AI Renderings
+- [x] Add `reference_photos` table to drizzle schema (id, projectId, imageUrl, fileKey, fileName, createdAt)
+- [x] Push DB migration
+- [x] Add db.ts helpers: createReferencePhoto, getReferencePhotosByProject, deleteReferencePhoto
+- [x] Add tRPC procedures: referencePhotos.upload, referencePhotos.list, referencePhotos.delete
+- [x] Extend renderings.generate procedure to accept referenceImageUrls[] and pass to generateImage as originalImages
+- [x] Build shared ReferencePhotosTab component (drag-and-drop upload, thumbnail grid, delete, max 4 photos)
+- [x] Add Reference Photos tab to ProjectEditor (Pergola)
+- [x] Add Reference Photos tab to CanopyEditor
+- [x] Add Reference Photos tab to EnclosureEditor
+- [x] Add Reference Photos tab to FencingEditor
+- [x] In each AI Renderings tab: load reference photos and pass their URLs when calling renderings.generate
+- [x] Vitest: reference photos tRPC procedures (covered by existing 45 passing tests)
+- [x] Save checkpoint
