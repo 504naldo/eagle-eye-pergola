@@ -18,7 +18,21 @@ export interface EnclosureQTOItem {
   basis: string;
 }
 
-export function calculateEnclosureQTO(p: EnclosureParams): EnclosureQTOItem[] {
+export function getEnclosureDefaultRates(): Record<string, number> {
+  return {
+    "Aluminium frame posts (100×100 SHS)": 520,
+    "Top + bottom frame rails (100×50 RHS)": 88,
+    "Intermediate vertical mullions": 320,
+    "Post base plates + anchor bolts": 195,
+    "Panel gaskets, sealant, and fixing hardware": 35,
+    "Door hardware (handle, lock, closer, hinges)": 480,
+    "Site establishment, access, protection": 1400,
+    "Engineering certification (concept-level)": 2200,
+  };
+}
+
+export function calculateEnclosureQTO(p: EnclosureParams, rateOverrides?: Record<string, number>): EnclosureQTOItem[] {
+  const ro = rateOverrides ?? {};
   const w = p.widthFt;
   const d = p.depthFt;
   const h = p.heightFt;
@@ -169,9 +183,11 @@ export function calculateEnclosureQTO(p: EnclosureParams): EnclosureQTOItem[] {
     basis: `Allowance`,
   });
 
+  // Apply rateOverrides if present
   return items.map(item => ({
     ...item,
-    lineTotal: Math.round(item.qty * item.unitRate * 100) / 100,
+    unitRate: ro[item.description] ?? item.unitRate,
+    lineTotal: Math.round(item.qty * (ro[item.description] ?? item.unitRate) * 100) / 100,
   }));
 }
 

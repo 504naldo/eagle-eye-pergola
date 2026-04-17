@@ -135,3 +135,13 @@ export const projectFiles = mysqlTable("project_files", {
 
 export type ProjectFile = typeof projectFiles.$inferSelect;
 export type InsertProjectFile = typeof projectFiles.$inferInsert;
+// ─── Rate Overrides (per-project unit rate customisation) ────────────────────
+export const rateOverrides = mysqlTable("rate_overrides", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  // JSON map: { [description: string]: number } — overrides default unit rates
+  rates: json("rates").notNull().$type<Record<string, number>>(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RateOverride = typeof rateOverrides.$inferSelect;
+export type InsertRateOverride = typeof rateOverrides.$inferInsert;

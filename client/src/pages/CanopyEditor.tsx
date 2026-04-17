@@ -17,9 +17,11 @@ import {
   type CanopyLightingOption,
 } from "@shared/scopeTypes";
 import FilesTab from "@/components/FilesTab";
+import { RatesTab } from "@/components/RatesTab";
 import {
   calculateCanopyQTO,
   calculateCanopyGrandTotal,
+  getCanopyDefaultRates,
   canopyPlanSVG,
   canopyFrontElevSVG,
   canopySideElevSVG,
@@ -40,7 +42,19 @@ const RENDERING_STYLES = [
 export default function CanopyEditor({ projectId }: Props) {
   const [, navigate] = useLocation();
   const [params, setParams] = useState<CanopyParams>(DEFAULT_CANOPY_PARAMS);
+  const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // Load saved rate overrides from DB on mount
+  const { data: savedRates } = trpc.rates.get.useQuery(
+    { projectId },
+    { enabled: !!projectId }
+  );
+  useEffect(() => {
+    if (savedRates && Object.keys(savedRates).length > 0) {
+      setRateOverrides(savedRates);
+    }
+  }, [savedRates]);
   const [renderingStyle, setRenderingStyle] = useState<"photorealistic" | "dusk" | "interior" | "aerial">("photorealistic");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -85,7 +99,7 @@ export default function CanopyEditor({ projectId }: Props) {
   }, [params, projectId, saveInputsMutation]);
 
   // Live QTO
-  const qtoItems = calculateCanopyQTO(params);
+  const qtoItems = calculateCanopyQTO(params, rateOverrides);
   const grandTotal = calculateCanopyGrandTotal(qtoItems);
 
   // Live SVGs
@@ -132,9 +146,9 @@ export default function CanopyEditor({ projectId }: Props) {
 
       <Tabs defaultValue="params">
         <TabsList className="flex overflow-x-auto whitespace-nowrap gap-0.5 mb-4 h-auto p-1 bg-gray-100 rounded-lg">
-          {["params", "drawings", "qto", "renderings", "notes", "files"].map(tab => (
+          {["params", "drawings", "qto", "renderings", "notes", "rates", "files"].map(tab => (
             <TabsTrigger key={tab} value={tab} className="text-xs px-3 py-1.5 capitalize flex-shrink-0">
-              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab === "files" ? "Files" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "qto" ? "QTO" : tab === "renderings" ? "AI Renderings" : tab === "files" ? "Files" : tab === "rates" ? "Unit Rates" : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -391,6 +405,14 @@ export default function CanopyEditor({ projectId }: Props) {
             </div>
             {projectId && <FilesTab projectId={projectId} />}
           </div>
+        </TabsContent>
+
+        <TabsContent value="rates">
+          <RatesTab
+            projectId={projectId}
+            rateRows={qtoItems.map(i => ({ category: i.category, description: i.description, unit: i.unit, defaultRate: getCanopyDefaultRates()[i.description] ?? i.unitRate }))}
+            onRatesSaved={saved => setRateOverrides(saved)}
+          />
         </TabsContent>
       </Tabs>
 

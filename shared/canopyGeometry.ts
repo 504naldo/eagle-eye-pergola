@@ -18,7 +18,23 @@ export interface CanopyQTOItem {
   basis: string;
 }
 
-export function calculateCanopyQTO(p: CanopyParams): CanopyQTOItem[] {
+export function getCanopyDefaultRates(): Record<string, number> {
+  return {
+    "Aluminium canopy frame (primary rafters + purlins)": 420,
+    "Freestanding support posts (150×150 AL SHS)": 680,
+    "Post base plates + anchor bolts": 220,
+    "Wall-mount brackets + fixings": 145,
+    "Wall ledger channel (150×75 AL RHS)": 95,
+    "Aluminium roofing panel / sheet": 185,
+    "LED strip lighting (integrated into fascia/rafters)": 95,
+    "Recessed downlights (IP65)": 285,
+    "Site establishment, access, protection": 1200,
+    "Engineering certification (concept-level)": 1800,
+  };
+}
+
+export function calculateCanopyQTO(p: CanopyParams, rateOverrides?: Record<string, number>): CanopyQTOItem[] {
+  const ro = rateOverrides ?? {};
   const w = p.widthFt;
   const proj = p.projectionFt;
   const h = p.heightFt;
@@ -169,10 +185,11 @@ export function calculateCanopyQTO(p: CanopyParams): CanopyQTOItem[] {
     basis: `Allowance`,
   });
 
-  // Calculate line totals
+  // Calculate line totals — apply rateOverrides if present
   return items.map(item => ({
     ...item,
-    lineTotal: Math.round(item.qty * item.unitRate * 100) / 100,
+    unitRate: ro[item.description] ?? item.unitRate,
+    lineTotal: Math.round(item.qty * (ro[item.description] ?? item.unitRate) * 100) / 100,
   }));
 }
 

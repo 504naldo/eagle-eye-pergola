@@ -8,6 +8,7 @@ import {
   scopeItems, InsertScopeItem, ScopeItem,
   renderings, InsertRendering, Rendering,
   projectFiles, InsertProjectFile, ProjectFile,
+  rateOverrides,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -256,6 +257,24 @@ export async function deleteRendering(id: number): Promise<Rendering | undefined
   return undefined;
 }
 
+// ─── Rate Overrides ─────────────────────────────────────────────────────────
+export async function getRateOverrides(projectId: number): Promise<Record<string, number>> {
+  const db = await getDb();
+  if (!db) return {};
+  const row = await db.select().from(rateOverrides).where(eq(rateOverrides.projectId, projectId)).limit(1);
+  return (row[0]?.rates as Record<string, number>) ?? {};
+}
+export async function upsertRateOverrides(projectId: number, rates: Record<string, number>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: rateOverrides.id }).from(rateOverrides).where(eq(rateOverrides.projectId, projectId)).limit(1);
+  if (existing.length > 0) {
+    await db.update(rateOverrides).set({ rates }).where(eq(rateOverrides.projectId, projectId));
+  } else {
+    await db.insert(rateOverrides).values({ projectId, rates });
+  }
+  return rates;
+}
 // ─── Project Files ────────────────────────────────────────────────────────────
 export async function getFilesByProject(projectId: number): Promise<ProjectFile[]> {
   const db = await getDb();

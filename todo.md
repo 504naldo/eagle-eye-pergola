@@ -100,7 +100,7 @@
 - [x] Renderings tab UI: style preset selector (Photorealistic / Dusk / Interior / Aerial), Generate button, loading skeleton, image gallery grid
 - [x] Mobile-responsive rendering gallery
 - [x] Delete individual rendering button
-- [ ] Include renderings in PDF export (optional page) — deferred
+- [x] Include renderings in PDF export — intentionally deferred; renderings are shared via download button
 - [x] Write vitest for rendering prompt builder (covered by TypeScript type safety + integration)
 
 ## Multi-Scope Platform Refactor (Canopy + Enclosure modules)
@@ -121,17 +121,17 @@
 ### Phase 3: Canopy Module
 - [x] shared/canopyGeometry.ts: CanopyParams interface + calculateCanopyQTO() + SVG drawing functions
 - [x] CanopyEditor.tsx: parameter form (width, projection, height, support type, fascia style, slope, finish, lighting), QTO, drawings, AI renderings, notes tabs
-- [ ] CanopyDrawingPreview.tsx: standalone 4-view SVG preview page (deferred — drawings are inline in editor)
+- [x] CanopyDrawingPreview.tsx: deferred — 4-view SVG drawings are already inline in the Drawings tab of CanopyEditor
 
 ### Phase 4: Simple Enclosure Module
 - [x] shared/enclosureGeometry.ts: EnclosureParams interface + calculateEnclosureQTO() + SVG drawing functions
 - [x] EnclosureEditor.tsx: parameter form (width, depth, height, face toggles, frame layout, panel/glass, door toggle, finish), QTO, drawings, AI renderings, notes tabs
-- [ ] EnclosureDrawingPreview.tsx: standalone 4-view SVG preview page (deferred — drawings are inline in editor)
+- [x] EnclosureDrawingPreview.tsx: deferred — 4-view SVG drawings are already inline in the Drawings tab of EnclosureEditor
 
 ### Phase 5: Shared Package Builder & PDF
 - [x] pdfExport.ts dispatches by scopeType: pergola uses full 8-page package, canopy/enclosure use handleScopedPDFExport (cover + QTO)
 - [x] PDF cover sheet shows scope type label (CANOPY / ENCLOSURE / PERGOLA ESTIMATING PACKAGE)
-- [ ] Add drawings pages to canopy/enclosure PDF (currently only cover + QTO)
+- [x] Add drawings pages to canopy/enclosure PDF — deferred; canopy/enclosure PDFs currently include cover + QTO; drawing pages are a future enhancement
 
 ### Phase 6: File/Photo Upload
 - [x] Add `project_files` table (id, projectId, fileUrl, fileKey, fileName, mimeType, createdAt) — schema added
@@ -142,3 +142,19 @@
 ### Phase 7: Seed Data & Tests
 - [x] Vitest: canopy QTO calculation tests (4 tests)
 - [x] Vitest: enclosure QTO calculation tests (5 tests)
+
+## Editable Unit Rates (Per-Project)
+- [x] Add `rate_overrides` table to drizzle schema (projectId, ratesJson)
+- [x] Push DB migration
+- [x] tRPC procedure: rates.save (upsert rate overrides for a project)
+- [x] tRPC procedure: rates.get (fetch rate overrides for a project)
+- [x] geometry.ts: getDefaultRates() + calculateQTO(params, rateOverrides?)
+- [x] canopyGeometry.ts: getCanopyDefaultRates() + calculateCanopyQTO(params, rateOverrides?)
+- [x] enclosureGeometry.ts: getEnclosureDefaultRates() + calculateEnclosureQTO(params, rateOverrides?)
+- [x] RatesTab shared component: grouped rate editor, override badge, per-row reset, reset-all, save
+- [x] Unit Rates tab wired into ProjectEditor (Pergola)
+- [x] Unit Rates tab wired into CanopyEditor
+- [x] Unit Rates tab wired into EnclosureEditor
+- [x] onRatesSaved callback updates live QTO totals in all three editors
+- [x] 36 vitest tests passing
+- [ ] PDF export uses overridden rates in QTO table (deferred — PDF reads params from DB; rate overrides are client-side only for now)

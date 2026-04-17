@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
-import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem } from "@shared/geometry";
+import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
+import { RatesTab } from "@/components/RatesTab";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusion",
@@ -108,7 +109,18 @@ export default function ProjectEditor() {
     ledLighting: form.ledLighting,
   };
 
-  const [rateOverrides, setRateOverrides] = useState<Record<string, string>>({});
+  const [rateOverrides, setRateOverrides] = useState<Record<string, number>>({});
+
+  // Load saved rate overrides from DB on mount
+  const { data: savedRates } = trpc.rates.get.useQuery(
+    { projectId },
+    { enabled: !!projectId }
+  );
+  useEffect(() => {
+    if (savedRates && Object.keys(savedRates).length > 0) {
+      setRateOverrides(savedRates);
+    }
+  }, [savedRates]);
 
   // Renderings
   const { data: renderingsList, isLoading: renderingsLoading } = trpc.renderings.list.useQuery({ projectId });
@@ -196,16 +208,7 @@ export default function ProjectEditor() {
     });
   };
 
-  const qtoItemsBase = calculateQTO(pergolaParams);
-  const qtoItems: QTOItem[] = qtoItemsBase.map(item => {
-    const key = item.description;
-    const overrideStr = rateOverrides[key];
-    if (overrideStr !== undefined) {
-      const rate = parseFloat(overrideStr) || 0;
-      return { ...item, unitRate: rate, lineTotal: Math.round(item.qty * rate * 100) / 100 };
-    }
-    return item;
-  });
+  const qtoItems: QTOItem[] = calculateQTO(pergolaParams, rateOverrides);
   const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
   const grandTotal = calculateGrandTotal(qtoItems);
 
@@ -285,6 +288,7 @@ export default function ProjectEditor() {
                 { value: "details", label: "Connection Details", shortLabel: "Details" },
                 { value: "notes", label: "Project Summary", shortLabel: "Notes" },
                 { value: "renderings", label: "AI Renderings", shortLabel: "Renders" },
+                { value: "rates", label: "Unit Rates", shortLabel: "Rates" },
                 { value: "files", label: "Files", shortLabel: "Files" },
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm whitespace-nowrap">
@@ -457,7 +461,7 @@ export default function ProjectEditor() {
                                 min={0}
                                 step={10}
                                 value={rateOverrides[item.description] ?? item.unitRate}
-                                onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
+                                onChange={e => setRateOverrides(r => ({ ...r, [item.description]: parseFloat(e.target.value) || 0 }))}
                                 className="w-24 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
                               />
                             </td>
@@ -485,7 +489,7 @@ export default function ProjectEditor() {
                             min={0}
                             step={10}
                             value={rateOverrides[item.description] ?? item.unitRate}
-                            onChange={e => setRateOverrides(r => ({ ...r, [item.description]: e.target.value }))}
+                            onChange={e => setRateOverrides(r => ({ ...r, [item.description]: parseFloat(e.target.value) || 0 }))}
                             className="w-20 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
                           />
                           <span className="text-[10px] text-gray-400">CAD/{item.unit}</span>
@@ -882,6 +886,17 @@ export default function ProjectEditor() {
               </div>
               {project && <FilesTab projectId={project.id} />}
             </div>
+          </TabsContent>
+
+          {/* ── Unit Rates Tab ── */}
+          <TabsContent value="rates">
+            {project && (
+              <RatesTab
+                projectId={project.id}
+                rateRows={qtoItems.map(i => ({ category: i.category, description: i.description, unit: i.unit, defaultRate: getDefaultRates()[i.description] ?? i.unitRate }))}
+                onRatesSaved={saved => setRateOverrides(saved)}
+              />
+            )}
           </TabsContent>
         </Tabs>
 

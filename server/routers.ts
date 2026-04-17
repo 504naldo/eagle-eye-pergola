@@ -10,7 +10,8 @@ import {
   getScopeItems, seedScopeItems, updateScopeItem, addScopeItem, deleteScopeItem,
   getRenderingsByProject, createRendering, deleteRendering,
   getFilesByProject, createProjectFile, deleteProjectFile,
-} from "./db";
+  getRateOverrides, upsertRateOverrides,
+} from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 
@@ -446,6 +447,26 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
         if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
         const deleted = await deleteProjectFile(input.id);
         return { success: !!deleted };
+      }),
+  }),
+  // ─── Rate Overrides ──────────────────────────────────────────────────────────
+  rates: router({
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Not found');
+        return getRateOverrides(input.projectId);
+      }),
+    save: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        rates: z.record(z.string(), z.number()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        return upsertRateOverrides(input.projectId, input.rates);
       }),
   }),
 });
