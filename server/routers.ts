@@ -320,7 +320,9 @@ The summary should cover: (1) project overview and intent, (2) structural system
       .input(z.object({
         projectId: z.number(),
         style: z.enum(["photorealistic", "dusk", "interior", "aerial"]),
-        // Project params for prompt building
+        // Scope type — determines which prompt template is used
+        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing"]).optional(),
+        // Pergola / canopy / enclosure params
         widthFt: z.string().optional(),
         depthFt: z.string().optional(),
         heightFt: z.string().optional(),
@@ -333,6 +335,11 @@ The summary should cover: (1) project overview and intent, (2) structural system
         ledLighting: z.boolean().optional(),
         clientName: z.string().optional(),
         location: z.string().optional(),
+        // Fencing-specific params
+        meshType: z.string().optional(),
+        anchorMethod: z.string().optional(),
+        hasGate: z.boolean().optional(),
+        gateWidthFt: z.number().optional(),
         // Reference images to guide the rendering style
         referenceImageUrls: z.array(z.string().url()).optional(),
       }))
@@ -340,40 +347,135 @@ The summary should cover: (1) project overview and intent, (2) structural system
         const project = await getProjectById(input.projectId);
         if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
 
-        const width = parseFloat(input.widthFt ?? "58") || 58;
-        const depth = parseFloat(input.depthFt ?? "15.67") || 15.67;
-        const height = parseFloat(input.heightFt ?? "10") || 10;
-        const posts = input.postCount ?? 5;
+        // Determine scope — fall back to project.scopeType if not passed explicitly
+        const scope = input.scopeType ?? project.scopeType ?? "pergola";
+        const locationDesc = input.location ? ` at ${input.location}` : "";
         const finish = input.finishColor ?? "Matte Black";
-        const slatDesc = input.slatType === "operable" ? "motorized operable aluminum louver slats" : "fixed aluminum slats";
-        const glassZones = [
-          input.glassFront ? "front" : null,
-          input.glassLeft ? "left side" : null,
-          input.glassRight ? "right side" : null,
-        ].filter(Boolean);
-        const glassDesc = glassZones.length > 0
-          ? `Lumin frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
-          : "no glass enclosure panels";
-        const ledDesc = input.ledLighting ? "integrated LED strip lighting along the beams" : "no LED lighting";
-        const locationDesc = input.location ? ` located at ${input.location}` : "";
 
-        // Style-specific photography direction
-        const stylePrompts: Record<string, string> = {
-          photorealistic: `Bright midday sun, clear blue sky, photorealistic architectural photography, shot from a 3/4 angle at eye level showing the front and one side of the pergola. Commercial restaurant patio setting${locationDesc}. People dining in background, soft bokeh.`,
-          dusk: `Golden hour dusk lighting, warm amber sky, long shadows. The ${ledDesc} glowing softly. Atmospheric, moody architectural photography. Commercial patio${locationDesc}. Shot from a low 3/4 angle.`,
-          interior: `Interior view looking outward from under the pergola canopy. Showing the ${slatDesc} overhead, ${glassDesc} on the sides. Warm interior lighting, tables and chairs visible. Photorealistic interior architectural photography.`,
-          aerial: `Aerial bird's-eye view from above and slightly in front, showing the full ${width} ft wide by ${depth} ft deep pergola footprint. Clearly showing the ${slatDesc} roof pattern, ${posts} front posts (no rear posts — wall-mounted lean-to), ${glassDesc}. Photorealistic aerial architectural rendering.`,
-        };
+        let prompt: string;
 
-        const prompt = `Photorealistic architectural rendering of a premium commercial aluminum pergola / patio enclosure system.
+        if (scope === "fencing") {
+          // ── Fencing prompt ──────────────────────────────────────────────────
+          const runFt = parseFloat(input.widthFt ?? "50") || 50;
+          const heightFt = parseFloat(input.heightFt ?? "6") || 6;
+          const postSpacingFt = parseFloat(input.depthFt ?? "8") || 8;
+          const mesh = input.meshType ?? "chain_link";
+          const meshLabel: Record<string, string> = {
+            chain_link: "galvanised chain-link mesh infill",
+            welded_wire: "welded wire mesh infill",
+            expanded_metal: "expanded metal mesh infill",
+            solid_panel: "solid aluminum panel infill",
+            palisade: "palisade steel paling infill",
+          };
+          const meshDesc = meshLabel[mesh] ?? mesh;
+          const anchorLabel: Record<string, string> = {
+            concrete_footing: "posts set in concrete footings",
+            surface_mount: "surface-mounted base plate posts",
+            core_drill: "core-drilled post anchors",
+          };
+          const anchorDesc = anchorLabel[input.anchorMethod ?? "concrete_footing"] ?? "concrete footing posts";
+          const gateDesc = input.hasGate
+            ? `including a ${input.gateWidthFt ?? 4} ft wide swing gate`
+            : "no gate";
+          const finishDesc = finish === "Powder Coat Black" ? "powder-coat black finish"
+            : finish === "Hot-Dip Galvanised" ? "hot-dip galvanised finish"
+            : `${finish} finish`;
+
+          const fencingStylePrompts: Record<string, string> = {
+            photorealistic: `Bright daylight, clear sky, photorealistic architectural photography. Shot from a 3/4 angle at eye level showing the fence run and gate. Clean commercial or industrial site context${locationDesc}.`,
+            dusk: `Golden hour dusk lighting, warm sky. Atmospheric, moody architectural photography. Shot from a low 3/4 angle showing the fence silhouette${locationDesc}.`,
+            interior: `View from inside the secured area looking outward through the fence. Showing the mesh infill and gate from the inside. Photorealistic.`,
+            aerial: `Aerial bird's-eye view from above showing the full fence run layout, post spacing, and gate position. Photorealistic aerial architectural rendering.`,
+          };
+
+          prompt = `Photorealistic architectural rendering of a commercial security fence installation.
+
+Fence system: ${runFt} ft run, ${heightFt} ft height, ${meshDesc}, steel tube frame posts at ${postSpacingFt} ft centres, ${anchorDesc}, ${gateDesc}. Finish: ${finishDesc}. Modern, high-quality commercial fencing aesthetic.
+
+IMPORTANT: This is a FENCE — do NOT render any pergola, canopy, roof structure, or overhead beams. The image must show only the fence panels, posts, mesh infill${input.hasGate ? ", and gate" : ""} as described above.
+
+${fencingStylePrompts[input.style]}
+
+High resolution, 16:9 aspect ratio, professional architectural visualization quality.`;
+
+        } else if (scope === "canopy") {
+          // ── Canopy prompt ────────────────────────────────────────────────────
+          const width = parseFloat(input.widthFt ?? "30") || 30;
+          const depth = parseFloat(input.depthFt ?? "12") || 12;
+          const height = parseFloat(input.heightFt ?? "10") || 10;
+          const canopyStylePrompts: Record<string, string> = {
+            photorealistic: `Bright midday sun, photorealistic architectural photography, 3/4 angle at eye level. Commercial setting${locationDesc}.`,
+            dusk: `Golden hour dusk lighting. Atmospheric architectural photography${locationDesc}.`,
+            interior: `Interior view looking outward from under the canopy. Photorealistic.`,
+            aerial: `Aerial bird's-eye view showing the full ${width} ft x ${depth} ft canopy footprint. Photorealistic.`,
+          };
+          prompt = `Photorealistic architectural rendering of a premium commercial aluminum canopy structure.
+
+Structure: ${width} ft wide x ${depth} ft deep x ${height} ft clear height. Freestanding aluminum canopy with ${finish} powder coat finish. Modern commercial aesthetic.
+
+${canopyStylePrompts[input.style]}
+
+High resolution, 16:9 aspect ratio, professional architectural visualization quality.`;
+
+        } else if (scope === "enclosure") {
+          // ── Enclosure prompt ─────────────────────────────────────────────────
+          const width = parseFloat(input.widthFt ?? "30") || 30;
+          const depth = parseFloat(input.depthFt ?? "12") || 12;
+          const height = parseFloat(input.heightFt ?? "10") || 10;
+          const glassZones = [
+            input.glassFront ? "front" : null,
+            input.glassLeft ? "left side" : null,
+            input.glassRight ? "right side" : null,
+          ].filter(Boolean);
+          const glassDesc = glassZones.length > 0
+            ? `frameless glass enclosure panels on the ${glassZones.join(", ")}`
+            : "glass enclosure panels";
+          const enclosureStylePrompts: Record<string, string> = {
+            photorealistic: `Bright midday sun, photorealistic architectural photography, 3/4 angle at eye level. Commercial patio setting${locationDesc}.`,
+            dusk: `Golden hour dusk lighting, warm interior glow visible through glass panels. Atmospheric${locationDesc}.`,
+            interior: `Interior view looking outward through the ${glassDesc}. Warm interior lighting, tables visible. Photorealistic.`,
+            aerial: `Aerial bird's-eye view showing the full ${width} ft x ${depth} ft enclosed structure. Photorealistic.`,
+          };
+          prompt = `Photorealistic architectural rendering of a premium commercial aluminum patio enclosure system.
+
+Structure: ${width} ft wide x ${depth} ft deep x ${height} ft clear height. Aluminum frame with ${glassDesc}. ${finish} powder coat finish. Modern high-end commercial aesthetic.
+
+${enclosureStylePrompts[input.style]}
+
+High resolution, 16:9 aspect ratio, professional architectural visualization quality.`;
+
+        } else {
+          // ── Pergola prompt (default) ─────────────────────────────────────────
+          const width = parseFloat(input.widthFt ?? "58") || 58;
+          const depth = parseFloat(input.depthFt ?? "15.67") || 15.67;
+          const height = parseFloat(input.heightFt ?? "10") || 10;
+          const posts = input.postCount ?? 5;
+          const slatDesc = input.slatType === "operable" ? "motorized operable aluminum louver slats" : "fixed aluminum slats";
+          const glassZones = [
+            input.glassFront ? "front" : null,
+            input.glassLeft ? "left side" : null,
+            input.glassRight ? "right side" : null,
+          ].filter(Boolean);
+          const glassDesc = glassZones.length > 0
+            ? `Lumin frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
+            : "no glass enclosure panels";
+          const ledDesc = input.ledLighting ? "integrated LED strip lighting along the beams" : "no LED lighting";
+          const pergolaStylePrompts: Record<string, string> = {
+            photorealistic: `Bright midday sun, clear blue sky, photorealistic architectural photography, shot from a 3/4 angle at eye level showing the front and one side of the pergola. Commercial restaurant patio setting${locationDesc}. People dining in background, soft bokeh.`,
+            dusk: `Golden hour dusk lighting, warm amber sky, long shadows. The ${ledDesc} glowing softly. Atmospheric, moody architectural photography. Commercial patio${locationDesc}. Shot from a low 3/4 angle.`,
+            interior: `Interior view looking outward from under the pergola canopy. Showing the ${slatDesc} overhead, ${glassDesc} on the sides. Warm interior lighting, tables and chairs visible. Photorealistic interior architectural photography.`,
+            aerial: `Aerial bird's-eye view from above and slightly in front, showing the full ${width} ft wide by ${depth} ft deep pergola footprint. Clearly showing the ${slatDesc} roof pattern, ${posts} front posts (no rear posts — wall-mounted lean-to), ${glassDesc}. Photorealistic aerial architectural rendering.`,
+          };
+          prompt = `Photorealistic architectural rendering of a premium commercial aluminum pergola / patio enclosure system.
 
 Structure: ${width} ft wide x ${depth} ft deep x ${height} ft clear height. Wall-mounted lean-to configuration — ${posts} front posts only, NO rear posts (attached to building wall at rear via concealed ledger). Roof system: ${slatDesc}. ${glassDesc}. Finish: ${finish} powder coat aluminum. ${ledDesc}. Modern, high-end commercial restaurant patio aesthetic.
 
 IMPORTANT: Do NOT include any rear posts or back beams. The rear of the structure is attached directly to the building wall.
 
-${stylePrompts[input.style]}
+${pergolaStylePrompts[input.style]}
 
 High resolution, 16:9 aspect ratio, professional architectural visualization quality.`;
+        }
 
         const styleLabels: Record<string, string> = {
           photorealistic: "Photorealistic Day View",

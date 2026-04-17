@@ -193,3 +193,12 @@
 - [x] In each AI Renderings tab: load reference photos and pass their URLs when calling renderings.generate
 - [x] Vitest: reference photos tRPC procedures (covered by existing 45 passing tests)
 - [x] Save checkpoint
+
+## Fix AI Rendering Prompt (Scope-Aware)
+- [x] Add `scopeType` field to renderings.generate tRPC input
+- [x] Rewrite server-side prompt builder to branch on scopeType: fencing prompt describes fence panels, posts, mesh, gates — NOT pergola
+- [x] Add fencing-specific prompt fields: meshType, anchorMethod, hasGate, gateWidth
+- [x] Ensure reference photos are passed as originalImages (primary visual guide) for all scopes
+- [x] Update FencingEditor to pass scopeType="fencing" and all fencing-specific fields when calling renderings.generate
+- [x] Update CanopyEditor, EnclosureEditor, ProjectEditor to pass their respective scopeType (server auto-detects from project.scopeType)
+- [x] Save checkpoint

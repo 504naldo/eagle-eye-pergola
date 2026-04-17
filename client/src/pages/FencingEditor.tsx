@@ -123,41 +123,40 @@ export default function FencingEditor({ projectId }: Props) {
   }, [projectId, project?.projectName]);
 
   const handleGenerateRendering = useCallback(() => {
-    const promptParts = [
-      `photorealistic architectural rendering of a steel SHS-framed welded wire mesh security fence`,
-      `run length approximately ${params.runLengthFt}ft, height ${params.heightFt}ft`,
-      `post spacing ${params.postSpacingFt}ft centres`,
-      params.meshType === "welded_wire_50x50" ? "50×50mm welded wire mesh infill" :
-        params.meshType === "welded_wire_75x75" ? "75×75mm welded wire mesh infill" :
-        params.meshType === "chain_link" ? "chain link mesh infill" : "solid panel infill",
-      params.hasGate ? `single swing access gate ${params.gateWidthFt}ft wide` : "no gate",
-      params.finish === "black_pc" ? "powder coat black finish" :
-        params.finish === "galvanised" ? "hot-dip galvanised finish" : "custom powder coat finish",
-      params.location ? `location: ${params.location}` : "underground parkade setting",
-      renderingStyle === "photorealistic" ? "bright daylight, 3/4 perspective view, professional architectural photography" :
-        renderingStyle === "dusk" ? "dusk/evening, dramatic lighting, moody atmosphere" :
-        renderingStyle === "interior" ? "interior view from inside the secured area looking outward through the fence" :
-        "aerial bird's-eye view showing fence layout and gate position",
-      "high quality, professional, clean background",
-    ];
-    // Pass fencing-specific params as the available optional fields
+    // Map FencingEditor mesh type values to the server-side mesh type keys
+    const meshTypeMap: Record<string, string> = {
+      welded_wire_50x50: "welded_wire",
+      welded_wire_75x75: "welded_wire",
+      chain_link: "chain_link",
+      expanded_metal: "expanded_metal",
+      solid_panel: "solid_panel",
+      palisade: "palisade",
+    };
+    const finishLabel = params.finish === "black_pc" ? "Powder Coat Black"
+      : params.finish === "galvanised" ? "Hot-Dip Galvanised"
+      : "Custom Powder Coat";
+
     generateRenderingMutation.mutate({
       projectId,
       style: renderingStyle,
-      // Pass fencing-specific params via available optional fields
-      // widthFt = run length, depthFt = post spacing, heightFt = fence height
-      widthFt: String(params.runLengthFt),
-      depthFt: String(params.postSpacingFt),
-      heightFt: String(params.heightFt),
+      // Tell the server this is a fencing project — uses the fencing-specific prompt template
+      scopeType: "fencing",
+      // Fencing dimensions (mapped to the generic width/depth/height fields)
+      widthFt: String(params.runLengthFt),   // run length
+      depthFt: String(params.postSpacingFt), // post spacing
+      heightFt: String(params.heightFt),     // fence height
+      // Fencing-specific fields
+      meshType: meshTypeMap[params.meshType] ?? params.meshType,
+      anchorMethod: params.anchorMethod,
+      hasGate: params.hasGate,
+      gateWidthFt: params.hasGate ? params.gateWidthFt : undefined,
+      finishColor: finishLabel,
       location: params.location || undefined,
       clientName: params.clientName || undefined,
-      // Pass mesh/finish info via slatType/finishColor
-      slatType: params.meshType,
-      finishColor: params.finish === "black_pc" ? "Powder Coat Black" : params.finish === "galvanised" ? "Hot-Dip Galvanised" : "Custom Powder Coat",
-      // Pass reference photo URLs to guide the rendering
+      // Reference photo URLs — used as primary visual style guide
       referenceImageUrls: referencePhotos.map(p => p.imageUrl),
     });
-  }, [projectId, params, renderingStyle, generateRenderingMutation]);
+  }, [projectId, params, renderingStyle, generateRenderingMutation, referencePhotos]);
 
   // QTO
   const qtoItems = calculateFencingQTO(params, rateOverrides);
