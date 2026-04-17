@@ -157,4 +157,4 @@
 - [x] Unit Rates tab wired into EnclosureEditor
 - [x] onRatesSaved callback updates live QTO totals in all three editors
 - [x] 36 vitest tests passing
-- [ ] PDF export uses overridden rates in QTO table (deferred — PDF reads params from DB; rate overrides are client-side only for now)
+- [x] PDF export uses overridden rates in QTO table — pdfExport.ts now calls getRateOverrides(projectId) and passes the result into calculateQTO / calculateCanopyQTO / calculateEnclosureQTO before rendering the PDF.

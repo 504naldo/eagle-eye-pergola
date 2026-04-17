@@ -1,6 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { Request, Response } from "express";
-import { getProjectById, getProjectParams, getChecklistItems, getScopeItems } from "./db";
+import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides } from "./db";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
@@ -324,6 +324,7 @@ async function handleScopedPDFExport(
   const savedInputs = (project?.inputsJson as Record<string, unknown>) ?? {};
   const scopeLabel = scope === "canopy" ? "CANOPY" : "ENCLOSURE";
   const projectName = project?.projectName ?? "Untitled";
+  const rateOverrides = await getRateOverrides(project?.id ?? 0);
 
   // ── COVER PAGE ──
   doc.addPage();
@@ -357,11 +358,11 @@ async function handleScopedPDFExport(
   let grandTotal: number;
   if (scope === "canopy") {
     const p = { ...DEFAULT_CANOPY_PARAMS, ...savedInputs };
-    qtoItems = calculateCanopyQTO(p) as QTOItem[];
+    qtoItems = calculateCanopyQTO(p, rateOverrides) as QTOItem[];
     grandTotal = calculateCanopyGrandTotal(qtoItems);
   } else {
     const p = { ...DEFAULT_ENCLOSURE_PARAMS, ...savedInputs };
-    qtoItems = calculateEnclosureQTO(p) as QTOItem[];
+    qtoItems = calculateEnclosureQTO(p, rateOverrides) as QTOItem[];
     grandTotal = calculateEnclosureGrandTotal(qtoItems);
   }
 
@@ -450,7 +451,8 @@ export async function handlePDFExport(req: Request, res: Response) {
     };
 
     const dims = getDrawingDimensions(pergolaParams);
-    const qtoItems = calculateQTO(pergolaParams) as QTOItem[];
+    const savedRateOverrides = await getRateOverrides(projectId);
+    const qtoItems = calculateQTO(pergolaParams, savedRateOverrides) as QTOItem[];
     const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
     const grandTotal = calculateGrandTotal(qtoItems);
     const checklistCategories = Array.from(new Set(checklist.map(c => c.category)));
