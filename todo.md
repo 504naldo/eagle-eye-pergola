@@ -250,3 +250,11 @@
 - [x] Update FencingEditor Drawings tab to show all new drawing views
 - [x] Run TypeScript check and 45 tests passing
 - [x] Save checkpoint
+
+## Integrate ReportLab-Quality PDF into App Export
+
+- [ ] Create server/fencingPdfBuilder.ts: port the Python PDF generator to TypeScript using PDFKit — all 16 sheets with proper fonts, centered layouts, professional title blocks
+- [ ] Wire fencingPdfBuilder into server/pdfExport.ts fencing branch (replace SVG pipeline)
+- [ ] Fetch reference photos and AI renderings from DB and embed in R-01/R-02 sheets
+- [ ] Run TypeScript check and 45 tests passing
+- [ ] Save checkpoint

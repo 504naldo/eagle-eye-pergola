@@ -1,27 +1,15 @@
 import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import type { Request, Response } from "express";
-import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject } from "./db";
+import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject, getReferencePhotosByProject } from "./db";
 import https from "https";
 import http from "http";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
 import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS, DEFAULT_FENCING_PARAMS } from "../shared/scopeTypes";
-import {
-  calculateFencingQTO,
-  drawFencingGeneralNotes,
-  drawFencingExistingConditions,
-  drawFencingPlan,
-  drawFencingFrontElevation,
-  drawFencingSideElevation,
-  drawFencingRightSideElevation,
-  drawFencingOverheadClearance,
-  drawFencingDetail,
-  drawFencingMaterialSchedule,
-  drawFencingDoorSchedule,
-  drawFencingSiteVerification,
-} from "../shared/fencingGeometry";
+import { calculateFencingQTO } from "../shared/fencingGeometry";
+import { buildFencingPDF } from "./fencingPdfBuilder";
 
 const GOLD = "#C9A84C";
 const BLACK = "#111111";
@@ -512,47 +500,35 @@ async function handleScopedPDFExport(
   doc.fontSize(7.5).fillColor(GOLD).font("Helvetica").text("PRELIMINARY BUDGET ESTIMATE (CAD)", gtBoxX + 12, gtBoxY + 10);
   doc.fontSize(22).fillColor("white").font("Helvetica-Bold").text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, gtBoxX + 12, gtBoxY + 24);
 
-  // ── FENCING: FULL CONSTRUCTION PACKAGE ──────────────────────────────────
+  // ── FENCING: native PDFKit builder (replaces SVG pipeline) ──────────────
   if (scope === "fencing") {
-    const fp = { ...DEFAULT_FENCING_PARAMS, ...(savedInputs as Record<string, unknown>) };
-    const svgSheets: Array<{ svg: string; label: string }> = [
-      { svg: drawFencingGeneralNotes(fp as Parameters<typeof drawFencingGeneralNotes>[0]), label: "S-01 General Notes" },
-      { svg: drawFencingExistingConditions(fp as Parameters<typeof drawFencingExistingConditions>[0]), label: "S-02 Existing Conditions" },
-      { svg: drawFencingPlan(fp as Parameters<typeof drawFencingPlan>[0]), label: "S-03 Plan View" },
-      { svg: drawFencingFrontElevation(fp as Parameters<typeof drawFencingFrontElevation>[0]), label: "S-04 Front Elevation" },
-      { svg: drawFencingSideElevation(fp as Parameters<typeof drawFencingSideElevation>[0]), label: "S-05 Left Side Elevation" },
-      { svg: drawFencingRightSideElevation(fp as Parameters<typeof drawFencingRightSideElevation>[0]), label: "S-06 Right Side Elevation" },
-      { svg: drawFencingOverheadClearance(fp as Parameters<typeof drawFencingOverheadClearance>[0]), label: "S-07 Overhead Clearance" },
-      { svg: drawFencingDetail(fp as Parameters<typeof drawFencingDetail>[0]), label: "S-08/09 Construction Details" },
-      { svg: drawFencingMaterialSchedule(fp as Parameters<typeof drawFencingMaterialSchedule>[0]), label: "S-10 Material Schedule" },
-      { svg: drawFencingDoorSchedule(fp as Parameters<typeof drawFencingDoorSchedule>[0]), label: "S-11 Door & Hardware Schedule" },
-      { svg: drawFencingSiteVerification(fp as Parameters<typeof drawFencingSiteVerification>[0]), label: "S-12 Site Verification" },
-    ];
+    // End the current doc — fencing uses its own standalone PDF builder
+    doc.end();
+    // Drain the current doc so the promise resolves (we won't use this buffer)
+    await pdfReady.catch(() => {});
 
-    for (const sheet of svgSheets) {
-      doc.addPage();
-      drawPageHeader(doc, projectName, sheet.label);
-      drawPageFooter(doc);
-      const contentTop2 = 62;
-      const contentH2 = PH - 62 - 28;
-      const drawX = MARGIN;
-      const drawY = contentTop2 + 4;
-      const drawW = Math.floor(PW - MARGIN * 2);
-      const drawH = Math.floor(contentH2 - 8);
-      try {
-        // Convert SVG to PNG at 2x resolution for crisp output
-        const pngBuf = await sharp(Buffer.from(sheet.svg))
-          .resize(drawW * 2, drawH * 2, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
-          .png()
-          .toBuffer();
-        doc.image(pngBuf, drawX, drawY, { width: drawW, height: drawH });
-      } catch (svgErr) {
-        // Fallback: white box with label if SVG conversion fails
-        doc.rect(drawX, drawY, drawW, drawH).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
-        doc.fontSize(10).fillColor(GRAY).font("Helvetica").text(`[Drawing: ${sheet.label}]`, drawX + 20, drawY + 20);
-        console.error(`[PDF] SVG render failed for ${sheet.label}:`, svgErr);
-      }
-    }
+    const fp = { ...DEFAULT_FENCING_PARAMS, ...(savedInputs as Record<string, unknown>) };
+    const fencingQtoItems = calculateFencingQTO(fp as Parameters<typeof calculateFencingQTO>[0], rateOverrides);
+    const refPhotos = await getReferencePhotosByProject(project?.id ?? 0);
+    const referencePhotoUrl = refPhotos.length > 0 ? refPhotos[0].imageUrl : undefined;
+    const aiRenderingUrl = projectRenderings.length > 0 ? projectRenderings[0].imageUrl : undefined;
+
+    const fencingPdfBuf = await buildFencingPDF({
+      params: fp as Parameters<typeof calculateFencingQTO>[0],
+      projectName,
+      clientName: project?.clientName ?? "",
+      location: project?.location ?? "",
+      qtoItems: fencingQtoItems,
+      referencePhotoUrl,
+      aiRenderingUrl,
+    });
+
+    const filename2 = `${projectName.replace(/[^a-z0-9]/gi, "_")}_fencing_package.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename2}"`);
+    res.setHeader("Content-Length", fencingPdfBuf.length);
+    res.send(fencingPdfBuf);
+    return;
   }
 
   // ── RENDERINGS PAGE (if any exist) ──
