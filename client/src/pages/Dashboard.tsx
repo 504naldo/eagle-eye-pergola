@@ -18,32 +18,36 @@ const STATUS_LABELS: Record<string, string> = {
   archived: "Archived",
 };
 
-const SCOPE_META: Record<string, { label: string; color: string; bg: string; description: string; placeholder: string }> = {
+const SCOPE_META: Record<string, { label: string; color: string; bg: string; borderColor: string; description: string; placeholder: string }> = {
   pergola: {
     label: "Pergola / Shade Structure",
-    color: "#C9A84C",
-    bg: "#111111",
+    color: "#92712A",
+    bg: "#FFFBF0",
+    borderColor: "#E8C96A",
     description: "Louvred or fixed-slat aluminium pergola with optional glass enclosure",
     placeholder: "e.g. Milestones Abbotsford Patio",
   },
   canopy: {
     label: "Canopy",
-    color: "#60A5FA",
-    bg: "#1E3A5F",
+    color: "#1D4ED8",
+    bg: "#EFF6FF",
+    borderColor: "#93C5FD",
     description: "Wall-mounted or freestanding aluminium canopy with fascia options",
     placeholder: "e.g. Retail Entry Canopy — Main St",
   },
   enclosure: {
     label: "Simple Enclosure",
-    color: "#34D399",
-    bg: "#064E3B",
+    color: "#065F46",
+    bg: "#ECFDF5",
+    borderColor: "#6EE7B7",
     description: "Aluminium-framed glass or panel enclosure system",
     placeholder: "e.g. Outdoor Dining Enclosure — Harbourside",
   },
   fencing: {
     label: "Fencing / Security",
-    color: "#F97316",
-    bg: "#431407",
+    color: "#9A3412",
+    bg: "#FFF7ED",
+    borderColor: "#FDBA74",
     description: "SHS-framed welded wire mesh or chain link security fencing with optional gate",
     placeholder: "e.g. Parkade Bicycle Room — Level B1",
   },
@@ -91,7 +95,7 @@ export default function Dashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Please sign in to access your projects.</p>
-          <a href={getLoginUrl()} className="inline-flex items-center px-6 py-2.5 rounded font-semibold text-sm" style={{ backgroundColor: "#C9A84C", color: "#111111" }}>
+          <a href={getLoginUrl()} className="inline-flex items-center px-6 py-2.5 rounded font-semibold text-sm bg-[#C9A84C] hover:bg-[#A07830] text-gray-900">
             Sign In
           </a>
         </div>
@@ -111,8 +115,7 @@ export default function Dashboard() {
           </div>
           <Button
             onClick={() => setCreateOpen(true)}
-            className="gap-2 font-semibold"
-            style={{ backgroundColor: "#C9A84C", color: "#111111" }}
+          className="gap-2 font-semibold bg-[#C9A84C] hover:bg-[#A07830] text-gray-900"
           >
             <Plus size={16} /> New Project
           </Button>
@@ -130,7 +133,7 @@ export default function Dashboard() {
             <FolderOpen size={48} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">No projects yet</h3>
             <p className="text-gray-400 text-sm mb-6">Create your first concept estimating project to get started.</p>
-            <Button onClick={() => setCreateOpen(true)} className="gap-2" style={{ backgroundColor: "#C9A84C", color: "#111111" }}>
+            <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-[#C9A84C] hover:bg-[#A07830] text-gray-900">
               <Plus size={16} /> Create First Project
             </Button>
           </div>
@@ -142,13 +145,13 @@ export default function Dashboard() {
               return (
                 <div key={project.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                   {/* Card header */}
-                  <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: meta.bg }}>
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: meta.bg, borderBottom: `1px solid ${meta.borderColor}` }}>
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} />
-                      <span className="text-white text-xs font-medium truncate">{project.projectName}</span>
+                      <span className="text-xs font-semibold truncate" style={{ color: meta.color }}>{project.projectName}</span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                      <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: meta.color + "33", color: meta.color }}>
+                      <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: meta.borderColor + "66", color: meta.color }}>
                         {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : "Enclosure"}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium status-${project.status}`}>
@@ -174,8 +177,7 @@ export default function Dashboard() {
                       <Button
                         size="sm"
                         variant="default"
-                        className="gap-1.5 flex-1 text-xs font-medium min-h-[40px] touch-manipulation"
-                        style={{ backgroundColor: "#C9A84C", color: "#111111" }}
+                        className="gap-1.5 flex-1 text-xs font-medium min-h-[40px] touch-manipulation bg-[#C9A84C] hover:bg-[#A07830] text-gray-900"
                         onClick={() => navigate(`/project/${project.id}`)}
                       >
                         <Edit size={13} /> Edit
@@ -220,7 +222,7 @@ export default function Dashboard() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+              <div className="w-1 h-5 bg-[#C9A84C] rounded-full flex-shrink-0" />
               New Project
             </DialogTitle>
           </DialogHeader>
@@ -290,7 +292,7 @@ export default function Dashboard() {
             <Button
               onClick={() => createMutation.mutate({ ...form, scopeType: selectedScope })}
               disabled={!form.projectName.trim() || createMutation.isPending}
-              style={{ backgroundColor: "#C9A84C", color: "#111111" }}
+              className="bg-[#C9A84C] hover:bg-[#A07830] text-gray-900"
             >
               {createMutation.isPending ? "Creating..." : "Create Project"}
             </Button>

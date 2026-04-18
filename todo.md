@@ -217,3 +217,13 @@
 - [x] Extend image-editing prompt to pergola scope: when reference photos exist, use site photo as base and add proposed pergola to the space
 - [x] 45 vitest tests still passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Theme: Black/Gold Header Only
+- [x] Restrict black background and gold (#C9A84C) accents to the header/nav bar only
+- [x] Update body/page background to clean white or light neutral (#F8F8F8)
+- [x] Update cards, forms, tabs, tables to use neutral light styling (white cards, gray borders, dark text)
+- [x] Update primary action buttons to use gold only as accent; secondary buttons neutral
+- [x] Update sidebar (if used) to light neutral style
+- [x] Update Dashboard project cards to light style
+- [x] Update all editor tab bars to light neutral style
+- [x] Save checkpoint

@@ -266,18 +266,18 @@ export default function ProjectEditor() {
 
         {/* Project info banner */}
         {project && (
-          <div className="bg-[#111111] rounded-lg p-3 sm:p-4 mb-4 sm:mb-5 grid grid-cols-3 sm:flex sm:items-center sm:gap-6 gap-2">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-5 grid grid-cols-3 sm:flex sm:items-center sm:gap-6 gap-2">
             <div>
-              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Client</div>
-              <div className="text-white text-xs sm:text-sm font-medium truncate">{project.clientName || "—"}</div>
+              <div className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Client</div>
+              <div className="text-gray-600 text-xs sm:text-sm font-medium truncate">{project.clientName || "—"}</div>
             </div>
             <div>
-              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Location</div>
-              <div className="text-white text-xs sm:text-sm font-medium truncate">{project.location || "—"}</div>
+              <div className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Location</div>
+              <div className="text-gray-600 text-xs sm:text-sm font-medium truncate">{project.location || "—"}</div>
             </div>
             <div>
-              <div className="text-[#C9A84C] text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Status</div>
-              <div className="text-white text-xs sm:text-sm font-medium capitalize">{project.status.replace("_", " ")}</div>
+              <div className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-widest mb-0.5">Status</div>
+              <div className="text-gray-600 text-xs sm:text-sm font-medium capitalize">{project.status.replace("_", " ")}</div>
             </div>
           </div>
         )}
@@ -447,7 +447,7 @@ export default function ProjectEditor() {
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="bg-[#111111] text-white">
+                        <tr className="bg-gray-100 text-gray-900">
                           <th className="text-left py-2 px-3 text-xs font-medium rounded-tl">Description</th>
                           <th className="text-center py-2 px-3 text-xs font-medium w-14">Unit</th>
                           <th className="text-center py-2 px-3 text-xs font-medium w-14">Qty</th>
@@ -507,7 +507,7 @@ export default function ProjectEditor() {
               ))}
               {/* Grand Total */}
               <div className="mt-4 flex justify-end">
-                <div className="bg-[#111111] rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
+                <div className="bg-gray-50 rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
                   <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
                   <div className="text-white text-2xl font-bold">
                     ${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -759,7 +759,7 @@ export default function ProjectEditor() {
               {/* Preview */}
               {notesText.trim() && (
                 <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="bg-[#111111] px-4 py-2 flex items-center gap-2">
+                  <div className="bg-gray-50 px-4 py-2 flex items-center gap-2">
                     <div className="w-1 h-4 bg-[#C9A84C] rounded-full" />
                     <span className="text-[#C9A84C] text-xs uppercase tracking-widest font-semibold">PDF Preview</span>
                   </div>
@@ -781,7 +781,7 @@ export default function ProjectEditor() {
               </div>
 
               {/* Generator controls */}
-              <div className="bg-[#111111] rounded-xl p-4 mb-6">
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <div className="text-[#C9A84C] text-xs uppercase tracking-widest font-semibold mb-3">Generate New Rendering</div>
                 <div className="text-gray-400 text-xs mb-4">AI generates a photorealistic rendering of your pergola based on the current project parameters. Each generation takes 10–20 seconds.</div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -919,7 +919,7 @@ export default function ProjectEditor() {
             onClick={() => setLightboxUrl(null)}
           >
             <button
-              className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all touch-manipulation"
+              className="absolute top-4 right-4 text-white/70 hover:text-gray-900 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all touch-manipulation"
               onClick={() => setLightboxUrl(null)}
             >
               <X size={20} />

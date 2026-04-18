@@ -70,7 +70,7 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
         {/* Sidebar */}
         <aside className={`
           fixed inset-y-0 left-0 z-40 w-60 pt-14 sm:pt-16 flex flex-col
-          bg-[#111111] border-r border-[#2A2A2A]
+          bg-white border-r border-gray-200
           transform transition-transform duration-200 ease-in-out
           lg:static lg:translate-x-0 lg:pt-0 lg:w-56
           ${mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
@@ -81,8 +81,8 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
                 <a
                   className={`flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded text-sm transition-all touch-manipulation ${
                     isActive(href)
-                      ? "bg-[#1A1A1A] border-l-2 border-[#C9A84C] text-[#C9A84C] pl-[10px]"
-                      : "text-gray-400 hover:text-white hover:bg-[#1A1A1A] active:bg-[#222]"
+                      ? "bg-amber-50 border-l-2 border-[#C9A84C] text-[#A07830] pl-[10px] font-medium"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
                   }`}
                 >
                   <Icon size={16} />
@@ -91,9 +91,9 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
               </Link>
             ))}
           </nav>
-          <div className="p-4 border-t border-[#2A2A2A]">
-            <div className="text-[#C9A84C] text-xs font-semibold tracking-widest uppercase mb-1">Concept Only</div>
-            <div className="text-gray-600 text-xs">Not For Construction</div>
+          <div className="p-4 border-t border-gray-200">
+            <div className="text-[#A07830] text-xs font-semibold tracking-widest uppercase mb-1">Concept Only</div>
+            <div className="text-gray-400 text-xs">Not For Construction</div>
           </div>
         </aside>
 
@@ -117,10 +117,10 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
       </div>
 
       {/* Footer */}
-      <footer className="brand-footer py-2.5 sm:py-3 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs gap-1 sm:gap-0">
+      <footer className="bg-white border-t border-gray-200 py-2.5 sm:py-3 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs gap-1 sm:gap-0 text-gray-500">
         <span className="hidden sm:block">© 2025 Eagle Eye Management Services</span>
-        <span className="text-[#C9A84C]">Prepared by: Ranaldo Daniels</span>
-        <span className="text-gray-500 sm:text-inherit">Concept Only — Not For Construction</span>
+        <span className="text-[#A07830] font-medium">Prepared by: Ranaldo Daniels</span>
+        <span>Concept Only — Not For Construction</span>
       </footer>
     </div>
   );

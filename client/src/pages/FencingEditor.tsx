@@ -203,15 +203,15 @@ export default function FencingEditor({ projectId }: Props) {
       )}
 
       {/* Top bar */}
-      <div className="border-b border-[#C9A84C]/20 bg-[#1a1a1a] px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="border-b border-gray-200 bg-white px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="text-[#C9A84C] hover:text-white shrink-0">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="text-[#C9A84C] hover:text-gray-900 shrink-0">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back
           </Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#C9A84C]/20 text-[#C9A84C] uppercase tracking-wide shrink-0">Fencing</span>
-              <h1 className="text-white font-bold text-base truncate">{project?.projectName ?? "Loading…"}</h1>
+              <h1 className="text-gray-900 font-bold text-base truncate">{project?.projectName ?? "Loading…"}</h1>
             </div>
             {(project?.clientName || project?.location) && (
               <p className="text-gray-400 text-xs truncate">{[project.clientName, project.location].filter(Boolean).join(" — ")}</p>
@@ -219,7 +219,7 @@ export default function FencingEditor({ projectId }: Props) {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={handleExportPDF} className="border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/10 text-xs">
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="border-[#C9A84C]/60 text-[#C9A84C] hover:bg-[#C9A84C]/10 text-xs">
             <Download className="w-3 h-3 mr-1" /> Export PDF
           </Button>
           <Button size="sm" onClick={handleSave} disabled={isSaving} className="bg-[#C9A84C] hover:bg-[#b8963e] text-black font-bold text-xs">
@@ -231,7 +231,7 @@ export default function FencingEditor({ projectId }: Props) {
 
       {/* Tabs */}
       <Tabs defaultValue="params" className="flex-1 flex flex-col">
-        <TabsList className="bg-[#111] border-b border-[#C9A84C]/20 rounded-none h-auto p-0 justify-start overflow-x-auto flex-nowrap w-full">
+        <TabsList className="bg-white border-b border-gray-200 rounded-none h-auto p-0 justify-start overflow-x-auto flex-nowrap w-full">
           {[
             { value: "params", label: "Parameters" },
             { value: "drawings", label: "Drawings" },
@@ -265,7 +265,7 @@ export default function FencingEditor({ projectId }: Props) {
                   value={params.clientName}
                   onChange={e => set("clientName", e.target.value)}
                   placeholder="e.g. Strata Corp BC-1234"
-                  className="bg-[#111] border-[#333] text-white text-sm"
+                  className="bg-white border-gray-300 text-gray-900 text-sm"
                 />
               </div>
               <div className="space-y-1">
@@ -274,21 +274,21 @@ export default function FencingEditor({ projectId }: Props) {
                   value={params.location}
                   onChange={e => set("location", e.target.value)}
                   placeholder="e.g. Parkade Level B1"
-                  className="bg-[#111] border-[#333] text-white text-sm"
+                  className="bg-white border-gray-300 text-gray-900 text-sm"
                 />
               </div>
             </div>
 
             {/* Dimensions */}
-            <div className="border border-[#C9A84C]/20 rounded-lg p-4 space-y-4">
-              <h3 className="text-white font-semibold text-xs uppercase tracking-wide">Dimensions</h3>
+            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+              <h3 className="text-gray-700 font-semibold text-xs uppercase tracking-wide">Dimensions</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <Label className="text-gray-300 text-xs">Run Length (ft)</Label>
                   <Input type="number" min={4} max={200} step={0.5}
                     value={params.runLengthFt}
                     onChange={e => set("runLengthFt", parseFloat(e.target.value) || 0)}
-                    className="bg-[#111] border-[#333] text-white text-sm"
+                    className="bg-white border-gray-300 text-gray-900 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
@@ -296,7 +296,7 @@ export default function FencingEditor({ projectId }: Props) {
                   <Input type="number" min={3} max={16} step={0.5}
                     value={params.heightFt}
                     onChange={e => set("heightFt", parseFloat(e.target.value) || 0)}
-                    className="bg-[#111] border-[#333] text-white text-sm"
+                    className="bg-white border-gray-300 text-gray-900 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
@@ -304,13 +304,13 @@ export default function FencingEditor({ projectId }: Props) {
                   <Input type="number" min={2} max={10} step={0.5}
                     value={params.postSpacingFt}
                     onChange={e => set("postSpacingFt", parseFloat(e.target.value) || 0)}
-                    className="bg-[#111] border-[#333] text-white text-sm"
+                    className="bg-white border-gray-300 text-gray-900 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-gray-300 text-xs">SHS Frame Section (mm)</Label>
                   <Select value={String(params.frameSectionMm)} onValueChange={v => set("frameSectionMm", parseInt(v))}>
-                    <SelectTrigger className="bg-[#111] border-[#333] text-white text-sm">
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -325,13 +325,13 @@ export default function FencingEditor({ projectId }: Props) {
             </div>
 
             {/* Infill & Finish */}
-            <div className="border border-[#C9A84C]/20 rounded-lg p-4 space-y-4">
-              <h3 className="text-white font-semibold text-xs uppercase tracking-wide">Infill & Finish</h3>
+            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+              <h3 className="text-gray-700 font-semibold text-xs uppercase tracking-wide">Infill & Finish</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label className="text-gray-300 text-xs">Mesh / Infill Type</Label>
                   <Select value={params.meshType} onValueChange={v => set("meshType", v as FencingMeshType)}>
-                    <SelectTrigger className="bg-[#111] border-[#333] text-white text-sm">
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -345,7 +345,7 @@ export default function FencingEditor({ projectId }: Props) {
                 <div className="space-y-1">
                   <Label className="text-gray-300 text-xs">Finish</Label>
                   <Select value={params.finish} onValueChange={v => set("finish", v as FencingFinish)}>
-                    <SelectTrigger className="bg-[#111] border-[#333] text-white text-sm">
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -358,7 +358,7 @@ export default function FencingEditor({ projectId }: Props) {
                 <div className="space-y-1">
                   <Label className="text-gray-300 text-xs">Anchor Method</Label>
                   <Select value={params.anchorMethod} onValueChange={v => set("anchorMethod", v as FencingAnchorMethod)}>
-                    <SelectTrigger className="bg-[#111] border-[#333] text-white text-sm">
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -372,9 +372,9 @@ export default function FencingEditor({ projectId }: Props) {
             </div>
 
             {/* Gate */}
-            <div className="border border-[#C9A84C]/20 rounded-lg p-4 space-y-4">
+            <div className="border border-gray-200 rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-white font-semibold text-xs uppercase tracking-wide">Access Gate</h3>
+                <h3 className="text-gray-700 font-semibold text-xs uppercase tracking-wide">Access Gate</h3>
                 <div className="flex items-center gap-2">
                   <Label className="text-gray-300 text-xs">Include Gate</Label>
                   <Switch
@@ -391,7 +391,7 @@ export default function FencingEditor({ projectId }: Props) {
                     <Input type="number" min={2} max={16} step={0.5}
                       value={params.gateWidthFt}
                       onChange={e => set("gateWidthFt", parseFloat(e.target.value) || 0)}
-                      className="bg-[#111] border-[#333] text-white text-sm"
+                      className="bg-white border-gray-300 text-gray-900 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
@@ -399,7 +399,7 @@ export default function FencingEditor({ projectId }: Props) {
                     <Input type="number" min={3} max={16} step={0.5}
                       value={params.gateHeightFt}
                       onChange={e => set("gateHeightFt", parseFloat(e.target.value) || 0)}
-                      className="bg-[#111] border-[#333] text-white text-sm"
+                      className="bg-white border-gray-300 text-gray-900 text-sm"
                     />
                   </div>
                 </div>
@@ -407,19 +407,19 @@ export default function FencingEditor({ projectId }: Props) {
             </div>
 
             {/* Quick summary */}
-            <div className="bg-[#111] border border-[#C9A84C]/30 rounded-lg p-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h3 className="text-[#C9A84C] font-bold text-xs uppercase tracking-wide mb-3">Quick Estimate Summary</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div>
-                  <div className="text-white font-bold text-lg">{params.runLengthFt}ft</div>
+                  <div className="text-gray-900 font-bold text-lg">{params.runLengthFt}ft</div>
                   <div className="text-gray-400 text-xs">Run Length</div>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-lg">{params.heightFt}ft</div>
+                  <div className="text-gray-900 font-bold text-lg">{params.heightFt}ft</div>
                   <div className="text-gray-400 text-xs">Height</div>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-lg">{qtoItems.find(i => i.description.includes("Posts"))?.qty ?? 0}</div>
+                  <div className="text-gray-900 font-bold text-lg">{qtoItems.find(i => i.description.includes("Posts"))?.qty ?? 0}</div>
                   <div className="text-gray-400 text-xs">Posts</div>
                 </div>
                 <div>
@@ -440,8 +440,8 @@ export default function FencingEditor({ projectId }: Props) {
               { label: "Side Elevation (Section Through Post)", svg: sideElevSVG },
               { label: "Construction Details", svg: detailSVG },
             ].map(({ label, svg }) => (
-              <div key={label} className="border border-[#C9A84C]/20 rounded-lg overflow-hidden">
-                <div className="bg-[#111] px-4 py-2 flex items-center justify-between">
+              <div key={label} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
                   <span className="text-[#C9A84C] text-xs font-bold uppercase tracking-wide">{label}</span>
                   <span className="text-gray-500 text-xs">CONCEPT — NOT FOR CONSTRUCTION</span>
                 </div>
@@ -462,14 +462,14 @@ export default function FencingEditor({ projectId }: Props) {
               <span className="text-gray-400 text-xs">All rates are budget estimates — verify with supplier</span>
             </div>
             {Object.entries(qtoGroups).map(([group, items]) => (
-              <div key={group} className="border border-[#C9A84C]/20 rounded-lg overflow-hidden">
+              <div key={group} className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="bg-[#C9A84C]/10 px-4 py-2">
                   <span className="text-[#C9A84C] font-bold text-xs uppercase tracking-wide">{group}</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-[#111] text-gray-400">
+                      <tr className="bg-gray-50 text-gray-400">
                         <th className="text-left px-4 py-2 font-medium">Description</th>
                         <th className="text-right px-3 py-2 font-medium">Qty</th>
                         <th className="text-left px-2 py-2 font-medium">Unit</th>
@@ -479,7 +479,7 @@ export default function FencingEditor({ projectId }: Props) {
                     </thead>
                     <tbody>
                       {items.map((item, i) => (
-                        <tr key={i} className="border-t border-[#333] hover:bg-[#111]/50">
+                        <tr key={i} className="border-t border-[#333] hover:bg-gray-50/50">
                           <td className="px-4 py-2 text-white">{item.description}</td>
                           <td className="px-3 py-2 text-right text-gray-300">{item.qty}</td>
                           <td className="px-2 py-2 text-gray-400">{item.unit}</td>
@@ -492,7 +492,7 @@ export default function FencingEditor({ projectId }: Props) {
                 </div>
               </div>
             ))}
-            <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/40 rounded-lg px-6 py-4 flex justify-between items-center">
+            <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/60 rounded-lg px-6 py-4 flex justify-between items-center">
               <span className="text-[#C9A84C] font-bold text-sm uppercase tracking-wide">Budget Total (excl. GST)</span>
               <span className="text-[#C9A84C] font-bold text-xl">${grandTotal.toLocaleString()}</span>
             </div>
@@ -510,7 +510,7 @@ export default function FencingEditor({ projectId }: Props) {
               </div>
               <div className="flex gap-2 items-center">
                 <Select value={renderingStyle} onValueChange={v => setRenderingStyle(v as typeof renderingStyle)}>
-                  <SelectTrigger className="bg-[#111] border-[#333] text-white text-xs w-44">
+                  <SelectTrigger className="bg-white border-gray-300 text-gray-900 text-xs w-44">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -536,11 +536,11 @@ export default function FencingEditor({ projectId }: Props) {
             {renderingsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[1, 2].map(i => (
-                  <div key={i} className="aspect-video bg-[#111] rounded-lg animate-pulse border border-[#333]" />
+                  <div key={i} className="aspect-video bg-gray-50 rounded-lg animate-pulse border border-[#333]" />
                 ))}
               </div>
             ) : !renderings?.length ? (
-              <div className="text-center py-16 border border-[#C9A84C]/20 rounded-lg">
+              <div className="text-center py-16 border border-gray-200 rounded-lg">
                 <Wand2 className="w-10 h-10 text-[#C9A84C]/40 mx-auto mb-3" />
                 <p className="text-gray-400 text-sm">No renderings yet.</p>
                 <p className="text-gray-500 text-xs mt-1">Select a view style and click Generate to create your first AI rendering.</p>
@@ -548,7 +548,7 @@ export default function FencingEditor({ projectId }: Props) {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {renderings.map(r => (
-                  <div key={r.id} className="group relative border border-[#333] rounded-lg overflow-hidden bg-[#111]">
+                  <div key={r.id} className="group relative border border-[#333] rounded-lg overflow-hidden bg-gray-50">
                     <img
                       src={r.imageUrl}
                       alt={r.label ?? r.style}
@@ -556,11 +556,11 @@ export default function FencingEditor({ projectId }: Props) {
                       onClick={() => setLightboxUrl(r.imageUrl)}
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                      <Button size="sm" variant="outline" className="border-white text-white text-xs"
+                      <Button size="sm" variant="outline" className="border-white text-gray-600 text-xs"
                         onClick={() => setLightboxUrl(r.imageUrl)}>
                         <ZoomIn className="w-3 h-3 mr-1" /> View
                       </Button>
-                      <a href={r.imageUrl} download className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-white text-white text-xs hover:bg-white/10">
+                      <a href={r.imageUrl} download className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-white text-gray-600 text-xs hover:bg-white/10">
                         <Download className="w-3 h-3" /> Download
                       </a>
                       <Button size="sm" variant="outline" className="border-red-400 text-red-400 text-xs"
@@ -568,7 +568,7 @@ export default function FencingEditor({ projectId }: Props) {
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                    <div className="px-3 py-2 bg-[#1a1a1a] border-t border-[#333]">
+                    <div className="px-3 py-2 bg-white border-t border-[#333]">
                       <span className="text-[#C9A84C] text-xs font-medium">{r.label ?? r.style}</span>
                       <span className="text-gray-500 text-xs ml-2">{new Date(r.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -608,7 +608,7 @@ export default function FencingEditor({ projectId }: Props) {
           <div className="max-w-3xl mx-auto space-y-4">
             <h2 className="text-[#C9A84C] font-bold text-sm uppercase tracking-wider">Project Notes</h2>
             <textarea
-              className="w-full h-64 bg-[#111] border border-[#333] text-white text-sm rounded-lg p-4 resize-none focus:outline-none focus:border-[#C9A84C]/50"
+              className="w-full h-64 bg-gray-50 border border-[#333] text-white text-sm rounded-lg p-4 resize-none focus:outline-none focus:border-[#C9A84C]/50"
               placeholder="Add project notes, site observations, special conditions, or client instructions here…"
               value={notesText}
               onChange={e => setNotesText(e.target.value)}
