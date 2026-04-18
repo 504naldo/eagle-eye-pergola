@@ -507,17 +507,10 @@ function sheetQTO(
 ) {
   const { x0, y0, w, h } = pageSetup(doc, "A-01", "Preliminary Quantity Take-Off", ctx);
 
-  // Disclaimer banner
-  doc.rect(x0, y0 + h - 22, w, 18).fill(CREAM);
-  doc.strokeColor(GOLD).lineWidth(0.5).rect(x0, y0 + h - 22, w, 18).stroke();
-  doc.fillColor(GOLD).font("Helvetica-Oblique").fontSize(7)
-    .text("⚠  All quantities and costs are preliminary estimates only (CAD). Subject to field verification and licensed structural review.",
-      x0 + 8, y0 + h - 16, { width: w - 16 });
-
   const colW = [w * 0.44, w * 0.10, w * 0.12, w * 0.17, w * 0.17];
   const headers = ["Description", "Unit", "Qty", "Unit Rate (CAD)", "Line Total"];
 
-  let curY = y0 + h - 32;
+  let curY = y0 + 8;
   const rowH = 16;
   let grandTotal = 0;
 
@@ -526,15 +519,15 @@ function sheetQTO(
 
   for (const groupName of groups) {
     const items = qtoItems.filter(i => i.group === groupName);
-    curY -= 6;
+    curY += 6;
 
     // Group header
-    doc.rect(x0, curY - 2, w, rowH).fill("#E8E8E8");
+    doc.rect(x0, curY, w, rowH).fill("#E8E8E8");
     doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text(groupName, x0 + 6, curY + 4);
-    curY -= rowH;
+    curY += rowH;
 
     // Column headers
-    doc.rect(x0, curY - 2, w, rowH).fill(DARK);
+    doc.rect(x0, curY, w, rowH).fill(DARK);
     let cx = x0;
     headers.forEach((hdr, i) => {
       doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7);
@@ -543,12 +536,12 @@ function sheetQTO(
       else doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8 });
       cx += colW[i];
     });
-    curY -= rowH;
+    curY += rowH;
 
     // Rows
     items.forEach((item, ri) => {
       grandTotal += item.lineTotal;
-      doc.rect(x0, curY - 2, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
+      doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
 
       cx = x0;
       doc.fillColor(DARK).font("Helvetica").fontSize(7.5)
@@ -563,23 +556,32 @@ function sheetQTO(
         .text(`$${item.lineTotal.toFixed(2)}`, cx + 4, curY + 4, { width: colW[4] - 8, align: "right" });
 
       doc.strokeColor(MGRAY).lineWidth(0.3)
-        .moveTo(x0, curY - 2).lineTo(x0 + w, curY - 2).stroke();
-      curY -= rowH;
+        .moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
+      curY += rowH;
     });
-    curY -= 4;
+    curY += 4;
   }
 
   // Grand total
-  curY -= 8;
-  doc.rect(x0, curY - 2, w, rowH + 4).fill(GOLD);
+  curY += 8;
+  doc.rect(x0, curY, w, rowH + 4).fill(GOLD);
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
     .text("BUDGET TOTAL (excl. GST)", x0 + 8, curY + 5, { width: w / 2 });
   doc.text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, x0 + 8, curY + 5, { width: w - 16, align: "right" });
+  curY += rowH + 4;
 
   // Footnote
+  curY += 8;
   doc.fillColor(DGRAY).font("Helvetica-Oblique").fontSize(6.5)
     .text("* Budget estimate only. All quantities and rates require field verification and supplier confirmation prior to tender.",
-      x0, curY - 16, { width: w });
+      x0, curY, { width: w });
+
+  // Disclaimer banner at bottom
+  doc.rect(x0, y0 + h - 22, w, 18).fill(CREAM);
+  doc.strokeColor(GOLD).lineWidth(0.5).rect(x0, y0 + h - 22, w, 18).stroke();
+  doc.fillColor(GOLD).font("Helvetica-Oblique").fontSize(7)
+    .text("⚠  All quantities and costs are preliminary estimates only (CAD). Subject to field verification and licensed structural review.",
+      x0 + 8, y0 + h - 16, { width: w - 16 });
 }
 
 // ── Sheet 3: General Notes ────────────────────────────────────────────────────
@@ -667,23 +669,23 @@ function sheetGeneralNotes(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   function drawNotesCol(sections: [string, string[]][], cx: number, startY: number) {
     let cy = startY;
     for (const [title, lines] of sections) {
-      cy -= 4;
+      cy += 4;
       sectionHeading(doc, cx, cy, title);
-      cy -= 18;
+      cy += 18;
       for (const line of lines) {
         if (line === "") {
-          cy -= 4;
+          cy += 4;
         } else {
           doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(line, cx + 6, cy, { width: colW - 12 });
-          cy -= 11;
+          cy += 11;
         }
       }
-      cy -= 6;
+      cy += 6;
     }
   }
 
-  drawNotesCol(sectionsLeft, x0, y0 + h - 8);
-  drawNotesCol(sectionsRight, col2X, y0 + h - 8);
+  drawNotesCol(sectionsLeft, x0, y0 + 8);
+  drawNotesCol(sectionsRight, col2X, y0 + 8);
 
   // Vertical divider
   doc.strokeColor(MGRAY).lineWidth(0.5)
@@ -1579,79 +1581,80 @@ function sheetMaterialSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
     ] : []),
   ];
 
-  let curY = y0 + h - 8;
-  sectionHeading(doc, x0, curY - 14, "MATERIAL & COMPONENT SCHEDULE");
-  curY -= 28;
+  let curY = y0 + 8;
+  sectionHeading(doc, x0, curY, "MATERIAL & COMPONENT SCHEDULE");
+  curY += 22;
 
   // Table header
   const rowH = 18;
-  doc.rect(x0, curY - rowH + 4, w, rowH).fill(DARK);
+  doc.rect(x0, curY, w, rowH).fill(DARK);
   let cx = x0;
   for (let i = 0; i < headers.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(headers[i], cx + 4, curY - 10, { width: colWidths[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(headers[i], cx + 4, curY + 5, { width: colWidths[i] - 8 });
     cx += colWidths[i];
   }
-  curY -= rowH;
+  curY += rowH;
 
   // Rows
   for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
-    doc.rect(x0, curY - rowH + 4, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
+    doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
     cx = x0;
     for (let ci = 0; ci < row.length; ci++) {
       if (ci === 0 || ci === 4 || ci === 5) {
-        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(row[ci], cx + 4, curY - 10, { width: colWidths[ci] - 8, align: "center" });
+        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8, align: "center" });
       } else {
-        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(row[ci], cx + 4, curY - 10, { width: colWidths[ci] - 8 });
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8 });
       }
       cx += colWidths[ci];
     }
-    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY - rowH + 4).lineTo(x0 + w, curY - rowH + 4).stroke();
-    curY -= rowH;
+    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
+    curY += rowH;
   }
 
-  drawBorder(doc, x0, curY + 4, w, y0 + h - 8 - 28 - (curY + 4), 0.75, DARK);
+  drawBorder(doc, x0, y0 + 8 + 22, w, curY - (y0 + 8 + 22), 0.75, DARK);
 
   // Notes
-  curY -= 16;
+  curY += 12;
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY);
-  curY -= 12;
+  curY += 12;
   const notes = [
     "1. All steel sections to be Grade 350W unless otherwise noted.",
     "2. All welding to CSA W59. Grind all exposed welds smooth.",
-    `3. Powder coat finish: Dulux Interpon D1000 or approved equal, RAL 9005 Jet Black, min. 60μm DFT.`,
+    `3. Powder coat finish: Dulux Interpon D1000 or approved equal, RAL 9005 Jet Black, min. 60\u03bcm DFT.`,
     "4. Quantities are approximate. Contractor to verify all quantities on site prior to ordering.",
   ];
   for (const n of notes) {
     doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w });
-    curY -= 11;
+    curY += 11;
   }
 
   // Fabrication spec block
-  const fabY = y0 + 12;
+  curY += 10;
   const fabH = 130;
+  const fabY = curY;
   doc.rect(x0, fabY, w, fabH).fill("#F5F5F5");
   doc.strokeColor("#CCCCCC").lineWidth(0.5).rect(x0, fabY, w, fabH).stroke();
   doc.rect(x0, fabY, 4, fabH).fill(GOLD);
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("FABRICATION & INSTALLATION SPECIFICATION", x0 + 12, fabY + fabH - 16);
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("FABRICATION & INSTALLATION SPECIFICATION", x0 + 12, fabY + 8);
   const fabSpecs: [string, string][] = [
     ["Steel Grade:", "Grade 350W to CSA G40.21 for all structural sections"],
     ["Welding Standard:", "CSA W59 — all structural welds. Grind exposed welds smooth."],
     ["Surface Prep:", "SSPC-SP6 Commercial Blast prior to powder coat application"],
-    ["Powder Coat:", "Dulux Interpon D1000 or approved equal, RAL 9005 Jet Black, min. 60μm DFT"],
+    ["Powder Coat:", "Dulux Interpon D1000 or approved equal, RAL 9005 Jet Black, min. 60\u03bcm DFT"],
     ["Anchor System:", "Hilti HIT-HY 270 epoxy anchor system, M12 rods, min. 130mm embedment"],
     ["Anchor Approval:", "Contractor to submit anchor design calc to EOR prior to installation"],
     ["Shop Drawings:", "Submit for review min. 10 business days prior to fabrication start"],
     ["Field Verification:", "Contractor to verify all dimensions on site. See S-12 Site Verification Sheet."],
     ["MEP Coordination:", "Contractor to coordinate with mechanical/electrical trades re: overhead clearances"],
-    ["Tolerances:", "Overall run ±3mm; post plumb ±1mm/m; gate operation: 90° swing min."],
+    ["Tolerances:", "Overall run \u00b13mm; post plumb \u00b11mm/m; gate operation: 90\u00b0 swing min."],
     ["Warranty:", "Fabricator to provide 2-year warranty on workmanship; powder coat per manufacturer"],
   ];
-  let fy2 = fabY + fabH - 32;
+  let fy2 = fabY + 22;
   for (const [lbl, val] of fabSpecs) {
     doc.fillColor(DGRAY).font("Helvetica").fontSize(6.5).text(lbl, x0 + 12, fy2, { width: 120 });
     doc.fillColor(DARK).font("Helvetica").fontSize(6.5).text(val, x0 + 140, fy2, { width: w - 152 });
-    fy2 -= 10;
+    fy2 += 10;
   }
 }
 
@@ -1665,9 +1668,9 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   const fs = params.frameSectionMm;
   const finishLabel = params.finish === "black_pc" ? "Powder Coat Black" : "Hot-Dip Galvanised";
 
-  let curY = y0 + h - 8;
-  sectionHeading(doc, x0, curY - 14, "DOOR SCHEDULE");
-  curY -= 28;
+  let curY = y0 + 8;
+  sectionHeading(doc, x0, curY, "DOOR SCHEDULE");
+  curY += 22;
 
   const dHeaders = ["Door No.", "Size (W×H)", "Frame Type", "Material", "Finish", "Remarks"];
   const dColW = [w * 0.10, w * 0.16, w * 0.18, w * 0.16, w * 0.16, w * 0.24];
@@ -1676,30 +1679,30 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   ];
 
   const rowH = 18;
-  doc.rect(x0, curY - rowH + 4, w, rowH).fill(DARK);
+  doc.rect(x0, curY, w, rowH).fill(DARK);
   let cx = x0;
   for (let i = 0; i < dHeaders.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(dHeaders[i], cx + 4, curY - 10, { width: dColW[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(dHeaders[i], cx + 4, curY + 5, { width: dColW[i] - 8 });
     cx += dColW[i];
   }
-  curY -= rowH;
+  curY += rowH;
 
   for (let ri = 0; ri < dRows.length; ri++) {
-    doc.rect(x0, curY - rowH + 4, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
+    doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
     cx = x0;
     for (let ci = 0; ci < dRows[ri].length; ci++) {
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(dRows[ri][ci], cx + 4, curY - 10, { width: dColW[ci] - 8 });
+      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(dRows[ri][ci], cx + 4, curY + 5, { width: dColW[ci] - 8 });
       cx += dColW[ci];
     }
-    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY - rowH + 4).lineTo(x0 + w, curY - rowH + 4).stroke();
-    curY -= rowH;
+    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
+    curY += rowH;
   }
-  drawBorder(doc, x0, curY + 4, w, y0 + h - 8 - 28 - (curY + 4), 0.75);
-  curY -= 20;
+  drawBorder(doc, x0, y0 + 8 + 22, w, curY - (y0 + 8 + 22), 0.75);
+  curY += 20;
 
   // Hardware schedule
-  sectionHeading(doc, x0, curY - 14, "HARDWARE SCHEDULE — DOOR D-01");
-  curY -= 28;
+  sectionHeading(doc, x0, curY, "HARDWARE SCHEDULE — DOOR D-01");
+  curY += 22;
 
   const hHeaders = ["Item", "Description", "Specification", "Material", "Qty", "Remarks"];
   const hColW = [w * 0.08, w * 0.22, w * 0.26, w * 0.14, w * 0.06, w * 0.24];
@@ -1714,34 +1717,35 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
     ["H-08", "Threshold", "Aluminum, 75mm wide", "Aluminum / PC Black", "1", "Seal gap at slab"],
   ];
 
-  doc.rect(x0, curY - rowH + 4, w, rowH).fill(DARK);
+  doc.rect(x0, curY, w, rowH).fill(DARK);
   cx = x0;
   for (let i = 0; i < hHeaders.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(hHeaders[i], cx + 4, curY - 10, { width: hColW[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(hHeaders[i], cx + 4, curY + 5, { width: hColW[i] - 8 });
     cx += hColW[i];
   }
-  curY -= rowH;
+  curY += rowH;
 
+  const hTableStart = curY;
   for (let ri = 0; ri < hRows.length; ri++) {
-    doc.rect(x0, curY - rowH + 4, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
+    doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
     cx = x0;
     for (let ci = 0; ci < hRows[ri].length; ci++) {
       if (ci === 0 || ci === 4) {
-        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY - 10, { width: hColW[ci] - 8 });
+        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8 });
       } else {
-        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY - 10, { width: hColW[ci] - 8 });
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8 });
       }
       cx += hColW[ci];
     }
-    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY - rowH + 4).lineTo(x0 + w, curY - rowH + 4).stroke();
-    curY -= rowH;
+    doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
+    curY += rowH;
   }
-  drawBorder(doc, x0, curY + 4, w, y0 + h - 8 - 28 - 20 - 28 - (curY + 4), 0.75);
+  drawBorder(doc, x0, hTableStart - rowH, w, curY - (hTableStart - rowH), 0.75);
 
   // Notes
-  curY -= 16;
+  curY += 12;
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY);
-  curY -= 12;
+  curY += 12;
   const notes = [
     "1. All hardware to be commercial grade. Substitutions require written approval.",
     "2. Contractor to confirm door swing direction and latch hand on site.",
@@ -1750,24 +1754,25 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   ];
   for (const n of notes) {
     doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w });
-    curY -= 11;
+    curY += 11;
   }
 
   // Contractor coordination block
-  const coordY = y0 + 12;
+  curY += 10;
   const coordH = 160;
+  const coordY = curY;
   doc.rect(x0, coordY, w, coordH).fill("#F5F5F5");
   doc.strokeColor("#CCCCCC").lineWidth(0.5).rect(x0, coordY, w, coordH).stroke();
   doc.rect(x0, coordY, 4, coordH).fill(GOLD);
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("CONTRACTOR COORDINATION REQUIREMENTS", x0 + 12, coordY + coordH - 16);
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("CONTRACTOR COORDINATION REQUIREMENTS", x0 + 12, coordY + 8);
 
   const colW2 = (w - 20) / 2;
   const lx = x0 + 12;
   const rx = x0 + 12 + colW2 + 8;
-  let ty = coordY + coordH - 32;
+  let ty = coordY + 24;
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("TRADE COORDINATION", lx, ty);
   doc.text("REQUIRED SUBMITTALS", rx, ty);
-  ty -= 12;
+  ty += 12;
 
   const leftItems = [
     "Structural: Anchor design to be reviewed by EOR prior to installation.",
@@ -1789,7 +1794,7 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   for (let i = 0; i < leftItems.length; i++) {
     doc.fillColor(DARK).font("Helvetica").fontSize(6).text(leftItems[i], lx, ty, { width: colW2 - 8 });
     doc.text(rightItems[i], rx, ty, { width: colW2 - 8 });
-    ty -= 10;
+    ty += 10;
   }
 }
 
@@ -1803,11 +1808,11 @@ function sheetSiteVerification(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
   const gateWidthM = params.hasGate ? ftToM(params.gateWidthFt) : 0;
   const gateHeightM = params.hasGate ? ftToM(params.gateHeightFt) : 0;
 
-  let curY = y0 + h - 8;
+  let curY = y0 + 8;
 
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8)
-    .text("FIELD VERIFICATION CHECKLIST — Complete prior to fabrication. Return signed copy to Eagle Eye Management Services.", x0, curY - 14, { width: w });
-  curY -= 28;
+    .text("FIELD VERIFICATION CHECKLIST — Complete prior to fabrication. Return signed copy to Eagle Eye Management Services.", x0, curY, { width: w });
+  curY += 20;
 
   const sections: [string, [string, string, string][]][] = [
     ["A. OVERALL DIMENSIONS", [
@@ -1851,47 +1856,49 @@ function sheetSiteVerification(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
   const colHeaders = ["ITEM", "FIELD MEASUREMENT", "DESIGN VALUE", "INITIALS"];
 
   for (const [sectionTitle, items] of sections) {
-    curY -= 6;
-    sectionHeading(doc, x0, curY - 14, sectionTitle);
-    curY -= 28;
+    curY += 6;
+    sectionHeading(doc, x0, curY, sectionTitle);
+    curY += 22;
 
     // Column headers
-    doc.rect(x0, curY - rowH + 4, w, rowH).fill(DARK);
+    doc.rect(x0, curY, w, rowH).fill(DARK);
     let cx = x0;
     for (let i = 0; i < colHeaders.length; i++) {
-      doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(colHeaders[i], cx + 4, curY - 10, { width: colW[i] - 8 });
+      doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(colHeaders[i], cx + 4, curY + 5, { width: colW[i] - 8 });
       cx += colW[i];
     }
-    curY -= rowH;
+    curY += rowH;
 
+    const sectionStart = curY;
     for (let ri = 0; ri < items.length; ri++) {
       const [item, field, design] = items[ri];
-      doc.rect(x0, curY - rowH + 4, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
+      doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
       cx = x0;
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(item, cx + 4, curY - 10, { width: colW[0] - 8 }); cx += colW[0];
-      doc.fillColor(DGRAY).font("Helvetica").fontSize(7.5).text(field, cx + 4, curY - 10, { width: colW[1] - 8 }); cx += colW[1];
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(design, cx + 4, curY - 10, { width: colW[2] - 8 }); cx += colW[2];
-      doc.strokeColor(MGRAY).lineWidth(0.5).rect(cx + 4, curY - 10, colW[3] - 8, rowH - 6).stroke();
-      doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY - rowH + 4).lineTo(x0 + w, curY - rowH + 4).stroke();
-      curY -= rowH;
+      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(item, cx + 4, curY + 5, { width: colW[0] - 8 }); cx += colW[0];
+      doc.fillColor(DGRAY).font("Helvetica").fontSize(7.5).text(field, cx + 4, curY + 5, { width: colW[1] - 8 }); cx += colW[1];
+      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(design, cx + 4, curY + 5, { width: colW[2] - 8 }); cx += colW[2];
+      doc.strokeColor(MGRAY).lineWidth(0.5).rect(cx + 4, curY + 4, colW[3] - 8, rowH - 6).stroke();
+      doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
+      curY += rowH;
     }
-    drawBorder(doc, x0, curY + 4, w, y0 + h - 8 - (curY + 4), 0.5, MGRAY);
-    curY -= 8;
+    drawBorder(doc, x0, sectionStart - rowH, w, curY - (sectionStart - rowH), 0.5, MGRAY);
+    curY += 8;
   }
 
   // Sign-off block
-  curY -= 10;
+  curY += 10;
   const signH = 60;
-  doc.rect(x0, curY - signH, w, signH).fill("#F5F5F5");
-  doc.strokeColor("#CCCCCC").lineWidth(0.5).rect(x0, curY - signH, w, signH).stroke();
-  doc.rect(x0, curY - signH, 4, signH).fill(GOLD);
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("SIGN-OFF", x0 + 12, curY - signH + 8);
+  const signY = curY;
+  doc.rect(x0, signY, w, signH).fill("#F5F5F5");
+  doc.strokeColor("#CCCCCC").lineWidth(0.5).rect(x0, signY, w, signH).stroke();
+  doc.rect(x0, signY, 4, signH).fill(GOLD);
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text("SIGN-OFF", x0 + 12, signY + 8);
   const signFields = [
     ["Contractor Representative:", "________________________", "Date: _______________"],
     ["Eagle Eye Representative:", "________________________", "Date: _______________"],
     ["Notes / Discrepancies:", "___________________________________________________________"],
   ];
-  let sy = curY - signH + 22;
+  let sy = signY + 22;
   for (const row of signFields) {
     let sx = x0 + 12;
     for (const cell of row) {

@@ -253,8 +253,19 @@
 
 ## Integrate ReportLab-Quality PDF into App Export
 
-- [ ] Create server/fencingPdfBuilder.ts: port the Python PDF generator to TypeScript using PDFKit — all 16 sheets with proper fonts, centered layouts, professional title blocks
-- [ ] Wire fencingPdfBuilder into server/pdfExport.ts fencing branch (replace SVG pipeline)
-- [ ] Fetch reference photos and AI renderings from DB and embed in R-01/R-02 sheets
-- [ ] Run TypeScript check and 45 tests passing
-- [ ] Save checkpoint
+- [x] Create server/fencingPdfBuilder.ts: port the Python PDF generator to TypeScript using PDFKit — all 16 sheets with proper fonts, centered layouts, professional title blocks
+- [x] Wire fencingPdfBuilder into server/pdfExport.ts fencing branch (replace SVG pipeline)
+- [x] Fetch reference photos and AI renderings from DB and embed in R-01/R-02 sheets
+- [x] Run TypeScript check and 45 tests passing
+- [x] Save checkpoint
+
+## Fix PDF Top-Down Rendering
+
+- [x] Fix sheetQTO: start curY at y0+8 and increment downward (was bottom-up)
+- [x] Fix sheetGeneralNotes: drawNotesCol starts at y0+8 and increments downward
+- [x] Fix sheetMaterialSchedule: start curY at y0+8 and increment downward
+- [x] Fix sheetDoorSchedule: Door Schedule + Hardware Schedule + Coordination block all top-down
+- [x] Fix sheetSiteVerification: checklist sections + sign-off block all top-down
+- [x] Regenerate test PDF and visually verified all 16 sheets render correctly
+- [x] 45 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint
