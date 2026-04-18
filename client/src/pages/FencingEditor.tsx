@@ -25,10 +25,17 @@ import { RatesTab } from "@/components/RatesTab";
 import {
   calculateFencingQTO,
   getFencingDefaultRates,
+  drawFencingGeneralNotes,
+  drawFencingExistingConditions,
   drawFencingPlan,
   drawFencingFrontElevation,
   drawFencingSideElevation,
+  drawFencingRightSideElevation,
+  drawFencingOverheadClearance,
   drawFencingDetail,
+  drawFencingMaterialSchedule,
+  drawFencingDoorSchedule,
+  drawFencingSiteVerification,
 } from "@shared/fencingGeometry";
 
 interface Props {
@@ -163,11 +170,18 @@ export default function FencingEditor({ projectId }: Props) {
   const qtoItems = calculateFencingQTO(params, rateOverrides);
   const grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
 
-  // SVG drawings
+  // SVG drawings — full construction package
+  const generalNotesSVG = drawFencingGeneralNotes(params);
+  const existingConditionsSVG = drawFencingExistingConditions(params);
   const planSVG = drawFencingPlan(params);
   const frontElevSVG = drawFencingFrontElevation(params);
   const sideElevSVG = drawFencingSideElevation(params);
+  const rightSideElevSVG = drawFencingRightSideElevation(params);
+  const overheadClearanceSVG = drawFencingOverheadClearance(params);
   const detailSVG = drawFencingDetail(params);
+  const materialScheduleSVG = drawFencingMaterialSchedule(params);
+  const doorScheduleSVG = drawFencingDoorSchedule(params);
+  const siteVerificationSVG = drawFencingSiteVerification(params);
 
   const set = <K extends keyof FencingParams>(key: K, val: FencingParams[K]) =>
     setParams(prev => ({ ...prev, [key]: val }));
@@ -433,17 +447,31 @@ export default function FencingEditor({ projectId }: Props) {
 
         {/* ── Drawings Tab ────────────────────────────────────────────────────── */}
         <TabsContent value="drawings" className="flex-1 overflow-auto p-4">
-          <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="space-y-6 max-w-5xl mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[#C9A84C] font-bold text-sm uppercase tracking-wider">Construction Drawing Package</h2>
+              <span className="text-gray-400 text-xs">PRELIMINARY — FOR ESTIMATING PURPOSES ONLY</span>
+            </div>
             {[
-              { label: "Plan View (Looking Down)", svg: planSVG },
-              { label: "Front Elevation (Drive Aisle View)", svg: frontElevSVG },
-              { label: "Side Elevation (Section Through Post)", svg: sideElevSVG },
-              { label: "Construction Details", svg: detailSVG },
-            ].map(({ label, svg }) => (
-              <div key={label} className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
-                  <span className="text-[#C9A84C] text-xs font-bold uppercase tracking-wide">{label}</span>
-                  <span className="text-gray-500 text-xs">CONCEPT — NOT FOR CONSTRUCTION</span>
+              { sheet: "S-01", label: "General Notes & Scope", svg: generalNotesSVG },
+              { sheet: "S-02", label: "Existing Conditions", svg: existingConditionsSVG },
+              { sheet: "S-03", label: "Plan View", svg: planSVG },
+              { sheet: "S-04", label: "Front Elevation", svg: frontElevSVG },
+              { sheet: "S-05", label: "Left Side Elevation", svg: sideElevSVG },
+              { sheet: "S-06", label: "Right Side Elevation", svg: rightSideElevSVG },
+              { sheet: "S-07", label: "Overhead Clearance Diagram", svg: overheadClearanceSVG },
+              { sheet: "S-08/09", label: "Construction Details (DET-01 through DET-08)", svg: detailSVG },
+              { sheet: "S-10", label: "Material & Component Schedule", svg: materialScheduleSVG },
+              { sheet: "S-11", label: "Door & Hardware Schedule", svg: doorScheduleSVG },
+              { sheet: "S-12", label: "Site Verification Sheet", svg: siteVerificationSVG },
+            ].map(({ sheet, label, svg }) => (
+              <div key={sheet} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                <div className="bg-gray-900 px-4 py-2 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[#C9A84C] text-xs font-bold font-mono">{sheet}</span>
+                    <span className="text-white text-xs font-semibold uppercase tracking-wide">{label}</span>
+                  </div>
+                  <span className="text-gray-400 text-xs">Eagle Eye Management Services</span>
                 </div>
                 <div
                   className="bg-white overflow-x-auto"

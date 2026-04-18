@@ -227,3 +227,26 @@
 - [x] Update Dashboard project cards to light style
 - [x] Update all editor tab bars to light neutral style
 - [x] Save checkpoint
+
+## Construction-Grade Drawing Package (Fencing)
+- [x] Rewrite drawFencingPlan(): construction-grade floor plan with dimension strings, post tags (P1–Pn), keynote bubbles, door swing arc, anchorage symbols, wall/column callouts, scale bar, north arrow placeholder, title block
+- [x] Rewrite drawFencingFrontElevation(): wall-to-wall front elevation with door integrated, post spacing dims, overall height dim, door height/width dims, mesh infill hatch, material tags, keynote callouts, title block
+- [x] Add drawFencingLeftSideElevation(): left side against concrete wall, enclosure depth dim, wall tie-in detail callout, overhead clearance note
+- [x] Add drawFencingRightSideElevation(): right side at column, termination detail callout, enclosure depth dim
+- [x] Add drawFencingOverheadClearanceDiagram(): plan showing overhead duct/pipe constraints, VERIFY ON SITE labels, clearance zones
+- [x] Add drawFencingBasePlateDetail(): enlarged detail — base plate, anchor bolt, slab, weld, dimensions, material callouts
+- [x] Add drawFencingEndPostWallDetail(): end post to concrete wall connection — hilti anchor, plate, weld, gap, finish
+- [x] Add drawFencingPanelInfillDetail(): panel frame section, mesh wire gauge, frame tube size, weld spacing, finish
+- [x] Add drawFencingDoorJambDetail(): door jamb section, frame, hinge side, latch side, mesh panel adjacent
+- [x] Add drawFencingDoorHeadDetail(): door head, top rail, frame, clearance
+- [x] Add drawFencingLatchLockDetail(): latch/lock hardware, strike plate, frame prep, access control prep note
+- [x] Add drawFencingColumnTerminationDetail(): fence termination at right column — clip angle, anchor, gap, finish
+- [x] Add drawFencingTopRailDetail(): top rail condition, cap plate, frame tube, finish
+- [x] Add drawFencingMaterialSchedule(): SVG table — item, description, size/spec, finish, qty, remarks
+- [x] Add drawFencingDoorHardwareSchedule(): SVG table — door size, frame type, hinges, latch, closer, threshold, access control prep
+- [x] Add drawFencingSiteVerificationSheet(): SVG field-measure checklist — all dims to verify, checkboxes, notes column
+- [x] Add drawFencingGeneralNotesSheet(): scope of work, field verification, contractor coordination, anchor verification, finish requirements, MEP coordination, tolerances, fabrication note, compliance note
+- [x] Update pdfExport.ts fencing case: add all new sheets in correct order with professional title blocks on every sheet
+- [x] Update FencingEditor Drawings tab to show all new drawing views
+- [x] Run TypeScript check and 45 tests passing
+- [x] Save checkpoint
