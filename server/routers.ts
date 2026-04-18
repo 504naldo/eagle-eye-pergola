@@ -494,28 +494,80 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
         console.log(`[renderings.generate] projectId=${input.projectId} scope=${scope} dbRefPhotos=${dbRefPhotos.length} totalRefUrls=${allRefUrls.length}`);
 
         // When reference photos exist, switch to image-editing mode:
-        // use the first reference photo as the base image and instruct the AI to modify it
+        // use the reference photo as the base image and instruct the AI to add the proposed structure to the site
         let finalPrompt = prompt;
-        if (allRefUrls.length > 0 && scope === "fencing") {
-          const runFt2 = parseFloat(input.widthFt ?? "50") || 50;
-          const heightFt2 = parseFloat(input.heightFt ?? "6") || 6;
-          const meshLabel2: Record<string, string> = {
-            chain_link: "galvanised chain-link mesh infill",
-            welded_wire: "welded wire mesh infill",
-            expanded_metal: "expanded metal mesh infill",
-            solid_panel: "solid aluminum panel infill",
-            palisade: "palisade steel paling infill",
-          };
-          const meshDesc2 = meshLabel2[input.meshType ?? "welded_wire"] ?? "welded wire mesh infill";
-          const finishDesc2 = finish === "Powder Coat Black" ? "powder-coat black" : finish === "Hot-Dip Galvanised" ? "hot-dip galvanised" : finish;
-          const gateDesc2 = input.hasGate ? `with a ${input.gateWidthFt ?? 4} ft wide swing gate` : "no gate";
-          finalPrompt = `This is the actual site where the fencing will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed fencing system installed in this space.
+        if (allRefUrls.length > 0) {
+          const w = parseFloat(input.widthFt ?? "30") || 30;
+          const d = parseFloat(input.depthFt ?? "12") || 12;
+          const h = parseFloat(input.heightFt ?? "10") || 10;
+          const finishDesc3 = finish === "Powder Coat Black" ? "powder-coat black" : finish === "Hot-Dip Galvanised" ? "hot-dip galvanised" : finish;
 
-Proposed fencing system: ${runFt2} ft run, ${heightFt2} ft height, steel tube frame with ${meshDesc2}, ${finishDesc2} finish, ${gateDesc2}. The fence should look like it is physically installed in this exact location — matching the floor, walls, ceiling, lighting, and spatial context shown in the reference photo.
+          if (scope === "fencing") {
+            const runFt2 = parseFloat(input.widthFt ?? "50") || 50;
+            const heightFt2 = parseFloat(input.heightFt ?? "6") || 6;
+            const meshLabel2: Record<string, string> = {
+              chain_link: "galvanised chain-link mesh infill",
+              welded_wire: "welded wire mesh infill",
+              expanded_metal: "expanded metal mesh infill",
+              solid_panel: "solid aluminum panel infill",
+              palisade: "palisade steel paling infill",
+            };
+            const meshDesc2 = meshLabel2[input.meshType ?? "welded_wire"] ?? "welded wire mesh infill";
+            const gateDesc2 = input.hasGate ? `with a ${input.gateWidthFt ?? 4} ft wide swing gate` : "no gate";
+            finalPrompt = `This is the actual site where the fencing will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed fencing system installed in this space.
+
+Proposed fencing system: ${runFt2} ft run, ${heightFt2} ft height, steel tube frame with ${meshDesc2}, ${finishDesc3} finish, ${gateDesc2}. The fence should look like it is physically installed in this exact location — matching the floor, walls, ceiling, lighting, and spatial context shown in the reference photo.
 
 Do NOT change the background environment. Do NOT add pergolas, canopies, or overhead structures. Only add the fence panels, posts, and gate to the existing space shown in the photo.
 
 High resolution, photorealistic architectural visualization quality.`;
+
+          } else if (scope === "canopy") {
+            finalPrompt = `This is the actual site where the canopy will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed canopy structure installed in this space.
+
+Proposed canopy: ${w} ft wide x ${d} ft deep x ${h} ft clear height, aluminum frame with ${finishDesc3} powder coat finish. The canopy should look like it is physically installed at this location — matching the building facade, ground surface, lighting, and spatial context shown in the reference photo.
+
+Do NOT change the background environment. Only add the canopy structure to the existing space shown in the photo. Do NOT add fencing, pergola louver roofs, or glass enclosure panels unless they are already visible in the reference photo.
+
+High resolution, photorealistic architectural visualization quality.`;
+
+          } else if (scope === "enclosure") {
+            const glassZones2 = [
+              input.glassFront ? "front" : null,
+              input.glassLeft ? "left side" : null,
+              input.glassRight ? "right side" : null,
+            ].filter(Boolean);
+            const glassDesc2 = glassZones2.length > 0
+              ? `frameless glass panels on the ${glassZones2.join(", ")}`
+              : "glass enclosure panels";
+            finalPrompt = `This is the actual site where the patio enclosure will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed enclosure system installed in this space.
+
+Proposed enclosure: ${w} ft wide x ${d} ft deep x ${h} ft clear height, aluminum frame with ${glassDesc2}, ${finishDesc3} powder coat finish. The enclosure should look like it is physically installed at this location — matching the building, floor, lighting, and spatial context shown in the reference photo.
+
+Do NOT change the background environment. Only add the enclosure structure to the existing space. Do NOT add fencing or overhead canopy roofs.
+
+High resolution, photorealistic architectural visualization quality.`;
+
+          } else {
+            // pergola (default)
+            const slatDesc2 = input.slatType === "operable" ? "motorized operable aluminum louver slats" : "fixed aluminum slats";
+            const glassZones3 = [
+              input.glassFront ? "front" : null,
+              input.glassLeft ? "left side" : null,
+              input.glassRight ? "right side" : null,
+            ].filter(Boolean);
+            const glassDesc3 = glassZones3.length > 0
+              ? `Lumin frameless glass panels on the ${glassZones3.join(", ")}`
+              : "no glass enclosure panels";
+            const ledDesc2 = input.ledLighting ? "integrated LED strip lighting" : "no LED lighting";
+            finalPrompt = `This is the actual site where the pergola will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed pergola structure installed in this space.
+
+Proposed pergola: ${w} ft wide x ${d} ft deep x ${h} ft clear height, wall-mounted lean-to aluminum pergola with ${slatDesc2} roof, ${glassDesc3}, ${finishDesc3} powder coat finish, ${ledDesc2}. The pergola should look like it is physically installed at this location — matching the building facade, ground surface, lighting, and spatial context shown in the reference photo.
+
+Do NOT change the background environment. Only add the pergola structure to the existing space shown in the photo.
+
+High resolution, photorealistic architectural visualization quality.`;
+          }
         }
 
         const originalImages = allRefUrls.map(url => ({

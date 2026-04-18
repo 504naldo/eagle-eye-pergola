@@ -210,3 +210,10 @@
 - [x] Remove debug console.log from FencingEditor client (keep server log for now)
 - [x] 45 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Image-Editing Mode for All Scopes
+- [x] Extend image-editing prompt to canopy scope: when reference photos exist, use site photo as base and add proposed canopy to the space
+- [x] Extend image-editing prompt to enclosure scope: when reference photos exist, use site photo as base and add proposed enclosure to the space
+- [x] Extend image-editing prompt to pergola scope: when reference photos exist, use site photo as base and add proposed pergola to the space
+- [x] 45 vitest tests still passing, 0 TypeScript errors
+- [x] Save checkpoint
