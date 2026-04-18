@@ -484,15 +484,48 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
           aerial: "Aerial Overview",
         };
 
-        // Build originalImages array from reference photos if provided
-        const originalImages = (input.referenceImageUrls ?? []).slice(0, 4).map(url => ({
+        // Fetch reference photos from DB server-side (authoritative — never rely solely on client-passed URLs)
+        const dbRefPhotos = await getReferencePhotosByProject(input.projectId);
+        // Merge: DB photos take priority; client-passed URLs fill any gaps up to 4 total
+        const allRefUrls = [
+          ...dbRefPhotos.map(p => p.imageUrl),
+          ...(input.referenceImageUrls ?? []).filter(u => !dbRefPhotos.some(p => p.imageUrl === u)),
+        ].slice(0, 4);
+        console.log(`[renderings.generate] projectId=${input.projectId} scope=${scope} dbRefPhotos=${dbRefPhotos.length} totalRefUrls=${allRefUrls.length}`);
+
+        // When reference photos exist, switch to image-editing mode:
+        // use the first reference photo as the base image and instruct the AI to modify it
+        let finalPrompt = prompt;
+        if (allRefUrls.length > 0 && scope === "fencing") {
+          const runFt2 = parseFloat(input.widthFt ?? "50") || 50;
+          const heightFt2 = parseFloat(input.heightFt ?? "6") || 6;
+          const meshLabel2: Record<string, string> = {
+            chain_link: "galvanised chain-link mesh infill",
+            welded_wire: "welded wire mesh infill",
+            expanded_metal: "expanded metal mesh infill",
+            solid_panel: "solid aluminum panel infill",
+            palisade: "palisade steel paling infill",
+          };
+          const meshDesc2 = meshLabel2[input.meshType ?? "welded_wire"] ?? "welded wire mesh infill";
+          const finishDesc2 = finish === "Powder Coat Black" ? "powder-coat black" : finish === "Hot-Dip Galvanised" ? "hot-dip galvanised" : finish;
+          const gateDesc2 = input.hasGate ? `with a ${input.gateWidthFt ?? 4} ft wide swing gate` : "no gate";
+          finalPrompt = `This is the actual site where the fencing will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed fencing system installed in this space.
+
+Proposed fencing system: ${runFt2} ft run, ${heightFt2} ft height, steel tube frame with ${meshDesc2}, ${finishDesc2} finish, ${gateDesc2}. The fence should look like it is physically installed in this exact location — matching the floor, walls, ceiling, lighting, and spatial context shown in the reference photo.
+
+Do NOT change the background environment. Do NOT add pergolas, canopies, or overhead structures. Only add the fence panels, posts, and gate to the existing space shown in the photo.
+
+High resolution, photorealistic architectural visualization quality.`;
+        }
+
+        const originalImages = allRefUrls.map(url => ({
           url,
           mimeType: "image/jpeg" as const,
         }));
         const { url: imageUrl } = await generateImage(
           originalImages.length > 0
-            ? { prompt, originalImages }
-            : { prompt }
+            ? { prompt: finalPrompt, originalImages }
+            : { prompt: finalPrompt }
         );
         if (!imageUrl) throw new Error("Image generation returned no URL");
 

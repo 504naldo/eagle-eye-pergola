@@ -136,6 +136,7 @@ export default function FencingEditor({ projectId }: Props) {
       : params.finish === "galvanised" ? "Hot-Dip Galvanised"
       : "Custom Powder Coat";
 
+    console.log('[FencingEditor] handleGenerateRendering referencePhotos:', referencePhotos);
     generateRenderingMutation.mutate({
       projectId,
       style: renderingStyle,

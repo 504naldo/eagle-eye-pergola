@@ -202,3 +202,11 @@
 - [x] Update FencingEditor to pass scopeType="fencing" and all fencing-specific fields when calling renderings.generate
 - [x] Update CanopyEditor, EnclosureEditor, ProjectEditor to pass their respective scopeType (server auto-detects from project.scopeType)
 - [x] Save checkpoint
+
+## Fix: Reference Photos Used Server-Side in Rendering Generation
+- [x] Fetch reference photos from DB server-side in renderings.generate (authoritative — never rely solely on client-passed URLs)
+- [x] Merge DB photos + client-passed URLs (DB takes priority, up to 4 total)
+- [x] When reference photos exist + scope=fencing: switch to image-editing prompt mode — use reference photo as base, instruct AI to add the proposed fence to the existing space shown in the photo
+- [x] Remove debug console.log from FencingEditor client (keep server log for now)
+- [x] 45 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint
