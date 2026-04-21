@@ -46,7 +46,7 @@ if (existingProjects.length > 0) {
       "Milestones Restaurants Inc.",
       "Abbotsford, BC — Strip Mall Patio",
       "in_review",
-      "Lean-to aluminum shading system with Lumin glass vertical enclosure. 5 front posts only — no rear posts. Roof system and Lumin glass both connect to building wall. Prepared by: Ranaldo Daniels."
+      "Louvered roof enclosure with 5 front sections (11'×8'), 6×6 posts, 8' side sections with glass escape doors, 5 louver bays with integrated LED lighting in 8\" beams. Total front face 58', total height 8'10\". Prepared by: Ranaldo Daniels."
     ]
   );
   projectId = result.insertId;
@@ -63,19 +63,19 @@ await conn.execute(
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
   [
     projectId,
-    "58.00",   // 58'-0" total width
-    "15.67",   // 15'-8" depth
-    "10.00",   // 10'-0" clear height
-    5,         // 5 front posts only
-    "14.50",   // ~14'-6" post spacing C/C
-    "fixed",   // fixed slat system
-    "4.00",    // 4" slat spacing
-    1,         // glassFront = true
-    1,         // glassLeft = true
-    1,         // glassRight = true
+    "58.00",   // 58'-0" total front width (5 sections × 11' + 6 posts × 0.5')
+    "15.67",   // 15'-8" depth (side section depth)
+    "8.83",    // 8'-10" total height including 8" beams
+    6,         // 6 posts (6"×6" aluminum SHS)
+    "9.67",    // ~9'-8" post spacing C/C (58' ÷ 6 posts)
+    "operable", // operable louvers (not fixed slats)
+    "10.00",   // 10' louver bay width (between 8" beams)
+    1,         // glassFront = true (5 sections of glass)
+    1,         // glassLeft = true (side glass enclosure with escape door)
+    1,         // glassRight = true (side glass enclosure with escape door)
     "wall_mounted_lean_to",
     "Matte Black",
-    1          // LED lighting = true
+    1          // LED lighting = true (integrated in 8" beams)
   ]
 );
 console.log("Project parameters seeded.");
@@ -85,40 +85,40 @@ await conn.execute("DELETE FROM checklist_items WHERE projectId = ?", [projectId
 
 const checklistItems = [
   // Overall Dimensions
-  { category: "Overall Dimensions", label: "Confirm total patio width: 58'-0\" (17,678 mm)", checked: 0, sortOrder: 1 },
-  { category: "Overall Dimensions", label: "Confirm total patio depth: 15'-8\" (4,775 mm)", checked: 0, sortOrder: 2 },
-  { category: "Overall Dimensions", label: "Confirm clear height under existing Lumin glass / awning", checked: 0, sortOrder: 3 },
-  { category: "Overall Dimensions", label: "Measure distance from building face to front post line", checked: 0, sortOrder: 4 },
+  { category: "Overall Dimensions", label: "Confirm total front face width: 58'-0\" (17,678 mm) — 5 sections × 11' + 6 posts × 0.5'", checked: 0, sortOrder: 1 },
+  { category: "Overall Dimensions", label: "Confirm total depth: 15'-8\" (4,775 mm) — wall-mount option with 1 post per side", checked: 0, sortOrder: 2 },
+  { category: "Overall Dimensions", label: "Confirm total height: 8'-10\" (2,692 mm) — 8' sections + 8\" beams", checked: 0, sortOrder: 3 },
+  { category: "Overall Dimensions", label: "Confirm 5 louver bay sections at 10' wide each with 8\" structural beams between", checked: 0, sortOrder: 4 },
   { category: "Overall Dimensions", label: "Confirm finished floor level — any slope or drain locations", checked: 0, sortOrder: 5 },
 
   // Heights & Clearances
-  { category: "Heights & Clearances", label: "Measure underside of existing building soffit / awning at rear", checked: 0, sortOrder: 6 },
-  { category: "Heights & Clearances", label: "Confirm minimum clear height required for occupancy / code", checked: 0, sortOrder: 7 },
-  { category: "Heights & Clearances", label: "Identify any overhead obstructions (signage, lighting, HVAC)", checked: 0, sortOrder: 8 },
-  { category: "Heights & Clearances", label: "Confirm wall ledger connection height on building face", checked: 0, sortOrder: 9 },
+  { category: "Heights & Clearances", label: "Measure underside of existing building soffit / awning at rear wall connection", checked: 0, sortOrder: 6 },
+  { category: "Heights & Clearances", label: "Confirm minimum clear height required for occupancy / code (8'-0\" min)", checked: 0, sortOrder: 7 },
+  { category: "Heights & Clearances", label: "Identify any overhead obstructions (signage, lighting, HVAC, sprinklers)", checked: 0, sortOrder: 8 },
+  { category: "Heights & Clearances", label: "Confirm wall ledger connection height on building face — 8'-10\" total", checked: 0, sortOrder: 9 },
 
   // Building Wall & Connection
   { category: "Building Wall & Connection", label: "Identify building wall construction (CMU, wood frame, steel stud)", checked: 0, sortOrder: 10 },
-  { category: "Building Wall & Connection", label: "Confirm no windows or openings conflict with wall ledger zone", checked: 0, sortOrder: 11 },
-  { category: "Building Wall & Connection", label: "Confirm landlord / building owner approval for wall penetrations", checked: 0, sortOrder: 12 },
-  { category: "Building Wall & Connection", label: "Locate and mark any existing wall utilities (electrical, plumbing, gas)", checked: 0, sortOrder: 13 },
+  { category: "Building Wall & Connection", label: "Confirm no windows or openings conflict with wall ledger zone (rear connection)", checked: 0, sortOrder: 11 },
+  { category: "Building Wall & Connection", label: "Confirm landlord / building owner approval for wall penetrations and ledger bolts", checked: 0, sortOrder: 12 },
+  { category: "Building Wall & Connection", label: "Locate and mark any existing wall utilities (electrical, plumbing, gas, HVAC)", checked: 0, sortOrder: 13 },
 
   // Post Locations
-  { category: "Post Locations", label: "Mark 5 front post locations on slab — confirm no conflicts", checked: 0, sortOrder: 14 },
-  { category: "Post Locations", label: "Confirm slab thickness and condition at each post base location", checked: 0, sortOrder: 15 },
+  { category: "Post Locations", label: "Mark 6 post locations (6\"×6\" aluminum SHS) on slab — confirm no conflicts", checked: 0, sortOrder: 14 },
+  { category: "Post Locations", label: "Confirm slab thickness and condition at each post base location (min. 4\" recommended)", checked: 0, sortOrder: 15 },
   { category: "Post Locations", label: "Confirm no underground utilities below post base locations", checked: 0, sortOrder: 16 },
 
   // Utilities & Coordination
-  { category: "Utilities & Coordination", label: "Locate existing patio electrical outlets and lighting circuits", checked: 0, sortOrder: 17 },
-  { category: "Utilities & Coordination", label: "Confirm LED string light power source location", checked: 0, sortOrder: 18 },
+  { category: "Utilities & Coordination", label: "Locate existing patio electrical outlets and lighting circuits for LED integration", checked: 0, sortOrder: 17 },
+  { category: "Utilities & Coordination", label: "Confirm LED power source location — integrated in 8\" beams between louver sections", checked: 0, sortOrder: 18 },
   { category: "Utilities & Coordination", label: "Identify any gas lines, water lines, or drains in patio zone", checked: 0, sortOrder: 19 },
   { category: "Utilities & Coordination", label: "Confirm permit requirements with local authority (City of Abbotsford)", checked: 0, sortOrder: 20 },
 
-  // Lumin Glass Enclosure
-  { category: "Lumin Glass Enclosure", label: "Confirm Lumin glass panel layout — front, left, and right sides", checked: 0, sortOrder: 21 },
-  { category: "Lumin Glass Enclosure", label: "Confirm glass top rail connection to fascia beam — coordinate with Lumin supplier", checked: 0, sortOrder: 22 },
-  { category: "Lumin Glass Enclosure", label: "Confirm door/opening locations in Lumin glass system", checked: 0, sortOrder: 23 },
-  { category: "Lumin Glass Enclosure", label: "Confirm glass corner condition detail at front/side intersections", checked: 0, sortOrder: 24 },
+  // Glass Enclosure & Doors
+  { category: "Glass Enclosure & Doors", label: "Confirm glass panel layout — 5 front sections (11'×8' each) + left/right side enclosure", checked: 0, sortOrder: 21 },
+  { category: "Glass Enclosure & Doors", label: "Confirm glass escape door locations — 32\" swing door on each side face (closest to wall)", checked: 0, sortOrder: 22 },
+  { category: "Glass Enclosure & Doors", label: "Confirm sliding glass panel configuration — remainder of each side section after escape door", checked: 0, sortOrder: 23 },
+  { category: "Glass Enclosure & Doors", label: "Confirm glass top rail connection to louver beam structure", checked: 0, sortOrder: 24 },
 ];
 
 for (const item of checklistItems) {
@@ -134,15 +134,15 @@ await conn.execute("DELETE FROM scope_items WHERE projectId = ?", [projectId]);
 
 const scopeItems = [
   // Inclusions
-  { type: "inclusion", text: "Supply and install prefabricated aluminum lean-to pergola structure (front posts + wall-mounted rear ledger)", sortOrder: 1 },
-  { type: "inclusion", text: "5 × front posts (100×100 aluminum SHS, matte black powder coat)", sortOrder: 2 },
-  { type: "inclusion", text: "Front fascia beam (150×75 aluminum RHS, matte black powder coat)", sortOrder: 3 },
-  { type: "inclusion", text: "Rear wall ledger beam bolted to building face (no rear posts)", sortOrder: 4 },
-  { type: "inclusion", text: "Fixed aluminum slat roof system — full 58'-0\" × 15'-8\" coverage", sortOrder: 5 },
-  { type: "inclusion", text: "Lumin glass vertical enclosure — front face, left side, and right side", sortOrder: 6 },
-  { type: "inclusion", text: "Lumin glass top rail integrated connection to front fascia beam (weathertight)", sortOrder: 7 },
-  { type: "inclusion", text: "Post base plates and anchor bolts into existing concrete slab", sortOrder: 8 },
-  { type: "inclusion", text: "LED string lighting integrated into slat system", sortOrder: 9 },
+  { type: "inclusion", text: "Supply and install prefabricated aluminum louvered roof enclosure structure (6 posts + wall-mounted rear ledger)", sortOrder: 1 },
+  { type: "inclusion", text: "6 × structural posts (6\"×6\" aluminum SHS, matte black powder coat)", sortOrder: 2 },
+  { type: "inclusion", text: "5 louver bay sections with operable aluminum louvers (10' wide × 15' deep each)", sortOrder: 3 },
+  { type: "inclusion", text: "4 × structural beams (8\" depth) between louver sections with integrated LED lighting", sortOrder: 4 },
+  { type: "inclusion", text: "Rear wall ledger beam bolted to building face (wall-mounted connection)", sortOrder: 5 },
+  { type: "inclusion", text: "Glass vertical enclosure — 5 front sections (11'×8' each), left side, and right side", sortOrder: 6 },
+  { type: "inclusion", text: "Glass escape doors on each side face (32\" swing door + sliding glass panels)", sortOrder: 7 },
+  { type: "inclusion", text: "Post base plates and anchor bolts into existing concrete slab (6 posts)", sortOrder: 8 },
+  { type: "inclusion", text: "LED strip lighting integrated into 8\" structural beams", sortOrder: 9 },
   { type: "inclusion", text: "Matte black powder coat finish on all aluminum components", sortOrder: 10 },
   { type: "inclusion", text: "Shop drawings and fabrication package", sortOrder: 11 },
 
@@ -150,25 +150,25 @@ const scopeItems = [
   { type: "exclusion", text: "Licensed structural engineering and stamped drawings (by others)", sortOrder: 1 },
   { type: "exclusion", text: "Building permit fees and permit application (by others)", sortOrder: 2 },
   { type: "exclusion", text: "Concrete slab repair, levelling, or replacement", sortOrder: 3 },
-  { type: "exclusion", text: "Electrical rough-in, wiring, and panel connections for LED lighting", sortOrder: 4 },
-  { type: "exclusion", text: "Waterproofing membrane or drainage system at wall ledger", sortOrder: 5 },
-  { type: "exclusion", text: "Signage, heaters, or other tenant improvements", sortOrder: 6 },
+  { type: "exclusion", text: "Electrical rough-in, wiring, and panel connections for LED lighting in beams", sortOrder: 4 },
+  { type: "exclusion", text: "Waterproofing membrane or drainage system at wall ledger and beam connections", sortOrder: 5 },
+  { type: "exclusion", text: "Glass escape door hardware, latch mechanisms, and access control prep", sortOrder: 6 },
   { type: "exclusion", text: "Any work inside the building or to the building envelope", sortOrder: 7 },
 
   // Assumptions
-  { type: "assumption", text: "Existing concrete slab is structurally adequate to receive post base anchors without reinforcement", sortOrder: 1 },
+  { type: "assumption", text: "Existing concrete slab is structurally adequate to receive 6 post base anchors without reinforcement", sortOrder: 1 },
   { type: "assumption", text: "Building wall is structurally adequate to receive wall ledger without additional blocking", sortOrder: 2 },
   { type: "assumption", text: "All field dimensions will be verified prior to fabrication — drawing dimensions are preliminary", sortOrder: 3 },
-  { type: "assumption", text: "Lumin glass system is supplied by Lumin and installed under a separate contract — this scope covers the pergola frame only", sortOrder: 4 },
-  { type: "assumption", text: "Landlord and building owner approval for wall penetrations will be obtained prior to fabrication", sortOrder: 5 },
-  { type: "assumption", text: "No underground utilities conflict with post base locations", sortOrder: 6 },
+  { type: "assumption", text: "Glass enclosure system is supplied by Lumin and installed under a separate contract — this scope covers the aluminum frame and louver system only", sortOrder: 4 },
+  { type: "assumption", text: "Landlord and building owner approval for wall penetrations and ledger bolts will be obtained prior to fabrication", sortOrder: 5 },
+  { type: "assumption", text: "No underground utilities conflict with post base locations or beam routing", sortOrder: 6 },
 
   // By Others
-  { type: "by_others", text: "Licensed structural engineer — review and stamp all connection details", sortOrder: 1 },
-  { type: "by_others", text: "Permit authority — City of Abbotsford building permit approval", sortOrder: 2 },
-  { type: "by_others", text: "Lumin glass supplier — supply and install vertical glass enclosure panels", sortOrder: 3 },
-  { type: "by_others", text: "Electrical contractor — LED lighting power supply and wiring", sortOrder: 4 },
-  { type: "by_others", text: "Landlord / property manager — wall penetration approval and coordination", sortOrder: 5 },
+  { type: "by_others", text: "Licensed structural engineer — review and stamp all connection details and beam sizing", sortOrder: 1 },
+  { type: "by_others", text: "Permit authority — City of Abbotsford building permit approval for louvered roof structure", sortOrder: 2 },
+  { type: "by_others", text: "Glass enclosure supplier — supply and install vertical glass panels and escape doors", sortOrder: 3 },
+  { type: "by_others", text: "Electrical contractor — LED lighting power supply and wiring in structural beams", sortOrder: 4 },
+  { type: "by_others", text: "Landlord / property manager — wall penetration approval, ledger bolt coordination, and roof access", sortOrder: 5 },
 ];
 
 for (const item of scopeItems) {
