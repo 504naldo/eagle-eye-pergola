@@ -18,6 +18,7 @@ import {
 import FilesTab from "@/components/FilesTab";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
+import { PromptEditor } from "@/components/PromptEditor";
 import {
   calculateEnclosureQTO,
   calculateEnclosureGrandTotal,
@@ -57,6 +58,7 @@ export default function EnclosureEditor({ projectId }: Props) {
   }, [savedRates]);
   const [renderingStyle, setRenderingStyle] = useState<"photorealistic" | "dusk" | "interior" | "aerial">("photorealistic");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [customPrompt, setCustomPrompt] = useState<string>("");
 
   const utils = trpc.useUtils();
 
@@ -345,6 +347,15 @@ export default function EnclosureEditor({ projectId }: Props) {
         {/* ── AI Renderings ── */}
         <TabsContent value="renderings">
           <div className="space-y-4">
+            {/* Prompt Editor */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <PromptEditor
+                defaultPrompt="AI will generate a prompt based on your enclosure parameters..."
+                onPromptChange={setCustomPrompt}
+                isLoading={generateRenderingMutation.isPending}
+              />
+            </div>
+
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-widest mb-3">Generate AI Rendering</h3>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -373,6 +384,7 @@ export default function EnclosureEditor({ projectId }: Props) {
                   location: project?.location ?? undefined,
                   clientName: project?.clientName ?? undefined,
                   referenceImageUrls: referencePhotos.map(p => p.imageUrl),
+                  customPrompt: customPrompt || undefined,
                 })}
                 disabled={generateRenderingMutation.isPending}
                 className="gap-2 font-semibold"

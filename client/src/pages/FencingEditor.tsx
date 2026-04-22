@@ -22,6 +22,7 @@ type FencingParamsRecord = FencingParams & Record<string, unknown>;
 import FilesTab from "@/components/FilesTab";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
+import { PromptEditor } from "@/components/PromptEditor";
 import {
   calculateFencingQTO,
   getFencingDefaultRates,
@@ -57,6 +58,7 @@ export default function FencingEditor({ projectId }: Props) {
   const [renderingStyle, setRenderingStyle] = useState<"photorealistic" | "dusk" | "interior" | "aerial">("photorealistic");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [notesText, setNotesText] = useState("");
+  const [customPrompt, setCustomPrompt] = useState<string>("");
 
   const utils = trpc.useUtils();
 
@@ -163,8 +165,9 @@ export default function FencingEditor({ projectId }: Props) {
       clientName: params.clientName || undefined,
       // Reference photo URLs — used as primary visual style guide
       referenceImageUrls: referencePhotos.map(p => p.imageUrl),
+      customPrompt: customPrompt || undefined,
     });
-  }, [projectId, params, renderingStyle, generateRenderingMutation, referencePhotos]);
+  }, [projectId, params, renderingStyle, generateRenderingMutation, referencePhotos, customPrompt]);
 
   // QTO
   const qtoItems = calculateFencingQTO(params, rateOverrides);
@@ -531,6 +534,15 @@ export default function FencingEditor({ projectId }: Props) {
         {/* ── AI Renderings Tab ───────────────────────────────────────────────── */}
         <TabsContent value="renderings" className="flex-1 overflow-auto p-4">
           <div className="max-w-4xl mx-auto space-y-6">
+            {/* Prompt Editor */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <PromptEditor
+                defaultPrompt="AI will generate a prompt based on your fencing parameters..."
+                onPromptChange={setCustomPrompt}
+                isLoading={generateRenderingMutation.isPending}
+              />
+            </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1">
                 <h2 className="text-[#C9A84C] font-bold text-sm uppercase tracking-wider mb-1">AI Visual Renderings</h2>

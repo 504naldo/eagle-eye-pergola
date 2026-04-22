@@ -342,6 +342,8 @@ The summary should cover: (1) project overview and intent, (2) structural system
         gateWidthFt: z.number().optional(),
         // Reference images to guide the rendering style
         referenceImageUrls: z.array(z.string().url()).optional(),
+        // Custom prompt override (optional) — if provided, replaces auto-generated prompt
+        customPrompt: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const project = await getProjectById(input.projectId);
@@ -570,14 +572,17 @@ High resolution, photorealistic architectural visualization quality.`;
           }
         }
 
+        // Use custom prompt if provided, otherwise use auto-generated prompt
+        const promptToUse = input.customPrompt ?? finalPrompt;
+
         const originalImages = allRefUrls.map(url => ({
           url,
           mimeType: "image/jpeg" as const,
         }));
         const { url: imageUrl } = await generateImage(
           originalImages.length > 0
-            ? { prompt: finalPrompt, originalImages }
-            : { prompt: finalPrompt }
+            ? { prompt: promptToUse, originalImages }
+            : { prompt: promptToUse }
         );
         if (!imageUrl) throw new Error("Image generation returned no URL");
 
@@ -589,7 +594,7 @@ High resolution, photorealistic architectural visualization quality.`;
           projectId: input.projectId,
           imageUrl,
           fileKey,
-          prompt,
+          prompt: promptToUse,  // Store the actual prompt used (custom or auto-generated)
           style: input.style,
           label: styleLabels[input.style],
         });

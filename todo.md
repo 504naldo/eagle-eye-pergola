@@ -269,3 +269,16 @@
 - [x] Regenerate test PDF and visually verified all 16 sheets render correctly
 - [x] 45 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Custom Prompt Editor for AI Renderings
+
+- [x] Update tRPC renderings.generate procedure to accept customPrompt parameter (optional, overrides auto-generated prompt)
+- [x] Build PromptEditor component: textarea with character count, preview toggle, edit/view modes
+- [x] Add prompt editor to ProjectEditor Renderings tab (Pergola)
+- [x] Add prompt editor to CanopyEditor Renderings tab
+- [x] Add prompt editor to EnclosureEditor Renderings tab
+- [x] Add prompt editor to FencingEditor Renderings tab
+- [x] Update rendering generation workflow: show editor before Generate button, allow save-then-generate
+- [ ] Display prompt used for each rendering (tooltip or expandable section)
+- [ ] Vitest: test custom prompt override logic
+- [ ] Save checkpoint
