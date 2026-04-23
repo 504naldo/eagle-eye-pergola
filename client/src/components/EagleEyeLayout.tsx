@@ -77,17 +77,17 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
         `}>
           <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
             {navItems.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href}>
-                <a
-                  className={`flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded text-sm transition-all touch-manipulation ${
-                    isActive(href)
-                      ? "bg-amber-50 border-l-2 border-[#C9A84C] text-[#A07830] pl-[10px] font-medium"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
-                  }`}
-                >
-                  <Icon size={16} />
-                  {label}
-                </a>
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded text-sm transition-all touch-manipulation ${
+                  isActive(href)
+                    ? "bg-amber-50 border-l-2 border-[#C9A84C] text-[#A07830] pl-[10px] font-medium"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
+                }`}
+              >
+                <Icon size={16} />
+                {label}
               </Link>
             ))}
           </nav>

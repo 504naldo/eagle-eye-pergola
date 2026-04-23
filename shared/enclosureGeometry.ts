@@ -203,7 +203,7 @@ const GREY = "#6B7280";
 const LIGHT = "#EFF6FF";
 const DISCLAIMER = "Concept Only – Not For Construction";
 
-/** Plan view */
+/** Plan view — Lumon enclosure with operable sliding panels and door zone */
 export function enclosurePlanSVG(p: EnclosureParams): string {
   const W = 560, H = 360;
   const scale = Math.min((W - 100) / p.widthFt, (H - 100) / p.depthFt);
@@ -212,28 +212,40 @@ export function enclosurePlanSVG(p: EnclosureParams): string {
   const ox = (W - rw) / 2;
   const oy = (H - rd) / 2;
 
-  const wallThick = 5;
-  const front = p.encloseFront ? `<rect x="${ox}" y="${oy + rd - wallThick}" width="${rw}" height="${wallThick}" fill="${DARK}"/>` : "";
-  const rear = p.encloseRear ? `<rect x="${ox}" y="${oy}" width="${rw}" height="${wallThick}" fill="${DARK}"/>` : "";
-  const left = p.encloseLeft ? `<rect x="${ox}" y="${oy}" width="${wallThick}" height="${rd}" fill="${DARK}"/>` : "";
-  const right = p.encloseRight ? `<rect x="${ox + rw - wallThick}" y="${oy}" width="${wallThick}" height="${rd}" fill="${DARK}"/>` : "";
-
-  // Door opening on front wall
-  const doorW = p.hasDoor && p.encloseFront ? p.doorWidthFt * scale : 0;
-  const doorX = ox + rw / 2 - doorW / 2;
-  const door = p.hasDoor && p.encloseFront
-    ? `<rect x="${doorX}" y="${oy + rd - wallThick}" width="${doorW}" height="${wallThick}" fill="white"/>
-       <line x1="${doorX}" y1="${oy + rd - wallThick}" x2="${doorX}" y2="${oy + rd + 12}" stroke="${DARK}" stroke-width="1"/>
-       <line x1="${doorX + doorW}" y1="${oy + rd - wallThick}" x2="${doorX + doorW}" y2="${oy + rd + 12}" stroke="${DARK}" stroke-width="1"/>
-       <text x="${doorX + doorW / 2}" y="${oy + rd + 22}" text-anchor="middle" font-size="8" fill="${GOLD}">DOOR</text>`
-    : "";
+  // Lumon panel zones: left (35%), center (35%), right (30%)
+  const leftZoneW = rw * 0.35;
+  const centerZoneW = rw * 0.35;
+  const rightZoneW = rw - leftZoneW - centerZoneW;
+  
+  const leftZone = `<rect x="${ox}" y="${oy}" width="${leftZoneW}" height="${rd}" fill="none" stroke="${GOLD}" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="${ox + leftZoneW / 2}" y="${oy + rd / 2 - 8}" text-anchor="middle" font-size="7" font-weight="600" fill="${GOLD}">OPERABLE</text>
+    <text x="${ox + leftZoneW / 2}" y="${oy + rd / 2}" text-anchor="middle" font-size="7" font-weight="600" fill="${GOLD}">LUMON</text>
+    <text x="${ox + leftZoneW / 2}" y="${oy + rd / 2 + 10}" text-anchor="middle" font-size="6" fill="${GREY}">2.44×3.35m</text>`;
+  
+  const centerZone = `<rect x="${ox + leftZoneW}" y="${oy}" width="${centerZoneW}" height="${rd}" fill="none" stroke="${GOLD}" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="${ox + leftZoneW + centerZoneW / 2}" y="${oy + rd / 2 - 8}" text-anchor="middle" font-size="7" font-weight="600" fill="${GOLD}">OPERABLE</text>
+    <text x="${ox + leftZoneW + centerZoneW / 2}" y="${oy + rd / 2}" text-anchor="middle" font-size="7" font-weight="600" fill="${GOLD}">LUMON</text>
+    <text x="${ox + leftZoneW + centerZoneW / 2}" y="${oy + rd / 2 + 10}" text-anchor="middle" font-size="6" fill="${GREY}">2.44×4.57m</text>`;
+  
+  const doorW = 2.67 * scale; // 32" ≈ 2.67 ft
+  const rightZoneX = ox + leftZoneW + centerZoneW;
+  const doorX = rightZoneX + rightZoneW / 2 - doorW / 2;
+  const rightZone = `<rect x="${rightZoneX}" y="${oy}" width="${rightZoneW}" height="${rd}" fill="none" stroke="${GOLD}" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <rect x="${doorX}" y="${oy}" width="${doorW}" height="${rd}" fill="white" stroke="${DARK}" stroke-width="1.5"/>
+    <line x1="${doorX + doorW / 2}" y1="${oy}" x2="${doorX + doorW / 2}" y2="${oy + rd}" stroke="${GREY}" stroke-width="0.5"/>
+    <circle cx="${doorX + doorW * 0.7}" cy="${oy + rd / 2}" r="2" fill="${GOLD}"/>
+    <text x="${doorX + doorW / 2}" y="${oy + rd / 2 - 4}" text-anchor="middle" font-size="6" fill="${GOLD}" font-weight="600">32" DOOR</text>
+    <text x="${rightZoneX + rightZoneW / 2}" y="${oy + rd - 6}" text-anchor="middle" font-size="6" fill="${GOLD}">SLIDING</text>`;
+  
+  const railingNote = `<text x="${ox}" y="${oy - 12}" font-size="6" fill="${GOLD}" font-weight="600">NOTE: Coordinate with existing railing</text>`;
+  const door = `${leftZone}${centerZone}${rightZone}${railingNote}`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="font-family:Inter,sans-serif">
   <rect width="${W}" height="${H}" fill="white"/>
   <!-- Floor area -->
   <rect x="${ox}" y="${oy}" width="${rw}" height="${rd}" fill="${LIGHT}" stroke="${GREY}" stroke-width="0.5" stroke-dasharray="4,3"/>
-  <!-- Walls -->
-  ${front}${rear}${left}${right}${door}
+  <!-- Lumon panel zones and door -->
+  ${door}
   <!-- Dimensions -->
   <line x1="${ox}" y1="${oy - 18}" x2="${ox + rw}" y2="${oy - 18}" stroke="${GREY}" stroke-width="0.8"/>
   <text x="${ox + rw / 2}" y="${oy - 22}" text-anchor="middle" font-size="10" fill="${DARK}" font-weight="600">${p.widthFt.toFixed(2)}ft</text>
