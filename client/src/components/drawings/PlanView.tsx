@@ -65,15 +65,15 @@ export default function PlanView({ dims, width = 700, height = 420 }: Props) {
         />
       ))}
 
-      {/* Lumin glass — front face */}
+      {/* Lumon glass — front face */}
       {dims.glassFront && (
         <rect x={x(0)} y={y(dims.depthFt)} width={drawW} height={5} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} />
       )}
-      {/* Lumin glass — left side */}
+      {/* Lumon glass — left side */}
       {dims.glassLeft && (
         <rect x={x(0) - 5} y={y(0)} width={5} height={drawH} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} />
       )}
-      {/* Lumin glass — right side */}
+      {/* Lumon glass — right side */}
       {dims.glassRight && (
         <rect x={x(dims.widthFt)} y={y(0)} width={5} height={drawH} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} />
       )}

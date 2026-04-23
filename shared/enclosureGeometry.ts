@@ -9,6 +9,7 @@ import type { EnclosureParams } from "./scopeTypes";
 // ─── QTO ─────────────────────────────────────────────────────────────────────
 
 export interface EnclosureQTOItem {
+  lineKey?: string;
   category: string;
   description: string;
   unit: string;
@@ -61,14 +62,14 @@ export function calculateEnclosureQTO(p: EnclosureParams, rateOverrides?: Record
   const cornerCount = [p.encloseFront, p.encloseLeft, p.encloseRight, p.encloseRear].filter(Boolean).length * 2;
 
   const panelLabel = p.panelOption === "glass"
-    ? "Frameless glass panels (12mm toughened)"
+    ? "Frameless Lumon panels (12mm toughened)"
     : p.panelOption === "polycarbonate"
     ? "Polycarbonate panels (16mm twin-wall)"
     : "Solid aluminium panels";
 
   const panelRate = p.panelOption === "glass" ? 285 : p.panelOption === "polycarbonate" ? 145 : 185;
 
-  const items: EnclosureQTOItem[] = [
+  const items: Omit<EnclosureQTOItem, 'lineKey'>[] = [
     // ── Structure ──
     {
       category: "Structure",
@@ -186,6 +187,7 @@ export function calculateEnclosureQTO(p: EnclosureParams, rateOverrides?: Record
   // Apply rateOverrides if present
   return items.map(item => ({
     ...item,
+    lineKey: `${item.category}:${item.description}`,
     unitRate: ro[item.description] ?? item.unitRate,
     lineTotal: Math.round(item.qty * (ro[item.description] ?? item.unitRate) * 100) / 100,
   }));

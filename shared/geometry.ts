@@ -17,6 +17,7 @@ export interface PergolaParams {
 }
 
 export interface QTOItem {
+  lineKey?: string;   // Unique key for override lookup (category:description)
   category: string;
   description: string;
   unit: string;
@@ -37,7 +38,7 @@ const DEFAULT_RATES: Record<string, number> = {
   "Operable aluminum louvers (150×25)": 320,
   "Slat clip / bracket sets": 28,
   "Motorized actuator / drive system": 3800,
-  "Lumin glass panels (vertical enclosure)": 420,
+  "Lumon panels (vertical enclosure)": 420,
   "Glass top rail (integrated to fascia beam)": 195,
   "Glass bottom track / sill": 145,
   "Trim / closure pieces": 1200,
@@ -49,12 +50,13 @@ export function getDefaultRates(): Record<string, number> {
 }
 
 function withRate(
-  item: Omit<QTOItem, "unitRate" | "lineTotal">,
+  item: Omit<QTOItem, "unitRate" | "lineTotal" | "lineKey">,
   hardcoded?: number,
   overrides?: Record<string, number>
 ): QTOItem {
   const unitRate = overrides?.[item.description] ?? hardcoded ?? DEFAULT_RATES[item.description] ?? 0;
-  return { ...item, unitRate, lineTotal: Math.round(item.qty * unitRate * 100) / 100 };
+  const lineKey = `${item.category}:${item.description}`;
+  return { ...item, lineKey, unitRate, lineTotal: Math.round(item.qty * unitRate * 100) / 100 };
 }
 
 export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, number>): QTOItem[] {
@@ -101,11 +103,11 @@ export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, nu
     withRate({ category: "Slat System", description: "Slat clip / bracket sets", unit: "EA", qty: slatCount * p.postCount, basis: "One set per slat per support point" }, undefined, ro),
     ...(p.slatType === "operable" ? [withRate({ category: "Slat System", description: "Motorized actuator / drive system", unit: "EA", qty: 1, basis: "One system per pergola zone" }, undefined, ro)] : []),
 
-    // ── Lumin Glass Enclosure ─────────────────────────────────────────────────────────────────────────────
+    // ── Lumon Enclosure ─────────────────────────────────────────────────────────────────────────────
     ...(totalGlassM2 > 0 ? [
-      withRate({ category: "Lumin Glass Enclosure", description: "Lumin glass panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}` }, undefined, ro),
-      withRate({ category: "Lumin Glass Enclosure", description: "Glass top rail (integrated to fascia beam)", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Top rail at glass-to-beam connection" }, undefined, ro),
-      withRate({ category: "Lumin Glass Enclosure", description: "Glass bottom track / sill", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Bottom track at slab level" }, undefined, ro),
+      withRate({ category: "Lumon Enclosure", description: "Lumon panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}` }, undefined, ro),
+      withRate({ category: "Lumon Enclosure", description: "Glass top rail (integrated to fascia beam)", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Top rail at glass-to-beam connection" }, undefined, ro),
+      withRate({ category: "Lumon Enclosure", description: "Glass bottom track / sill", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Bottom track at slab level" }, undefined, ro),
     ] : []),
 
     // ── Finishes & Accessories ─────────────────────────────────────────────────────────────────────────────

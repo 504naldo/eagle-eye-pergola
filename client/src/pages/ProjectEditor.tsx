@@ -16,6 +16,7 @@ import FilesTab from "@/components/FilesTab";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import { PromptEditor } from "@/components/PromptEditor";
+import { EditableQTOTable } from "@/components/EditableQTOTable";
 
 const SCOPE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusion",
@@ -218,6 +219,19 @@ export default function ProjectEditor() {
     });
   };
 
+  // QTO line overrides (custom qty/unit/description per line)
+  const { data: qtoLineOverrides = [] } = trpc.qto.getLineOverrides.useQuery({ projectId }, { enabled: !!projectId });
+  const qtoOverridesMap = Object.fromEntries(qtoLineOverrides.map(o => [o.lineKey, { customQuantity: o.customQuantity ? parseFloat(o.customQuantity) : undefined, customUnit: o.customUnit ?? undefined, customDescription: o.customDescription ?? undefined }]));
+
+  const updateQTOLine = trpc.qto.updateLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO line updated"); },
+    onError: () => toast.error("Failed to update QTO line"),
+  });
+  const deleteQTOLine = trpc.qto.deleteLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO override removed"); },
+    onError: () => toast.error("Failed to remove QTO override"),
+  });
+
   const qtoItems: QTOItem[] = calculateQTO(pergolaParams, rateOverrides);
   const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
   const grandTotal = calculateGrandTotal(qtoItems);
@@ -374,9 +388,9 @@ export default function ProjectEditor() {
                   </div>
                 </div>
 
-                {/* Lumin Glass */}
+                {/* Lumon Glass */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest border-b pb-2">Lumin Glass Enclosure</h3>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest border-b pb-2">Lumon Enclosure</h3>
                   <p className="text-xs text-gray-500">Vertical enclosure panels — connects to fascia beam at top</p>
                   {[
                     { key: "glassFront", label: "Front Face Enclosure" },
@@ -448,65 +462,52 @@ export default function ProjectEditor() {
                     <div className="w-2 h-2 rounded-full bg-[#C9A84C]" />
                     <h3 className="text-sm font-semibold text-gray-800">{cat}</h3>
                   </div>
-                  {/* Mobile: card layout; Desktop: table */}
+                  {/* Desktop: table with inline edit */}
                   <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-900">
-                          <th className="text-left py-2 px-3 text-xs font-medium rounded-tl">Description</th>
-                          <th className="text-center py-2 px-3 text-xs font-medium w-14">Unit</th>
-                          <th className="text-center py-2 px-3 text-xs font-medium w-14">Qty</th>
-                          <th className="text-right py-2 px-3 text-xs font-medium w-28">Unit Rate (CAD)</th>
-                          <th className="text-right py-2 px-3 text-xs font-medium w-28 rounded-tr">Line Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {qtoItems.filter(i => i.category === cat).map((item, idx) => (
-                          <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                            <td className="py-2 px-3 text-gray-800 border-b border-gray-100 text-xs">{item.description}</td>
-                            <td className="py-2 px-3 text-center text-gray-600 border-b border-gray-100 font-mono text-xs">{item.unit}</td>
-                            <td className="py-2 px-3 text-center font-semibold border-b border-gray-100 text-xs" style={{ color: "#C9A84C" }}>{item.qty}</td>
-                            <td className="py-1 px-2 border-b border-gray-100 text-right">
-                              <input
-                                type="number"
-                                min={0}
-                                step={10}
-                                value={rateOverrides[item.description] ?? item.unitRate}
-                                onChange={e => setRateOverrides(r => ({ ...r, [item.description]: parseFloat(e.target.value) || 0 }))}
-                                className="w-24 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
-                              />
-                            </td>
-                            <td className="py-2 px-3 text-right font-semibold border-b border-gray-100 text-xs text-gray-900">
-                              ${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <EditableQTOTable
+                      items={qtoItems.filter(i => i.category === cat).map(item => ({
+                        lineKey: item.lineKey ?? item.description,
+                        description: qtoOverridesMap[item.lineKey ?? item.description]?.customDescription ?? item.description,
+                        quantity: qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty,
+                        unit: qtoOverridesMap[item.lineKey ?? item.description]?.customUnit ?? item.unit,
+                        unitRate: rateOverrides[item.description] ?? item.unitRate,
+                        total: (qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty) * (rateOverrides[item.description] ?? item.unitRate),
+                      }))}
+                      overrides={qtoOverridesMap}
+                      onUpdateLineItem={async (lineKey, qty, unit, desc) => { updateQTOLine.mutate({ projectId, lineKey, customQuantity: qty, customUnit: unit, customDescription: desc }); }}
+                      onDeleteLineItem={async (lineKey) => { deleteQTOLine.mutate({ projectId, lineKey }); }}
+                    />
                   </div>
                   {/* Mobile card layout */}
                   <div className="sm:hidden space-y-2">
-                    {qtoItems.filter(i => i.category === cat).map((item, idx) => (
-                      <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="text-xs font-medium text-gray-800 flex-1 pr-2">{item.description}</p>
-                          <span className="text-xs font-bold text-gray-900 whitespace-nowrap">${item.lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    {qtoItems.filter(i => i.category === cat).map((item, idx) => {
+                      const ov = qtoOverridesMap[item.lineKey ?? item.description];
+                      const displayQty = ov?.customQuantity ?? item.qty;
+                      const displayUnit = ov?.customUnit ?? item.unit;
+                      const displayDesc = ov?.customDescription ?? item.description;
+                      const lineTotal = displayQty * (rateOverrides[item.description] ?? item.unitRate);
+                      return (
+                        <div key={idx} className={`bg-gray-50 rounded-lg p-3 border ${ov ? 'border-[#C9A84C]' : 'border-gray-100'}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="text-xs font-medium text-gray-800 flex-1 pr-2">{displayDesc}{ov && <span className="ml-1 text-[10px] text-[#C9A84C]">(edited)</span>}</p>
+                            <span className="text-xs font-bold text-gray-900 whitespace-nowrap">${lineTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-gray-500">{displayQty} {displayUnit}</span>
+                            <span className="text-[10px] text-gray-400">&times;</span>
+                            <input
+                              type="number"
+                              min={0}
+                              step={10}
+                              value={rateOverrides[item.description] ?? item.unitRate}
+                              onChange={e => setRateOverrides(r => ({ ...r, [item.description]: parseFloat(e.target.value) || 0 }))}
+                              className="w-20 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
+                            />
+                            <span className="text-[10px] text-gray-400">CAD/{displayUnit}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-gray-500">{item.qty} {item.unit}</span>
-                          <span className="text-[10px] text-gray-400">&times;</span>
-                          <input
-                            type="number"
-                            min={0}
-                            step={10}
-                            value={rateOverrides[item.description] ?? item.unitRate}
-                            onChange={e => setRateOverrides(r => ({ ...r, [item.description]: parseFloat(e.target.value) || 0 }))}
-                            className="w-20 text-right text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white"
-                          />
-                          <span className="text-[10px] text-gray-400">CAD/{item.unit}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -672,7 +673,7 @@ export default function ProjectEditor() {
                   },
                   {
                     title: "⑤ Glass Top Rail to Fascia Beam",
-                    desc: "Lumin glass top rail bolts directly to underside of front fascia beam. Weathertight sealant joint. Coordinate with Lumin glass supplier.",
+                    desc: "Lumon top rail bolts directly to underside of front fascia beam. Weathertight sealant joint. Coordinate with Lumon glass supplier.",
                     color: "#3B82F6",
                     icon: "🪟",
                   },

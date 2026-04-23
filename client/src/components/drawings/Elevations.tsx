@@ -46,7 +46,7 @@ export function FrontElevation({ dims, width = 700, height = 380 }: Props) {
       {/* Ground line */}
       <line x1={x(0)} y1={y(0)} x2={x(dims.widthFt)} y2={y(0)} stroke="#374151" strokeWidth={2} />
 
-      {/* Lumin glass front */}
+      {/* Lumon front */}
       {dims.glassFront && (
         <rect x={x(0)} y={y(dims.heightFt)} width={drawW} height={drawH} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} opacity={0.5} />
       )}
@@ -129,7 +129,7 @@ export function SideElevation({ dims, width = 700, height = 380 }: Props) {
       <rect x={x(0) - 10} y={y(dims.heightFt)} width={10} height={drawH} fill={DARK} />
       <text x={x(0) - 5} y={y(dims.heightFt / 2)} fill="white" fontSize={7} textAnchor="middle" transform={`rotate(-90, ${x(0) - 5}, ${y(dims.heightFt / 2)})`}>BUILDING WALL</text>
 
-      {/* Lumin glass side */}
+      {/* Lumon side */}
       {dims.glassLeft && (
         <rect x={x(dims.depthFt)} y={y(dims.heightFt)} width={5} height={drawH} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} />
       )}
@@ -216,7 +216,7 @@ export function SectionView({ dims, width = 700, height = 380 }: Props) {
       {/* Building wall */}
       <rect x={x(0) - 12} y={y(dims.heightFt)} width={12} height={drawH} fill={DARK} />
 
-      {/* Lumin glass front */}
+      {/* Lumon front */}
       {dims.glassFront && (
         <rect x={x(dims.depthFt)} y={y(dims.heightFt)} width={6} height={drawH} fill={GLASS_BLUE} stroke="#3B82F6" strokeWidth={1} />
       )}

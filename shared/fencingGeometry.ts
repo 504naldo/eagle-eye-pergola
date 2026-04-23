@@ -27,6 +27,7 @@ const ftToM = (ft: number) => ft * 0.3048;
 // ─── QTO Item ─────────────────────────────────────────────────────────────────
 
 export interface FencingQTOItem {
+  lineKey?: string;
   description: string;
   qty: number;
   unit: string;
@@ -91,6 +92,7 @@ export function calculateFencingQTO(
   const add = (description: string, qty: number, unit: string, basis: string, group: string) => {
     const unitRate = rate(description);
     items.push({
+      lineKey: `${group}:${description}`,
       description,
       qty: Math.round(qty * 100) / 100,
       unit,

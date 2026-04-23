@@ -41,8 +41,8 @@ function buildRenderingPrompt(input: RenderingInput): string {
   ].filter(Boolean);
   const glassDesc =
     glassZones.length > 0
-      ? `Lumin frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
-      : "no glass enclosure panels";
+      ? `Lumon frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
+      : "no Lumon panels";
   const ledDesc = input.ledLighting
     ? "integrated LED strip lighting along the beams"
     : "no LED lighting";
@@ -113,14 +113,14 @@ describe("renderingPromptBuilder", () => {
     expect(prompt).not.toContain("right side");
   });
 
-  it("uses 'no glass enclosure panels' when all glass is off", () => {
+  it("uses 'no Lumon panels' when all glass is off", () => {
     const prompt = buildRenderingPrompt({
       style: "aerial",
       glassFront: false,
       glassLeft: false,
       glassRight: false,
     });
-    expect(prompt).toContain("no glass enclosure panels");
+    expect(prompt).toContain("no Lumon panels");
   });
 
   it("includes finish color in the prompt", () => {

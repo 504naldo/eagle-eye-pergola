@@ -9,6 +9,7 @@ import type { CanopyParams } from "./scopeTypes";
 // ─── QTO ─────────────────────────────────────────────────────────────────────
 
 export interface CanopyQTOItem {
+  lineKey?: string;   // Injected by calculateCanopyQTO
   category: string;
   description: string;
   unit: string;
@@ -46,7 +47,7 @@ export function calculateCanopyQTO(p: CanopyParams, rateOverrides?: Record<strin
   const supportCount = p.supportType === "freestanding" ? Math.ceil(w / 6) : 0; // wall-mounted = 0 posts
   const wallBracketCount = p.supportType !== "freestanding" ? Math.ceil(w / 2) + 2 : 0;
 
-  const items: CanopyQTOItem[] = [
+  const items: Omit<CanopyQTOItem, 'lineKey'>[] = [
     // ── Structure ──
     {
       category: "Structure",
@@ -188,6 +189,7 @@ export function calculateCanopyQTO(p: CanopyParams, rateOverrides?: Record<strin
   // Calculate line totals — apply rateOverrides if present
   return items.map(item => ({
     ...item,
+    lineKey: `${item.category}:${item.description}`,
     unitRate: ro[item.description] ?? item.unitRate,
     lineTotal: Math.round(item.qty * (ro[item.description] ?? item.unitRate) * 100) / 100,
   }));

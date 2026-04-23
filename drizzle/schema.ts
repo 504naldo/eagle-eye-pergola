@@ -61,7 +61,7 @@ export const projectParams = mysqlTable("project_params", {
   // Slat system
   slatType: mysqlEnum("slatType", ["fixed", "operable"]).default("fixed").notNull(),
   slatSpacingIn: decimal("slatSpacingIn", { precision: 6, scale: 2 }).default("4.00"),
-  // Lumin glass enclosure
+  // Lumon enclosure
   glassFront: boolean("glassFront").default(true),
   glassLeft: boolean("glassLeft").default(true),
   glassRight: boolean("glassRight").default(true),

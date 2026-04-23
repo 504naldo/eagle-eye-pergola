@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 describe("Custom Prompt Logic", () => {
   it("should use custom prompt when provided", () => {
-    const customPrompt = "A modern pergola with glass panels and LED lighting";
+    const customPrompt = "A modern pergola with Lumon panels and LED lighting";
     const autoPrompt = "Auto-generated prompt based on parameters";
     
     const promptToUse = customPrompt || autoPrompt;
@@ -37,7 +37,7 @@ describe("Custom Prompt Logic", () => {
   });
 
   it("should handle long custom prompts", () => {
-    const customPrompt = "A sophisticated outdoor living space featuring a modern pergola structure with operable louvers, integrated LED lighting in the structural beams, and frameless glass enclosure panels on three sides. The design emphasizes clean lines, premium materials, and seamless integration with the existing patio landscape. Photorealistic rendering with warm evening lighting.";
+    const customPrompt = "A sophisticated outdoor living space featuring a modern pergola structure with operable louvers, integrated LED lighting in the structural beams, and frameless Lumon panels on three sides. The design emphasizes clean lines, premium materials, and seamless integration with the existing patio landscape. Photorealistic rendering with warm evening lighting.";
     const autoPrompt = "Auto-generated prompt";
     
     const promptToUse = customPrompt || autoPrompt;
@@ -46,11 +46,11 @@ describe("Custom Prompt Logic", () => {
   });
 
   it("should trim whitespace from custom prompt", () => {
-    const customPrompt = "  A pergola with glass panels  ".trim();
+    const customPrompt = "  A pergola with Lumon panels  ".trim();
     const autoPrompt = "Auto-generated prompt";
     
     const promptToUse = customPrompt || autoPrompt;
-    expect(promptToUse).toBe("A pergola with glass panels");
+    expect(promptToUse).toBe("A pergola with Lumon panels");
     expect(promptToUse).not.toContain("  ");
   });
 });

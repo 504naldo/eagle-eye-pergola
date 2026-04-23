@@ -24,6 +24,7 @@ const PH = 841.89;
 const MARGIN = 36;
 
 type QTOItem = {
+  lineKey?: string;
   description: string;
   unit: string;
   qty: number;
@@ -100,7 +101,7 @@ function drawPlanView(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawin
     doc.moveTo(px(0), py(d)).lineTo(px(dims.widthFt), py(d)).stroke();
   }
 
-  // Lumin glass panels
+  // Lumon panels
   if (dims.glassFront) {
     doc.rect(px(0), py(dims.depthFt), dw, 5).fill("#BFDBFE").stroke(BLUE).strokeColor(BLUE).lineWidth(1);
     doc.fontSize(7).fillColor(BLUE).font("Helvetica").text("LUMIN GLASS — FRONT", px(0), py(dims.depthFt) + 7, { width: dw, align: "center" });
@@ -150,7 +151,7 @@ function drawFrontElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof get
   // Ground line
   doc.strokeColor("#374151").lineWidth(2).moveTo(px(0), py(0)).lineTo(px(dims.widthFt), py(0)).stroke();
 
-  // Lumin glass overlay
+  // Lumon glass overlay
   if (dims.glassFront) {
     doc.rect(px(0), py(dims.heightFt), dw, dh).fill("#BFDBFE").opacity(0.35);
     doc.opacity(1);
@@ -633,7 +634,7 @@ export async function handlePDFExport(req: Request, res: Response) {
       ["HEIGHT", `${pergolaParams.heightFt.toFixed(1)}' Clear`],
       ["SYSTEM TYPE", "Lean-To Canopy"],
       ["SLAT TYPE", pergolaParams.slatType === "fixed" ? "Fixed Slats" : "Operable Louvers"],
-      ["ENCLOSURE", "Lumin Glass"],
+      ["ENCLOSURE", "Lumon Glass"],
       ["FINISH", pergolaParams.finishColor],
       ["STATUS", project.status.replace("_", " ").toUpperCase()],
     ];
@@ -687,7 +688,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     doc.rect(MARGIN, drawBoxY + 18, PW - MARGIN * 2, drawBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
     drawPlanView(doc, dims, MARGIN, drawBoxY + 18, PW - MARGIN * 2, drawBoxH - 18);
     doc.fontSize(8).fillColor(GRAY).font("Helvetica")
-      .text("Connection type: Wall-mounted lean-to — No rear posts — Lumin glass vertical enclosure on 3 sides — Slat roof connects to building wall via concealed ledger",
+      .text("Connection type: Wall-mounted lean-to — No rear posts — Lumon vertical enclosure on 3 sides — Slat roof connects to building wall via concealed ledger",
         MARGIN, drawBoxY + drawBoxH + 4, { width: PW - MARGIN * 2 });
 
     // ── PAGE 3: FRONT + SIDE ELEVATION ────────────────────────────────────
@@ -738,7 +739,7 @@ export async function handlePDFExport(req: Request, res: Response) {
       { text: "② Front fascia beam (150×75 AL. RHS)", bg: "#FFFBEB", border: "#F59E0B" },
       { text: "③ Front post (100×100 AL. SHS)", bg: LIGHT_GRAY, border: "#E5E7EB" },
       { text: "④ Aluminum slat system", bg: LIGHT_GRAY, border: "#E5E7EB" },
-      { text: "⑤ Lumin glass vertical enclosure", bg: "#EFF6FF", border: "#93C5FD" },
+      { text: "⑤ Lumon vertical enclosure", bg: "#EFF6FF", border: "#93C5FD" },
       { text: "⑥ Glass top rail → fascia beam (integrated)", bg: "#EFF6FF", border: "#93C5FD" },
     ];
     const legW = (PW - MARGIN * 2 - 20) / 3;
@@ -914,7 +915,7 @@ export async function handlePDFExport(req: Request, res: Response) {
       { title: "② Post Base Plate to Slab", desc: "200×200×12mm aluminum base plate. Chemical anchor bolts into concrete slab. Grout bed for levelling.", bg: LIGHT_GRAY, border: "#9CA3AF" },
       { title: "③ Front Beam to Post", desc: "150×75 RHS beam welded or bolted to 100×100 SHS post. Cap plate at post top. Powder coated to match.", bg: LIGHT_GRAY, border: "#9CA3AF" },
       { title: "④ Slat to Beam Clip", desc: "Aluminum clip bracket at each slat-to-beam intersection. Concealed fastener. Slat end cap at perimeter.", bg: LIGHT_GRAY, border: "#9CA3AF" },
-      { title: "⑤ Glass Top Rail to Fascia Beam", desc: "Lumin glass top rail bolts directly to underside of front fascia beam. Weathertight sealant joint. Coordinate with Lumin glass supplier.", bg: "#EFF6FF", border: BLUE },
+      { title: "⑤ Glass Top Rail to Fascia Beam", desc: "Lumon top rail bolts directly to underside of front fascia beam. Weathertight sealant joint. Coordinate with Lumon glass supplier.", bg: "#EFF6FF", border: BLUE },
       { title: "⑥ Side Glass Corner Condition", desc: "Glass-to-glass corner at front/side intersection. Aluminum corner post or structural silicone joint. Coordinate with supplier.", bg: "#EFF6FF", border: BLUE },
     ];
 

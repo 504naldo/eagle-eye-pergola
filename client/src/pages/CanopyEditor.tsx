@@ -20,6 +20,7 @@ import FilesTab from "@/components/FilesTab";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import { PromptEditor } from "@/components/PromptEditor";
+import { EditableQTOTable } from "@/components/EditableQTOTable";
 import {
   calculateCanopyQTO,
   calculateCanopyGrandTotal,
@@ -62,6 +63,17 @@ export default function CanopyEditor({ projectId }: Props) {
   const [customPrompt, setCustomPrompt] = useState<string>("");
 
   const utils = trpc.useUtils();
+  // QTO line overrides
+  const { data: qtoLineOverrides = [] } = trpc.qto.getLineOverrides.useQuery({ projectId }, { enabled: !!projectId });
+  const qtoOverridesMap = Object.fromEntries(qtoLineOverrides.map(o => [o.lineKey, { customQuantity: o.customQuantity ? parseFloat(o.customQuantity) : undefined, customUnit: o.customUnit ?? undefined, customDescription: o.customDescription ?? undefined }]));
+  const updateQTOLine = trpc.qto.updateLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO line updated"); },
+    onError: () => toast.error("Failed to update QTO line"),
+  });
+  const deleteQTOLine = trpc.qto.deleteLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO override removed"); },
+    onError: () => toast.error("Failed to remove QTO override"),
+  });
 
   // Load project
   const { data: project, isLoading: projectLoading } = trpc.projects.get.useQuery({ id: projectId });
@@ -253,42 +265,41 @@ export default function CanopyEditor({ projectId }: Props) {
 
         {/* ── QTO ── */}
         <TabsContent value="qto">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-gray-700 uppercase tracking-widest">Quantity Take-Off</span>
-              <span className="text-xs text-gray-400">Concept-level estimate only</span>
+              <span className="text-xs text-gray-400">Click any row to edit qty or unit</span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                    <th className="text-left px-4 py-2">Category</th>
-                    <th className="text-left px-4 py-2">Description</th>
-                    <th className="text-right px-4 py-2">Unit</th>
-                    <th className="text-right px-4 py-2">Qty</th>
-                    <th className="text-right px-4 py-2">Rate</th>
-                    <th className="text-right px-4 py-2">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {qtoItems.map((item, i) => (
-                    <tr key={i} className="border-t border-gray-50 hover:bg-gray-50">
-                      <td className="px-4 py-2 text-xs text-gray-500">{item.category}</td>
-                      <td className="px-4 py-2 text-xs text-gray-700">{item.description}</td>
-                      <td className="px-4 py-2 text-xs text-right text-gray-500">{item.unit}</td>
-                      <td className="px-4 py-2 text-xs text-right">{item.qty}</td>
-                      <td className="px-4 py-2 text-xs text-right text-gray-500">${item.unitRate.toLocaleString()}</td>
-                      <td className="px-4 py-2 text-xs text-right font-medium">${item.lineTotal.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-200 bg-gray-50">
-                    <td colSpan={5} className="px-4 py-3 text-sm font-bold text-right text-gray-700">GRAND TOTAL (Concept Estimate)</td>
-                    <td className="px-4 py-3 text-sm font-bold text-right" style={{ color: "#C9A84C" }}>${grandTotal.toLocaleString()}</td>
-                  </tr>
-                </tfoot>
-              </table>
+            <p className="text-xs text-red-600 mb-4 bg-red-50 border border-red-200 rounded p-2">
+              ⚠ All quantities and costs are preliminary estimates only (CAD). Subject to field verification, supplier quotes, and licensed review prior to fabrication.
+            </p>
+            {Array.from(new Set(qtoItems.map(i => i.category))).map(cat => (
+              <div key={cat} className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#C9A84C]" />
+                  <h3 className="text-sm font-semibold text-gray-800">{cat}</h3>
+                </div>
+                <EditableQTOTable
+                  items={qtoItems.filter(i => i.category === cat).map(item => ({
+                    lineKey: item.lineKey ?? item.description,
+                    description: qtoOverridesMap[item.lineKey ?? item.description]?.customDescription ?? item.description,
+                    quantity: qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty,
+                    unit: qtoOverridesMap[item.lineKey ?? item.description]?.customUnit ?? item.unit,
+                    unitRate: rateOverrides[item.description] ?? item.unitRate,
+                    total: (qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty) * (rateOverrides[item.description] ?? item.unitRate),
+                  }))}
+                  overrides={qtoOverridesMap}
+                  onUpdateLineItem={async (lineKey, qty, unit, desc) => { updateQTOLine.mutate({ projectId, lineKey, customQuantity: qty, customUnit: unit, customDescription: desc }); }}
+                  onDeleteLineItem={async (lineKey) => { deleteQTOLine.mutate({ projectId, lineKey }); }}
+                />
+              </div>
+            ))}
+            <div className="mt-4 flex justify-end">
+              <div className="bg-gray-50 rounded-lg px-6 py-4">
+                <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
+                <div className="text-gray-900 text-2xl font-bold">${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div className="text-gray-400 text-xs mt-1">CAD — Concept Only, Not For Construction</div>
+              </div>
             </div>
           </div>
         </TabsContent>

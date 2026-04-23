@@ -301,10 +301,15 @@
 - [x] Add tRPC procedure qto.updateLineItem to save unit/quantity overrides
 - [x] Add tRPC procedure qto.getLineItems to fetch QTO with applied overrides
 - [x] Build EditableQTOTable component with inline edit mode (click to edit, save/cancel buttons)
-- [ ] Add QTO tab to ProjectEditor with editable table
-- [ ] Add QTO tab to CanopyEditor with editable table
-- [ ] Add QTO tab to EnclosureEditor with editable table
-- [ ] Add QTO tab to FencingEditor with editable table
+- [x] Add QTO tab to ProjectEditor with editable table
+- [x] Add QTO tab to CanopyEditor with editable table
+- [x] Add QTO tab to EnclosureEditor with editable table
+- [x] Add QTO tab to FencingEditor with editable table
 - [ ] Verify PDF export uses edited quantities/units
-- [ ] Vitest: test QTO override logic and calculations
+- [x] Vitest: test QTO override logic and calculations
 - [ ] Save checkpoint
+
+## Lumon Naming Fix
+
+- [x] Replace all instances of "Lumon glass", "glass panels", "sliding glass", "glass enclosure" with "Lumon" throughout app (seed data, scope types, geometry, UI labels, PDF builder)
+- [x] Verify Lumon appears correctly in QTO, scope items, checklist, and PDF sheets

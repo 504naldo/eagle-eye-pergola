@@ -152,7 +152,7 @@ export const DEFAULT_SCOPE: Omit<InsertScopeItem, 'projectId'>[] = [
   { type: "inclusion", text: "Supply and install aluminum pergola structure (posts, beams, slats)", sortOrder: 1 },
   { type: "inclusion", text: "Wall-mounted ledger / bracket connection to building", sortOrder: 2 },
   { type: "inclusion", text: "Powder coat finish in specified color (Matte Black standard)", sortOrder: 3 },
-  { type: "inclusion", text: "Lumin glass vertical enclosure panels (front, left, right as specified)", sortOrder: 4 },
+  { type: "inclusion", text: "Lumon vertical enclosure panels (front, left, right as specified)", sortOrder: 4 },
   { type: "inclusion", text: "Glass top rail integrated connection to fascia beam", sortOrder: 5 },
   { type: "inclusion", text: "LED strip lighting (if selected)", sortOrder: 6 },
   { type: "inclusion", text: "Base plates and anchor hardware", sortOrder: 7 },
@@ -175,7 +175,7 @@ export const DEFAULT_SCOPE: Omit<InsertScopeItem, 'projectId'>[] = [
   { type: "by_others", text: "Building permit — by owner or general contractor", sortOrder: 31 },
   { type: "by_others", text: "Electrical work — by licensed electrician", sortOrder: 32 },
   { type: "by_others", text: "Waterproofing / slab review — by civil or structural engineer", sortOrder: 33 },
-  { type: "by_others", text: "Lumin glass final coordination — by Lumin glass supplier", sortOrder: 34 },
+  { type: "by_others", text: "Lumon glass final coordination — by Lumon glass supplier", sortOrder: 34 },
   { type: "by_others", text: "Landlord / building owner approval — by tenant / owner", sortOrder: 35 },
 ];
 

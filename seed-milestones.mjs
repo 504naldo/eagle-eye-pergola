@@ -117,7 +117,7 @@ const checklistItems = [
   // Glass Enclosure & Doors
   { category: "Glass Enclosure & Doors", label: "Confirm glass panel layout — 5 front sections (11'×8' each) + left/right side enclosure", checked: 0, sortOrder: 21 },
   { category: "Glass Enclosure & Doors", label: "Confirm glass escape door locations — 32\" swing door on each side face (closest to wall)", checked: 0, sortOrder: 22 },
-  { category: "Glass Enclosure & Doors", label: "Confirm sliding glass panel configuration — remainder of each side section after escape door", checked: 0, sortOrder: 23 },
+  { category: "Glass Enclosure & Doors", label: "Confirm Lumon panel configuration — remainder of each side section after escape door", checked: 0, sortOrder: 23 },
   { category: "Glass Enclosure & Doors", label: "Confirm glass top rail connection to louver beam structure", checked: 0, sortOrder: 24 },
 ];
 
@@ -139,9 +139,9 @@ const scopeItems = [
   { type: "inclusion", text: "5 louver bay sections with operable aluminum louvers (10' wide × 15' deep each)", sortOrder: 3 },
   { type: "inclusion", text: "4 × structural beams (8\" depth) between louver sections with integrated LED lighting", sortOrder: 4 },
   { type: "inclusion", text: "Rear wall ledger beam bolted to building face (wall-mounted connection)", sortOrder: 5 },
-  { type: "inclusion", text: "Operable sliding Lumon glass panels — left zone (2.44m × 3.35m) and center zone (2.44m × 4.57m)", sortOrder: 6 },
+  { type: "inclusion", text: "Operable sliding Lumon panels — left zone (2.44m × 3.35m) and center zone (2.44m × 4.57m)", sortOrder: 6 },
   { type: "inclusion", text: "Single 32\" swing door opening on right side (near entrance/wall) with latch hardware and handle clearance", sortOrder: 7 },
-  { type: "inclusion", text: "Sliding glass panels for right side zone (remainder after 32\" door opening)", sortOrder: 8 },
+  { type: "inclusion", text: "Sliding Lumon panels for right side zone (remainder after 32\" door opening)", sortOrder: 8 },
   { type: "inclusion", text: "Post base plates and anchor bolts into existing concrete slab (6 posts)", sortOrder: 9 },
   { type: "inclusion", text: "LED strip lighting integrated into 8\" structural beams", sortOrder: 10 },
   { type: "inclusion", text: "Matte black powder coat finish on all aluminum components", sortOrder: 11 },
@@ -160,15 +160,15 @@ const scopeItems = [
   { type: "assumption", text: "Existing concrete slab is structurally adequate to receive 6 post base anchors without reinforcement", sortOrder: 1 },
   { type: "assumption", text: "Building wall is structurally adequate to receive wall ledger without additional blocking", sortOrder: 2 },
   { type: "assumption", text: "All field dimensions will be verified prior to fabrication — drawing dimensions are preliminary", sortOrder: 3 },
-  { type: "assumption", text: "Lumon glass sliding panels are supplied and installed under a separate contract — preliminary pricing shown is Lumon glass only, subject to supplier confirmation and field verification", sortOrder: 4 },
-  { type: "assumption", text: "Existing railing (if present) will be coordinated with new glass enclosure entry zone — 32\" door clearance verified on site", sortOrder: 5 },
+  { type: "assumption", text: "Lumon sliding panels are supplied and installed under a separate contract — preliminary pricing shown is Lumon glass only, subject to supplier confirmation and field verification", sortOrder: 4 },
+  { type: "assumption", text: "Existing railing (if present) will be coordinated with new Lumon entry zone — 32\" door clearance verified on site", sortOrder: 5 },
   { type: "assumption", text: "Landlord and building owner approval for wall penetrations and ledger bolts will be obtained prior to fabrication", sortOrder: 6 },
   { type: "assumption", text: "No underground utilities conflict with post base locations or beam routing", sortOrder: 7 },
 
   // By Others
   { type: "by_others", text: "Licensed structural engineer — review and stamp all connection details and beam sizing", sortOrder: 1 },
   { type: "by_others", text: "Permit authority — City of Abbotsford building permit approval for louvered roof structure", sortOrder: 2 },
-  { type: "by_others", text: "Lumon glass supplier — supply and install operable sliding glass panels (left, center, right zones) and 32 inch door opening", sortOrder: 3 },
+  { type: "by_others", text: "Lumon glass supplier — supply and install operable Lumon panels (left, center, right zones) and 32 inch door opening", sortOrder: 3 },
   { type: "by_others", text: "Electrical contractor — LED lighting power supply and wiring in structural beams", sortOrder: 4 },
   { type: "by_others", text: "Landlord / property manager — wall penetration approval, ledger bolt coordination, and roof access", sortOrder: 5 },
 ];
@@ -181,7 +181,7 @@ const lumonPricingNotes = [
   { type: "assumption", text: "Rough Total (before discount): $22,059", sortOrder: 11 },
   { type: "assumption", text: "Revised Total (with client discount): $17,157", sortOrder: 12 },
   { type: "assumption", text: "Field Verification Note: Confirm 32 inch door opening clearance with handle and latch hardware on site prior to glass fabrication", sortOrder: 13 },
-  { type: "assumption", text: "Estimating Note: Handwritten pricing is for Lumon glass panels only. Does not include structural aluminum frame, LED lighting, installation labor, or site coordination.", sortOrder: 14 },
+  { type: "assumption", text: "Estimating Note: Handwritten pricing is for Lumon panels only. Does not include structural aluminum frame, LED lighting, installation labor, or site coordination.", sortOrder: 14 },
 ];
 
 scopeItems.push(...lumonPricingNotes);

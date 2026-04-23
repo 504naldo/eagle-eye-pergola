@@ -77,15 +77,15 @@ describe("calculateQTO", () => {
     expect(structureItems.length).toBeGreaterThan(0);
   });
 
-  it("includes Lumin glass items when glass is enabled", () => {
+  it("includes Lumon glass items when glass is enabled", () => {
     const items = calculateQTO(defaultParams);
-    const glassItems = items.filter(i => i.category === "Lumin Glass Enclosure");
+    const glassItems = items.filter(i => i.category === "Lumon Enclosure");
     expect(glassItems.length).toBeGreaterThan(0);
   });
 
-  it("excludes Lumin glass items when all glass is disabled", () => {
+  it("excludes Lumon glass items when all glass is disabled", () => {
     const items = calculateQTO({ ...defaultParams, glassFront: false, glassLeft: false, glassRight: false });
-    const glassItems = items.filter(i => i.category === "Lumin Glass Enclosure");
+    const glassItems = items.filter(i => i.category === "Lumon Enclosure");
     expect(glassItems.length).toBe(0);
   });
 

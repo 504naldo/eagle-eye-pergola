@@ -23,6 +23,7 @@ import FilesTab from "@/components/FilesTab";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import { PromptEditor } from "@/components/PromptEditor";
+import { EditableQTOTable } from "@/components/EditableQTOTable";
 import {
   calculateFencingQTO,
   getFencingDefaultRates,
@@ -61,6 +62,17 @@ export default function FencingEditor({ projectId }: Props) {
   const [customPrompt, setCustomPrompt] = useState<string>("");
 
   const utils = trpc.useUtils();
+  // QTO line overrides
+  const { data: qtoLineOverrides = [] } = trpc.qto.getLineOverrides.useQuery({ projectId }, { enabled: !!projectId });
+  const qtoOverridesMap = Object.fromEntries(qtoLineOverrides.map(o => [o.lineKey, { customQuantity: o.customQuantity ? parseFloat(o.customQuantity) : undefined, customUnit: o.customUnit ?? undefined, customDescription: o.customDescription ?? undefined }]));
+  const updateQTOLine = trpc.qto.updateLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO line updated"); },
+    onError: () => toast.error("Failed to update QTO line"),
+  });
+  const deleteQTOLine = trpc.qto.deleteLineItem.useMutation({
+    onSuccess: () => { utils.qto.getLineOverrides.invalidate({ projectId }); toast.success("QTO override removed"); },
+    onError: () => toast.error("Failed to remove QTO override"),
+  });
 
   // Load project
   const { data: project, isLoading: projectLoading } = trpc.projects.get.useQuery({ id: projectId });
@@ -490,42 +502,35 @@ export default function FencingEditor({ projectId }: Props) {
           <div className="max-w-4xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-[#C9A84C] font-bold text-sm uppercase tracking-wider">Quantity Take-Off</h2>
-              <span className="text-gray-400 text-xs">All rates are budget estimates — verify with supplier</span>
+              <span className="text-gray-400 text-xs">Click any row to edit qty or unit</span>
             </div>
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2">
+              ⚠ All quantities and costs are preliminary estimates only (CAD). Subject to field verification, supplier quotes, and licensed review prior to fabrication.
+            </p>
             {Object.entries(qtoGroups).map(([group, items]) => (
-              <div key={group} className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-[#C9A84C]/10 px-4 py-2">
-                  <span className="text-[#C9A84C] font-bold text-xs uppercase tracking-wide">{group}</span>
+              <div key={group} className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#C9A84C]" />
+                  <h3 className="text-sm font-semibold text-gray-800">{group}</h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-400">
-                        <th className="text-left px-4 py-2 font-medium">Description</th>
-                        <th className="text-right px-3 py-2 font-medium">Qty</th>
-                        <th className="text-left px-2 py-2 font-medium">Unit</th>
-                        <th className="text-right px-3 py-2 font-medium">Rate</th>
-                        <th className="text-right px-4 py-2 font-medium">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item, i) => (
-                        <tr key={i} className="border-t border-[#333] hover:bg-gray-50/50">
-                          <td className="px-4 py-2 text-white">{item.description}</td>
-                          <td className="px-3 py-2 text-right text-gray-300">{item.qty}</td>
-                          <td className="px-2 py-2 text-gray-400">{item.unit}</td>
-                          <td className="px-3 py-2 text-right text-gray-300">${item.unitRate.toLocaleString()}</td>
-                          <td className="px-4 py-2 text-right text-white font-medium">${item.lineTotal.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <EditableQTOTable
+                  items={items.map(item => ({
+                    lineKey: item.lineKey ?? item.description,
+                    description: qtoOverridesMap[item.lineKey ?? item.description]?.customDescription ?? item.description,
+                    quantity: qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty,
+                    unit: qtoOverridesMap[item.lineKey ?? item.description]?.customUnit ?? item.unit,
+                    unitRate: rateOverrides[item.description] ?? item.unitRate,
+                    total: (qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty) * (rateOverrides[item.description] ?? item.unitRate),
+                  }))}
+                  overrides={qtoOverridesMap}
+                  onUpdateLineItem={async (lineKey, qty, unit, desc) => { updateQTOLine.mutate({ projectId, lineKey, customQuantity: qty, customUnit: unit, customDescription: desc }); }}
+                  onDeleteLineItem={async (lineKey) => { deleteQTOLine.mutate({ projectId, lineKey }); }}
+                />
               </div>
             ))}
             <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/60 rounded-lg px-6 py-4 flex justify-between items-center">
-              <span className="text-[#C9A84C] font-bold text-sm uppercase tracking-wide">Budget Total (excl. GST)</span>
-              <span className="text-[#C9A84C] font-bold text-xl">${grandTotal.toLocaleString()}</span>
+              <span className="text-[#C9A84C] font-bold text-sm uppercase tracking-wide">Preliminary Budget Total (excl. GST)</span>
+              <span className="text-[#C9A84C] font-bold text-xl">${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <p className="text-gray-500 text-xs">* Budget estimate only. All quantities and rates require field verification and supplier confirmation prior to tender.</p>
           </div>

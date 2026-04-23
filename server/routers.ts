@@ -251,7 +251,7 @@ Project Details:
 - Clear Height: ${input.heightFt || "10"} ft
 - Post Configuration: ${input.postCount || 5} front posts only (wall-mounted lean-to — no rear posts)
 - Roof System: Aluminum ${input.slatType === "operable" ? "operable louver" : "fixed slat"} canopy, connected to building wall via concealed ledger
-- Lumin Glass Enclosure: Vertical glass panels on ${glassZones || "all sides"}, top rail integrated with fascia beam
+- Lumon Enclosure: Vertical Lumon panels on ${glassZones || "all sides"}, top rail integrated with fascia beam
 - Finish: ${input.finishColor || "Matte Black"} powder coat
 - LED Lighting: ${input.ledLighting ? "Included" : "Not included"}
 - Prepared by: Ranaldo Daniels, Eagle Eye Management Services
@@ -431,11 +431,11 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
             input.glassRight ? "right side" : null,
           ].filter(Boolean);
           const glassDesc = glassZones.length > 0
-            ? `frameless glass enclosure panels on the ${glassZones.join(", ")}`
-            : "glass enclosure panels";
+            ? `frameless Lumon panels on the ${glassZones.join(", ")}`
+            : "Lumon panels";
           const enclosureStylePrompts: Record<string, string> = {
             photorealistic: `Bright midday sun, photorealistic architectural photography, 3/4 angle at eye level. Commercial patio setting${locationDesc}.`,
-            dusk: `Golden hour dusk lighting, warm interior glow visible through glass panels. Atmospheric${locationDesc}.`,
+            dusk: `Golden hour dusk lighting, warm interior glow visible through Lumon panels. Atmospheric${locationDesc}.`,
             interior: `Interior view looking outward through the ${glassDesc}. Warm interior lighting, tables visible. Photorealistic.`,
             aerial: `Aerial bird's-eye view showing the full ${width} ft x ${depth} ft enclosed structure. Photorealistic.`,
           };
@@ -460,8 +460,8 @@ High resolution, 16:9 aspect ratio, professional architectural visualization qua
             input.glassRight ? "right side" : null,
           ].filter(Boolean);
           const glassDesc = glassZones.length > 0
-            ? `Lumin frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
-            : "no glass enclosure panels";
+            ? `Lumon frameless glass vertical enclosure panels on the ${glassZones.join(", ")}`
+            : "no Lumon panels";
           const ledDesc = input.ledLighting ? "integrated LED strip lighting along the beams" : "no LED lighting";
           const pergolaStylePrompts: Record<string, string> = {
             photorealistic: `Bright midday sun, clear blue sky, photorealistic architectural photography, shot from a 3/4 angle at eye level showing the front and one side of the pergola. Commercial restaurant patio setting${locationDesc}. People dining in background, soft bokeh.`,
@@ -530,7 +530,7 @@ High resolution, photorealistic architectural visualization quality.`;
 
 Proposed canopy: ${w} ft wide x ${d} ft deep x ${h} ft clear height, aluminum frame with ${finishDesc3} powder coat finish. The canopy should look like it is physically installed at this location — matching the building facade, ground surface, lighting, and spatial context shown in the reference photo.
 
-Do NOT change the background environment. Only add the canopy structure to the existing space shown in the photo. Do NOT add fencing, pergola louver roofs, or glass enclosure panels unless they are already visible in the reference photo.
+Do NOT change the background environment. Only add the canopy structure to the existing space shown in the photo. Do NOT add fencing, pergola louver roofs, or Lumon panels unless they are already visible in the reference photo.
 
 High resolution, photorealistic architectural visualization quality.`;
 
@@ -541,8 +541,8 @@ High resolution, photorealistic architectural visualization quality.`;
               input.glassRight ? "right side" : null,
             ].filter(Boolean);
             const glassDesc2 = glassZones2.length > 0
-              ? `frameless glass panels on the ${glassZones2.join(", ")}`
-              : "glass enclosure panels";
+              ? `Lumon panels on the ${glassZones2.join(", ")}`
+              : "Lumon panels";
             finalPrompt = `This is the actual site where the patio enclosure will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed enclosure system installed in this space.
 
 Proposed enclosure: ${w} ft wide x ${d} ft deep x ${h} ft clear height, aluminum frame with ${glassDesc2}, ${finishDesc3} powder coat finish. The enclosure should look like it is physically installed at this location — matching the building, floor, lighting, and spatial context shown in the reference photo.
@@ -560,8 +560,8 @@ High resolution, photorealistic architectural visualization quality.`;
               input.glassRight ? "right side" : null,
             ].filter(Boolean);
             const glassDesc3 = glassZones3.length > 0
-              ? `Lumin frameless glass panels on the ${glassZones3.join(", ")}`
-              : "no glass enclosure panels";
+              ? `Lumon Lumon panels on the ${glassZones3.join(", ")}`
+              : "no Lumon panels";
             const ledDesc2 = input.ledLighting ? "integrated LED strip lighting" : "no LED lighting";
             finalPrompt = `This is the actual site where the pergola will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed pergola structure installed in this space.
 
