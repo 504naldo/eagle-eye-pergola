@@ -331,3 +331,12 @@
 - [x] Visually verified all 3 drawing sheets render correctly after fix
 - [x] 51 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Fix Milestones PDF Root Cause (layout:landscape dimension swap)
+
+- [x] Identify root cause: PDFDocument created with both size:[PW,PH] AND layout:"landscape" — PDFKit swaps dimensions, rendering portrait A3 (841pt wide) instead of landscape A3 (1190pt wide)
+- [x] Remove layout:"landscape" from both PDFDocument constructors in pdfExport.ts (handleScopedPDFExport + handlePDFExport)
+- [x] Fix Front/Side Elevation title overlap: drawSectionTitle was drawing both titles at MARGIN; Side Elevation title now drawn at seX (right column)
+- [x] Visually verified all 9 pages of live Milestones PDF render correctly after fix
+- [x] 51 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint

@@ -425,7 +425,7 @@ async function handleScopedPDFExport(
   project: Awaited<ReturnType<typeof getProjectById>>,
   scope: "canopy" | "enclosure" | "fencing"
 ) {
-  const doc = new PDFDocument({ size: [PW, PH], layout: "landscape", margin: 0, autoFirstPage: false });
+  const doc = new PDFDocument({ size: [PW, PH], margin: 0, autoFirstPage: false });
   const chunks: Buffer[] = [];
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
   const pdfReady = new Promise<Buffer>((resolve, reject) => {
@@ -651,7 +651,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     const checklistCategories = Array.from(new Set(checklist.map(c => c.category)));
 
     // Create PDF document
-    const doc = new PDFDocument({ size: [PW, PH], layout: "landscape", margin: 0, autoFirstPage: false });
+    const doc = new PDFDocument({ size: [PW, PH], margin: 0, autoFirstPage: false });
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -796,9 +796,10 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // Side elevation
     const seX = MARGIN + halfW + 12;
-    drawSectionTitle(doc, "Side Elevation", "SHEET 05", elevY);
-    doc.fontSize(14).fillColor(BLACK).font("Helvetica-Bold").text("Side Elevation", seX, elevY + 2);
-    doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("SHEET 05", seX, elevY + 18);
+    // Draw side elevation section title at seX (right column)
+    doc.rect(seX, elevY, 4, 22).fill(GOLD);
+    doc.fontSize(14).fillColor(BLACK).font("Helvetica-Bold").text("Side Elevation", seX + 12, elevY + 2);
+    doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("SHEET 05", seX + 12, elevY + 18);
     doc.rect(seX, feBoxY, halfW, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Side Elevation", seX + 8, feBoxY + 5);
     doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("NTS", seX + 8, feBoxY + 5, { align: "right", width: halfW - 16 });
