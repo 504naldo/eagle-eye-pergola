@@ -313,3 +313,10 @@
 
 - [x] Replace all instances of "Lumon glass", "glass panels", "sliding glass", "glass enclosure" with "Lumon" throughout app (seed data, scope types, geometry, UI labels, PDF builder)
 - [x] Verify Lumon appears correctly in QTO, scope items, checklist, and PDF sheets
+
+## Fix PDF Centering Issues
+
+- [x] Inspect all PDF sheets visually for centering problems
+- [x] Fix text/drawing centering in fencingPdfBuilder.ts (S-02 through S-07 fixed)
+- [x] Verify all sheets render correctly after fix (all 16 sheets visually verified)
+- [x] Save checkpoint

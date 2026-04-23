@@ -700,10 +700,14 @@ function sheetExistingConditions(doc: PDFKit.PDFDocument, ctx: PageCtx, params: 
   const runM = ftToM(params.runLengthFt);
   const heightM = ftToM(params.heightFt);
 
+  // Reserve 40pt at top for north arrow, 20pt at bottom
+  const topPad = 40;
+  const botPad = 20;
+  const availH = h - topPad - botPad;
   const dw = w * 0.72;
-  const dh = h * 0.68;
+  const dh = Math.min(h * 0.68, availH * 0.90);
   const dx = x0 + (w - dw) / 2;
-  const dy = y0 + (h - dh) / 2 + 10;
+  const dy = y0 + topPad + (availH - dh) / 2;
 
   // Parkade floor
   doc.rect(dx, dy, dw, dh).fill("#F0F0F0");
@@ -772,11 +776,13 @@ function sheetExistingConditions(doc: PDFKit.PDFDocument, ctx: PageCtx, params: 
   leader(doc, dx + wallT + 8, dy + wallT + 8, dx - 10, dy + wallT - 20, "CONCRETE SLAB (EXIST.)");
   leader(doc, colPositions[0][0], colPositions[0][1], colPositions[0][0] - 30, colPositions[0][1] + 25, "EXIST. CONC. COLUMN");
 
-  // Legend
-  const legX = dx + dw + 18;
-  let legY = dy + dh - 10;
+  // Legend — inside drawing, top-right corner
+  const legX = dx + dw - 130;
+  let legY = dy + 10;
+  doc.rect(legX - 6, legY - 6, 130, 76).fill(WHITE);
+  doc.strokeColor(MGRAY).lineWidth(0.5).rect(legX - 6, legY - 6, 130, 76).stroke();
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("LEGEND", legX, legY);
-  legY -= 14;
+  legY += 12;
   const legendItems: [string, string][] = [
     [MGRAY, "Existing Concrete Wall"],
     [GOLD, "Proposed Fence Zone"],
@@ -786,12 +792,12 @@ function sheetExistingConditions(doc: PDFKit.PDFDocument, ctx: PageCtx, params: 
   for (const [col, lbl] of legendItems) {
     doc.rect(legX, legY, 10, 8).fill(col);
     doc.fillColor(DARK).font("Helvetica").fontSize(6.5).text(lbl, legX + 14, legY + 1);
-    legY -= 14;
+    legY += 14;
   }
 
-  // North arrow
+  // North arrow — above drawing, centred
   const naX = dx + dw / 2;
-  const naY = dy - 28;
+  const naY = y0 + 6;
   doc.fillColor(DARK).polygon([naX, naY + 14], [naX - 6, naY], [naX, naY + 4]).fill();
   doc.fillColor(WHITE).polygon([naX, naY + 14], [naX + 6, naY], [naX, naY + 4]).fill();
   doc.strokeColor(DARK).lineWidth(0.75).circle(naX, naY + 7, 10).stroke();
@@ -807,10 +813,14 @@ function sheetPlan(doc: PDFKit.PDFDocument, ctx: PageCtx, params: FencingParams)
   const gateWidthM = params.hasGate ? ftToM(params.gateWidthFt) : 0;
   const postSpacingM = ftToM(params.postSpacingFt);
 
+  // Reserve 50pt at top for keynotes/scale bar, 20pt at bottom
+  const topPad = 50;
+  const botPad = 20;
+  const availH = h - topPad - botPad;
   const dw = w * 0.80;
-  const dh = h * 0.72;
+  const dh = Math.min(h * 0.72, availH * 0.90);
   const dx = x0 + (w - dw) / 2;
-  const dy = y0 + (h - dh) / 2 + 8;
+  const dy = y0 + topPad + (availH - dh) / 2;
 
   const scale = dw / (runM + 1.0);
   const fenceW = runM * scale;
@@ -887,26 +897,27 @@ function sheetPlan(doc: PDFKit.PDFDocument, ctx: PageCtx, params: FencingParams)
   doc.fillColor(DARK).circle(fx - 16, fy, 7).fill();
   doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(6).text("1", fx - 19, fy - 4);
 
-  // Keynote legend
-  let legY = dy - 38;
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("KEYNOTES", dx + 4, legY);
-  legY -= 13;
+  // Keynote legend — in top reserved area
+  const knoteX = x0;
+  let legY = y0 + 8;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("KEYNOTES", knoteX, legY);
+  legY += 12;
   const knotes: [string, string][] = [
     ["1", "End Post — See DET-02"],
     ["2", "Gate Post — See DET-05"],
     ["3", "Mesh Panel — See DET-04"],
   ];
   for (const [num, txt] of knotes) {
-    doc.fillColor(DARK).circle(dx + 10, legY + 3, 6).fill();
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(6).text(num, dx + 7, legY);
-    doc.fillColor(DARK).font("Helvetica").fontSize(6.5).text(txt, dx + 20, legY);
-    legY -= 13;
+    doc.fillColor(DARK).circle(knoteX + 6, legY + 4, 5).fill();
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(6).text(num, knoteX + 3, legY + 1);
+    doc.fillColor(DARK).font("Helvetica").fontSize(6.5).text(txt, knoteX + 16, legY + 1);
+    legY += 12;
   }
 
-  // Scale bar
+  // Scale bar — in top reserved area, centred
   const sbX = dx + dw / 2 - 40;
-  const sbY = dy - 22;
-  doc.fillColor(DARK).font("Helvetica").fontSize(6).text("SCALE 1:25", 0, sbY + 10, { align: "center", width: PW });
+  const sbY = y0 + 8;
+  doc.fillColor(DARK).font("Helvetica").fontSize(6).text("SCALE 1:25", 0, sbY + 16, { align: "center", width: PW });
   for (let i = 0; i < 5; i++) {
     doc.rect(sbX + i * 16, sbY, 16, 6).fill(i % 2 === 0 ? DARK : WHITE);
     doc.strokeColor(DARK).lineWidth(0.5).rect(sbX + i * 16, sbY, 16, 6).stroke();
@@ -927,10 +938,14 @@ function sheetFrontElevation(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fenc
   const postSpacingM = ftToM(params.postSpacingFt);
   const fs = params.frameSectionMm;
 
+  // Reserve space: 80pt notes at top, 80pt info block at bottom
+  const topReserve = 80;
+  const botReserve = 80;
+  const availH = h - topReserve - botReserve;
   const dw = w * 0.82;
-  const dh = h * 0.50;
-  const dx = x0 + (w - dw) / 2 + 10;
-  const dy = y0 + h * 0.28;
+  const dh = Math.min(h * 0.50, availH * 0.90);
+  const dx = x0 + (w - dw) / 2;
+  const dy = y0 + topReserve + (availH - dh) / 2;
 
   const scale = dw / (runM + 1.2);
   const fenceW = runM * scale;
@@ -1084,10 +1099,13 @@ function sheetLeftElevation(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fenci
   const depthM = 1.0; // typical enclosure depth ~1m
   const fs = params.frameSectionMm;
 
+  // Reserve 50pt at bottom for notes
+  const notesReserve = 50;
+  const availH = h - notesReserve - 20;
   const dw = w * 0.55;
-  const dh = h * 0.60;
+  const dh = Math.min(h * 0.60, availH * 0.85);
   const dx = x0 + (w - dw) / 2;
-  const dy = y0 + (h - dh) / 2 + 10;
+  const dy = y0 + 10 + (availH - dh) / 2;
 
   const scaleX = dw / (depthM + 0.4);
   const scaleY = dh / (heightM + 0.4);
@@ -1133,14 +1151,15 @@ function sheetLeftElevation(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fenci
   leader(doc, fx + fenceD - fs * scaleX / 2, fy + fenceH * 0.8, fx + fenceD + 30, fy + fenceH * 0.8 + 20, `SHS ${fs}×${fs}×3 POST`);
   leader(doc, fx + fenceD / 2, fy - 3, fx + fenceD + 30, fy - 20, "TOP RAIL");
 
-  // Notes
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, y0 + 10);
+  // Notes at bottom
+  const notesY = y0 + h - notesReserve;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, notesY);
   const notes = [
     "1. Side elevation shows typical enclosure depth (approx. 1.0 m).",
     "2. Verify actual depth on site prior to fabrication.",
     "3. Back wall connection: clip angle to concrete wall — See DET-03.",
   ];
-  let ny = y0 + 22;
+  let ny = notesY + 12;
   for (const n of notes) {
     doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, ny, { width: w });
     ny += 11;
@@ -1156,10 +1175,13 @@ function sheetRightElevation(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fenc
   const depthM = 1.0;
   const fs = params.frameSectionMm;
 
+  // Reserve 50pt at bottom for notes
+  const notesReserve = 50;
+  const availH = h - notesReserve - 20;
   const dw = w * 0.55;
-  const dh = h * 0.60;
+  const dh = Math.min(h * 0.60, availH * 0.85);
   const dx = x0 + (w - dw) / 2;
-  const dy = y0 + (h - dh) / 2 + 10;
+  const dy = y0 + 10 + (availH - dh) / 2;
 
   const scaleX = dw / (depthM + 0.4);
   const scaleY = dh / (heightM + 0.4);
@@ -1208,14 +1230,15 @@ function sheetRightElevation(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fenc
   leader(doc, fx + fenceD, fy + fenceH * 0.3 + 4, fx + fenceD + 60, fy + fenceH * 0.3 - 10, "75×75×6 CLIP ANGLE — See DET-07");
   leader(doc, fx + fenceD - fs * scaleX / 2, fy + fenceH * 0.7, fx - 30, fy + fenceH * 0.7 + 10, `SHS ${fs}×${fs}×3 END POST`);
 
-  // Notes
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, y0 + 10);
+  // Notes at bottom
+  const notesY = y0 + h - notesReserve;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, notesY);
   const notes = [
     "1. Right side elevation shows column tie-in connection.",
     "2. Clip angle: 75×75×6 EA, 2× M12 Hilti HIT-RE500 per angle.",
     "3. Verify column face position on site. See DET-07 for detail.",
   ];
-  let ny = y0 + 22;
+  let ny = notesY + 12;
   for (const n of notes) {
     doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, ny, { width: w });
     ny += 11;
@@ -1229,10 +1252,14 @@ function sheetOverheadClearance(doc: PDFKit.PDFDocument, ctx: PageCtx, params: F
 
   const runM = ftToM(params.runLengthFt);
 
+  // Reserve 60pt at bottom for notes, 10pt at top
+  const notesReserve = 60;
+  const topPad = 10;
+  const availH = h - notesReserve - topPad;
   const dw = w * 0.75;
-  const dh = h * 0.70;
+  const dh = Math.min(h * 0.70, availH * 0.90);
   const dx = x0 + (w - dw) / 2;
-  const dy = y0 + (h - dh) / 2 + 8;
+  const dy = y0 + topPad + (availH - dh) / 2;
 
   // Parkade floor
   doc.rect(dx, dy, dw, dh).fill("#F2F2F2");
@@ -1284,26 +1311,13 @@ function sheetOverheadClearance(doc: PDFKit.PDFDocument, ctx: PageCtx, params: F
   doc.fillColor(RED).font("Helvetica-Bold").fontSize(6)
     .text("POTENTIAL CONFLICT ZONE — VERIFY ON SITE", fzX, confY + 7, { width: fzW, align: "center" });
 
-  // Notes
-  let notesY = dy - 10;
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", dx, notesY);
-  notesY -= 12;
-  const notes = [
-    "1. Contractor to verify all overhead clearances prior to fabrication.",
-    "2. Maintain minimum 150 mm clearance from all sprinkler heads.",
-    "3. Coordinate with mechanical engineer if duct conflicts with fence height.",
-    "4. All dimensions shown are approximate — field verify.",
-  ];
-  for (const n of notes) {
-    doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, dx, notesY, { width: dw });
-    notesY -= 11;
-  }
-
-  // Legend
-  const legX = dx + dw + 14;
-  let legY = dy + dh - 10;
+  // Legend — inside drawing area, top-right corner
+  const legX = dx + dw - 110;
+  let legY = dy + 10;
+  doc.rect(legX - 6, legY - 6, 110, 72).fill(WHITE);
+  doc.strokeColor(MGRAY).lineWidth(0.5).rect(legX - 6, legY - 6, 110, 72).stroke();
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("LEGEND", legX, legY);
-  legY -= 14;
+  legY += 12;
   const legendItems: [string, string][] = [
     [GOLD, "Proposed Fence Zone"],
     [BLUE, "HVAC Duct"],
@@ -1313,7 +1327,22 @@ function sheetOverheadClearance(doc: PDFKit.PDFDocument, ctx: PageCtx, params: F
   for (const [col, lbl] of legendItems) {
     doc.rect(legX, legY, 10, 8).fill(col);
     doc.fillColor(DARK).font("Helvetica").fontSize(6.5).text(lbl, legX + 14, legY + 1);
-    legY -= 14;
+    legY += 14;
+  }
+
+  // Notes at bottom
+  const notesY = y0 + h - notesReserve;
+  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, notesY);
+  const notes = [
+    "1. Contractor to verify all overhead clearances prior to fabrication.",
+    "2. Maintain minimum 150 mm clearance from all sprinkler heads.",
+    "3. Coordinate with mechanical engineer if duct conflicts with fence height.",
+    "4. All dimensions shown are approximate — field verify.",
+  ];
+  let ny = notesY + 12;
+  for (const n of notes) {
+    doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, ny, { width: w });
+    ny += 11;
   }
 }
 
