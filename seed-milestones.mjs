@@ -168,10 +168,23 @@ const scopeItems = [
   // By Others
   { type: "by_others", text: "Licensed structural engineer — review and stamp all connection details and beam sizing", sortOrder: 1 },
   { type: "by_others", text: "Permit authority — City of Abbotsford building permit approval for louvered roof structure", sortOrder: 2 },
-  { type: "by_others", text: "Lumon glass supplier — supply and install operable sliding glass panels (left, center, right zones) and 32\" door opening", sortOrder: 3 },
+  { type: "by_others", text: "Lumon glass supplier — supply and install operable sliding glass panels (left, center, right zones) and 32 inch door opening", sortOrder: 3 },
   { type: "by_others", text: "Electrical contractor — LED lighting power supply and wiring in structural beams", sortOrder: 4 },
   { type: "by_others", text: "Landlord / property manager — wall penetration approval, ledger bolt coordination, and roof access", sortOrder: 5 },
 ];
+
+// Add Lumon glass pricing notes to scope items (using assumption type for preliminary pricing)
+const lumonPricingNotes = [
+  { type: "assumption", text: "PRELIMINARY LUMON GLASS PRICING — Subject to supplier confirmation and field verification", sortOrder: 8 },
+  { type: "assumption", text: "Left Zone: 2.44m x 3.35m = 8.17 m2 x 2.5 factor = 20.425 m2 x $600/m2 = $12,255", sortOrder: 9 },
+  { type: "assumption", text: "Right Zone: 2.44m x 4.57m = 11.16 m2 x 2 (quantity) x $600/m2 = $13,392", sortOrder: 10 },
+  { type: "assumption", text: "Rough Total (before discount): $22,059", sortOrder: 11 },
+  { type: "assumption", text: "Revised Total (with client discount): $17,157", sortOrder: 12 },
+  { type: "assumption", text: "Field Verification Note: Confirm 32 inch door opening clearance with handle and latch hardware on site prior to glass fabrication", sortOrder: 13 },
+  { type: "assumption", text: "Estimating Note: Handwritten pricing is for Lumon glass panels only. Does not include structural aluminum frame, LED lighting, installation labor, or site coordination.", sortOrder: 14 },
+];
+
+scopeItems.push(...lumonPricingNotes);
 
 for (const item of scopeItems) {
   await conn.execute(

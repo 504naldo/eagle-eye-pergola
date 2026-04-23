@@ -282,3 +282,14 @@
 - [x] Display prompt used for each rendering (tooltip or expandable section)
 - [x] Vitest: test custom prompt override logic
 - [x] Save checkpoint
+
+
+## Add Lumon Glass Pricing to Milestones QTO
+
+- [x] Update seed data with Lumon glass line items (left zone 8.17m² × 2.5 factor, right zone 11.16m² × 2 factor)
+- [x] Calculate pricing: 20.425m² × $600 = $12,255; 22.32m² × $600 = $13,392; rough total $22,059; revised (client discount) $17,157
+- [x] Add QTO line items with "Preliminary Lumon Glass Only" disclaimers
+- [x] Add field verification note for 32" door/handle clearance
+- [x] Add estimating note that pricing is subject to supplier confirmation
+- [x] Verify QTO renders correctly with all pricing
+- [x] Save checkpoint
