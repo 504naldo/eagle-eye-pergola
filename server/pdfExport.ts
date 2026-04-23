@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import type { Request, Response } from "express";
-import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject, getReferencePhotosByProject } from "./db";
+import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject, getReferencePhotosByProject, getQTOLineOverrides } from "./db";
 import https from "https";
 import http from "http";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
@@ -414,6 +414,27 @@ async function handleScopedPDFExport(
   const projectName = project?.projectName ?? "Untitled";
   const rateOverrides = await getRateOverrides(project?.id ?? 0);
   const projectRenderings = await getRenderingsByProject(project?.id ?? 0);
+  // Load QTO line overrides (user-edited quantities/units/descriptions)
+  const rawLineOverrides = await getQTOLineOverrides(project?.id ?? 0);
+  const lineOverrideMap: Record<string, { qty?: number; unit?: string; desc?: string }> = {};
+  for (const o of rawLineOverrides) {
+    lineOverrideMap[o.lineKey] = {
+      qty: o.customQuantity ? parseFloat(o.customQuantity) : undefined,
+      unit: o.customUnit ?? undefined,
+      desc: o.customDescription ?? undefined,
+    };
+  }
+  function applyLineOverrides(items: QTOItem[]): QTOItem[] {
+    return items.map(item => {
+      const key = item.lineKey ?? item.description;
+      const ov = lineOverrideMap[key];
+      if (!ov) return item;
+      const qty = ov.qty ?? item.qty;
+      const unit = ov.unit ?? item.unit;
+      const desc = ov.desc ?? item.description;
+      return { ...item, description: desc, qty, unit, lineTotal: qty * item.unitRate };
+    });
+  }
 
   // ── COVER PAGE ──
   doc.addPage();
@@ -447,18 +468,18 @@ async function handleScopedPDFExport(
   let grandTotal: number;
   if (scope === "canopy") {
     const p = { ...DEFAULT_CANOPY_PARAMS, ...savedInputs };
-    qtoItems = calculateCanopyQTO(p, rateOverrides) as QTOItem[];
-    grandTotal = calculateCanopyGrandTotal(qtoItems);
+    qtoItems = applyLineOverrides(calculateCanopyQTO(p, rateOverrides) as QTOItem[]);
+    grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
   } else if (scope === "fencing") {
     const p = { ...DEFAULT_FENCING_PARAMS, ...savedInputs };
     const fencingItems = calculateFencingQTO(p, rateOverrides);
     // FencingQTOItem uses `group` instead of `category` — remap for PDF rendering
-    qtoItems = fencingItems.map(i => ({ ...i, category: i.group })) as QTOItem[];
+    qtoItems = applyLineOverrides(fencingItems.map(i => ({ ...i, category: i.group })) as QTOItem[]);
     grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
   } else {
     const p = { ...DEFAULT_ENCLOSURE_PARAMS, ...savedInputs };
-    qtoItems = calculateEnclosureQTO(p, rateOverrides) as QTOItem[];
-    grandTotal = calculateEnclosureGrandTotal(qtoItems);
+    qtoItems = applyLineOverrides(calculateEnclosureQTO(p, rateOverrides) as QTOItem[]);
+    grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
   }
 
   const qtoCategories = Array.from(new Set(qtoItems.map((i: QTOItem) => i.category)));
@@ -582,9 +603,27 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     const dims = getDrawingDimensions(pergolaParams);
     const savedRateOverrides = await getRateOverrides(projectId);
-    const qtoItems = calculateQTO(pergolaParams, savedRateOverrides) as QTOItem[];
+    const pergolaLineOverrides = await getQTOLineOverrides(projectId);
+    const pergolaLineOverrideMap: Record<string, { qty?: number; unit?: string; desc?: string }> = {};
+    for (const o of pergolaLineOverrides) {
+      pergolaLineOverrideMap[o.lineKey] = {
+        qty: o.customQuantity ? parseFloat(o.customQuantity) : undefined,
+        unit: o.customUnit ?? undefined,
+        desc: o.customDescription ?? undefined,
+      };
+    }
+    const rawQtoItems = calculateQTO(pergolaParams, savedRateOverrides) as QTOItem[];
+    const qtoItems = rawQtoItems.map(item => {
+      const key = item.lineKey ?? item.description;
+      const ov = pergolaLineOverrideMap[key];
+      if (!ov) return item;
+      const qty = ov.qty ?? item.qty;
+      const unit = ov.unit ?? item.unit;
+      const desc = ov.desc ?? item.description;
+      return { ...item, description: desc, qty, unit, lineTotal: qty * item.unitRate };
+    });
     const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
-    const grandTotal = calculateGrandTotal(qtoItems);
+    const grandTotal = qtoItems.reduce((s, i) => s + i.lineTotal, 0);
     const checklistCategories = Array.from(new Set(checklist.map(c => c.category)));
 
     // Create PDF document

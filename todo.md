@@ -305,9 +305,9 @@
 - [x] Add QTO tab to CanopyEditor with editable table
 - [x] Add QTO tab to EnclosureEditor with editable table
 - [x] Add QTO tab to FencingEditor with editable table
-- [ ] Verify PDF export uses edited quantities/units
+- [x] Verify PDF export uses edited quantities/units
 - [x] Vitest: test QTO override logic and calculations
-- [ ] Save checkpoint
+- [x] Save checkpoint
 
 ## Lumon Naming Fix
 
