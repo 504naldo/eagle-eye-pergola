@@ -320,3 +320,14 @@
 - [x] Fix text/drawing centering in fencingPdfBuilder.ts (S-02 through S-07 fixed)
 - [x] Verify all sheets render correctly after fix (all 16 sheets visually verified)
 - [x] Save checkpoint
+
+## Fix Milestones Pergola PDF Centering
+
+- [x] Audit all drawing functions in pdfExport.ts for elements placed outside drawing bounds
+- [x] Fix drawPlanView, drawFrontElevation, drawSideElevation, drawSection to use uniform scale (aspect-ratio-correct)
+- [x] Fix page layout to dynamically size drawing boxes to match each drawing's natural aspect ratio
+- [x] Add vertical centering offset for all drawing boxes (plan view, elevation, section)
+- [x] Use independent box heights for front and side elevations
+- [x] Visually verified all 3 drawing sheets render correctly after fix
+- [x] 51 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint

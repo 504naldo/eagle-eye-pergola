@@ -78,20 +78,25 @@ function drawDisclaimer(doc: PDFKit.PDFDocument, text: string, x: number, y: num
 
 function drawPlanView(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawingDimensions>, x: number, y: number, w: number, h: number) {
   const pad = { l: 60, r: 30, t: 40, b: 50 };
-  const dw = w - pad.l - pad.r;
-  const dh = h - pad.t - pad.b;
-  const sx = dw / dims.widthFt;
-  const sy = dh / dims.depthFt;
-  const px = (ft: number) => x + pad.l + ft * sx;
-  const py = (ft: number) => y + pad.t + ft * sy;
+  const availW = w - pad.l - pad.r;
+  const availH = h - pad.t - pad.b;
+  // Uniform scale: fit drawing to available area while preserving aspect ratio
+  const scale = Math.min(availW / dims.widthFt, availH / dims.depthFt);
+  const dw = dims.widthFt * scale;
+  const dh = dims.depthFt * scale;
+  // Center the drawing within the available area
+  const ox = x + pad.l + (availW - dw) / 2;
+  const oy = y + pad.t + (availH - dh) / 2;
+  const px = (ft: number) => ox + ft * scale;
+  const py = (ft: number) => oy + ft * scale;
 
   // Drawing border
-  doc.rect(x + pad.l, y + pad.t, dw, dh).fill(LIGHT_GRAY).stroke("#9CA3AF").strokeColor("#9CA3AF").lineWidth(1);
+  doc.rect(ox, oy, dw, dh).fill(LIGHT_GRAY).stroke("#9CA3AF").strokeColor("#9CA3AF").lineWidth(1);
 
   // Building wall (top)
-  doc.rect(x + pad.l, y + pad.t - 8, dw, 8).fill(BLACK);
+  doc.rect(ox, oy - 8, dw, 8).fill(BLACK);
   doc.fontSize(7).fillColor(BLACK).font("Helvetica-Bold")
-    .text("BUILDING WALL — WALL-MOUNTED LEAN-TO — NO REAR POSTS", x + pad.l, y + pad.t - 18, { width: dw, align: "center" });
+    .text("BUILDING WALL — WALL-MOUNTED LEAN-TO — NO REAR POSTS", ox, oy - 18, { width: dw, align: "center" });
 
   // Slat lines
   const slatSpacingFt = dims.slatSpacingIn / 12;
@@ -123,30 +128,36 @@ function drawPlanView(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawin
   // Dimension lines
   doc.strokeColor(GOLD).lineWidth(0.8);
   // Width
-  doc.moveTo(px(0), y + h - 18).lineTo(px(dims.widthFt), y + h - 18).stroke();
+  const dimLineY = oy + dh + 18;
+  doc.moveTo(px(0), dimLineY).lineTo(px(dims.widthFt), dimLineY).stroke();
   doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.widthFt.toFixed(1)}' (58'-0") TOTAL WIDTH`, px(0), y + h - 10, { width: dw, align: "center" });
+    .text(`${dims.widthFt.toFixed(1)}' (58'-0") TOTAL WIDTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
   // Depth
-  doc.moveTo(x + pad.l - 20, py(0)).lineTo(x + pad.l - 20, py(dims.depthFt)).stroke();
-  doc.save().translate(x + pad.l - 30, py(dims.depthFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
+  doc.moveTo(ox - 20, py(0)).lineTo(ox - 20, py(dims.depthFt)).stroke();
+  doc.save().translate(ox - 30, py(dims.depthFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
     .text(`${dims.depthFt.toFixed(1)}' DEPTH`, -20, 0).restore();
 
   // Label
   doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("ALUMINUM SLAT ROOF SYSTEM", px(0), py(dims.depthFt / 2) - 5, { width: dw, align: "center" });
 
   // North arrow
-  doc.fontSize(18).fillColor(BLACK).font("Helvetica-Bold").text("↑", x + w - 30, y + h - 40);
-  doc.fontSize(9).fillColor(BLACK).font("Helvetica-Bold").text("N", x + w - 26, y + h - 20);
+  doc.fontSize(18).fillColor(BLACK).font("Helvetica-Bold").text("↑", ox + dw - 24, oy + dh - 36);
+  doc.fontSize(9).fillColor(BLACK).font("Helvetica-Bold").text("N", ox + dw - 20, oy + dh - 16);
 }
 
 function drawFrontElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawingDimensions>, x: number, y: number, w: number, h: number) {
   const pad = { l: 55, r: 30, t: 30, b: 50 };
-  const dw = w - pad.l - pad.r;
-  const dh = h - pad.t - pad.b;
-  const sx = dw / dims.widthFt;
-  const sy = dh / dims.heightFt;
-  const px = (ft: number) => x + pad.l + ft * sx;
-  const py = (ft: number) => y + pad.t + dh - ft * sy;
+  const availW = w - pad.l - pad.r;
+  const availH = h - pad.t - pad.b;
+  // Uniform scale: fit drawing to available area while preserving aspect ratio
+  const scale = Math.min(availW / dims.widthFt, availH / dims.heightFt);
+  const dw = dims.widthFt * scale;
+  const dh = dims.heightFt * scale;
+  // Center the drawing within the available area
+  const ox = x + pad.l + (availW - dw) / 2;
+  const oy = y + pad.t + (availH - dh) / 2;
+  const px = (ft: number) => ox + ft * scale;
+  const py = (ft: number) => oy + dh - ft * scale;
 
   // Ground line
   doc.strokeColor("#374151").lineWidth(2).moveTo(px(0), py(0)).lineTo(px(dims.widthFt), py(0)).stroke();
@@ -175,27 +186,33 @@ function drawFrontElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof get
   }
 
   // Top fascia beam
-  doc.rect(px(0), py(0.5), dw, sy * 0.5).fill(BLACK);
+  doc.rect(px(0), py(0.5), dw, scale * 0.5).fill(BLACK);
 
   // Dimension lines
   doc.strokeColor(GOLD).lineWidth(0.8);
-  doc.moveTo(x + pad.l - 18, py(0)).lineTo(x + pad.l - 18, py(dims.heightFt)).stroke();
-  doc.save().translate(x + pad.l - 28, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
+  doc.moveTo(ox - 18, py(0)).lineTo(ox - 18, py(dims.heightFt)).stroke();
+  doc.save().translate(ox - 28, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
     .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
-  doc.moveTo(px(0), y + h - 18).lineTo(px(dims.widthFt), y + h - 18).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.widthFt.toFixed(1)}' (58'-0")`, px(0), y + h - 10, { width: dw, align: "center" });
+  const dimLineY = oy + dh + 18;
+  doc.moveTo(px(0), dimLineY).lineTo(px(dims.widthFt), dimLineY).stroke();
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.widthFt.toFixed(1)}' (58'-0")`, px(0), dimLineY + 4, { width: dw, align: "center" });
 
   doc.fontSize(7.5).fillColor(GRAY).font("Helvetica").text("NO REAR POSTS — WALL-MOUNTED CONNECTION TO BUILDING", px(0), py(0) + 6, { width: dw, align: "center" });
 }
 
 function drawSideElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawingDimensions>, x: number, y: number, w: number, h: number) {
   const pad = { l: 55, r: 50, t: 30, b: 50 };
-  const dw = w - pad.l - pad.r;
-  const dh = h - pad.t - pad.b;
-  const sx = dw / dims.depthFt;
-  const sy = dh / dims.heightFt;
-  const px = (ft: number) => x + pad.l + ft * sx;
-  const py = (ft: number) => y + pad.t + dh - ft * sy;
+  const availW = w - pad.l - pad.r;
+  const availH = h - pad.t - pad.b;
+  // Uniform scale: fit drawing to available area while preserving aspect ratio
+  const scale = Math.min(availW / dims.depthFt, availH / dims.heightFt);
+  const dw = dims.depthFt * scale;
+  const dh = dims.heightFt * scale;
+  // Center the drawing within the available area
+  const ox = x + pad.l + (availW - dw) / 2;
+  const oy = y + pad.t + (availH - dh) / 2;
+  const px = (ft: number) => ox + ft * scale;
+  const py = (ft: number) => oy + dh - ft * scale;
 
   // Ground line
   doc.strokeColor("#374151").lineWidth(2).moveTo(px(0), py(0)).lineTo(px(dims.depthFt), py(0)).stroke();
@@ -212,16 +229,16 @@ function drawSideElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getD
   for (let i = 0; i < dims.slatCount; i++) {
     const d = i * slatSpacingFt;
     if (d <= dims.depthFt) {
-      doc.rect(px(d) - 2, py(dims.heightFt), 4, dh - sy * 0.5).fill("#374151");
+      doc.rect(px(d) - 2, py(dims.heightFt), 4, dh - scale * 0.5).fill("#374151");
     }
   }
 
   // Top ledger/fascia
-  doc.rect(px(0), py(dims.heightFt), dw, sy * 0.5).fill(BLACK);
+  doc.rect(px(0), py(dims.heightFt), dw, scale * 0.5).fill(BLACK);
   // Front post
   doc.rect(px(dims.depthFt) - 5, py(dims.heightFt), 10, dh).fill(BLACK);
   // Gold fascia beam cap
-  doc.rect(px(dims.depthFt) - 7, py(dims.heightFt), 14, sy * 0.5).fill(GOLD);
+  doc.rect(px(dims.depthFt) - 7, py(dims.heightFt), 14, scale * 0.5).fill(GOLD);
 
   // Labels
   doc.fontSize(7.5).fillColor(GOLD).font("Helvetica-Bold").text("WALL LEDGER — BOLTED TO BUILDING", px(0) + 2, py(dims.heightFt) - 12);
@@ -229,8 +246,9 @@ function drawSideElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getD
 
   // Dimension lines
   doc.strokeColor(GOLD).lineWidth(0.8);
-  doc.moveTo(px(0), y + h - 18).lineTo(px(dims.depthFt), y + h - 18).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' (15'-8") DEPTH`, px(0), y + h - 10, { width: dw, align: "center" });
+  const dimLineY = oy + dh + 18;
+  doc.moveTo(px(0), dimLineY).lineTo(px(dims.depthFt), dimLineY).stroke();
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' (15'-8") DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
   doc.moveTo(px(dims.depthFt) + 18, py(0)).lineTo(px(dims.depthFt) + 18, py(dims.heightFt)).stroke();
   doc.save().translate(px(dims.depthFt) + 28, py(dims.heightFt / 2)).rotate(90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
     .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
@@ -238,12 +256,17 @@ function drawSideElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getD
 
 function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawingDimensions>, x: number, y: number, w: number, h: number) {
   const pad = { l: 60, r: 60, t: 30, b: 50 };
-  const dw = w - pad.l - pad.r;
-  const dh = h - pad.t - pad.b;
-  const sx = dw / dims.depthFt;
-  const sy = dh / dims.heightFt;
-  const px = (ft: number) => x + pad.l + ft * sx;
-  const py = (ft: number) => y + pad.t + dh - ft * sy;
+  const availW = w - pad.l - pad.r;
+  const availH = h - pad.t - pad.b;
+  // Uniform scale: fit drawing to available area while preserving aspect ratio
+  const scale = Math.min(availW / dims.depthFt, availH / dims.heightFt);
+  const dw = dims.depthFt * scale;
+  const dh = dims.heightFt * scale;
+  // Center the drawing within the available area
+  const ox = x + pad.l + (availW - dw) / 2;
+  const oy = y + pad.t + (availH - dh) / 2;
+  const px = (ft: number) => ox + ft * scale;
+  const py = (ft: number) => oy + dh - ft * scale;
 
   // Ground line
   doc.strokeColor("#374151").lineWidth(2).moveTo(px(0), py(0)).lineTo(px(dims.depthFt), py(0)).stroke();
@@ -259,15 +282,15 @@ function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawing
   const slatSpacingFt = dims.slatSpacingIn / 12;
   for (let i = 0; i < dims.slatCount; i++) {
     const d = i * slatSpacingFt;
-    if (d <= dims.depthFt) doc.rect(px(d) - 2, py(dims.heightFt), 4, dh - sy * 0.5).fill("#374151");
+    if (d <= dims.depthFt) doc.rect(px(d) - 2, py(dims.heightFt), 4, dh - scale * 0.5).fill("#374151");
   }
 
   // Top ledger/fascia
-  doc.rect(px(0), py(dims.heightFt), dw, sy * 0.5).fill(BLACK);
+  doc.rect(px(0), py(dims.heightFt), dw, scale * 0.5).fill(BLACK);
   // Front post
   doc.rect(px(dims.depthFt) - 5, py(dims.heightFt), 10, dh).fill(BLACK);
   // Gold fascia beam cap
-  doc.rect(px(dims.depthFt) - 7, py(dims.heightFt), 14, sy * 0.5).fill(GOLD);
+  doc.rect(px(dims.depthFt) - 7, py(dims.heightFt), 14, scale * 0.5).fill(GOLD);
 
   // Callout labels
   doc.fontSize(7.5).fillColor(GOLD).font("Helvetica-Bold").text("① WALL LEDGER", px(0) + 2, py(dims.heightFt) - 12);
@@ -281,10 +304,11 @@ function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawing
 
   // Dimension lines
   doc.strokeColor(GOLD).lineWidth(0.8);
-  doc.moveTo(px(0), y + h - 18).lineTo(px(dims.depthFt), y + h - 18).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' DEPTH`, px(0), y + h - 10, { width: dw, align: "center" });
-  doc.moveTo(x + pad.l - 30, py(0)).lineTo(x + pad.l - 30, py(dims.heightFt)).stroke();
-  doc.save().translate(x + pad.l - 42, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
+  const dimLineY = oy + dh + 18;
+  doc.moveTo(px(0), dimLineY).lineTo(px(dims.depthFt), dimLineY).stroke();
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
+  doc.moveTo(ox - 30, py(0)).lineTo(ox - 30, py(dims.heightFt)).stroke();
+  doc.save().translate(ox - 42, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
     .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
 }
 
@@ -718,9 +742,16 @@ export async function handlePDFExport(req: Request, res: Response) {
     const contentTop = 62;
     const contentH = PH - 62 - 28;
     drawSectionTitle(doc, "Plan View — Roof Level", "SHEET 03", contentTop + 6);
-    // Drawing box
-    const drawBoxY = contentTop + 36;
-    const drawBoxH = contentH - 50;
+    // Drawing box — size to drawing's natural aspect ratio (width:depth)
+    const planAvailW = PW - MARGIN * 2;
+    const planPad = { l: 60, r: 30, t: 40, b: 50 };
+    const planInnerW = planAvailW - planPad.l - planPad.r;
+    const planScale = planInnerW / dims.widthFt;
+    const planDrawH = dims.depthFt * planScale;
+    const drawBoxH = Math.min(planDrawH + planPad.t + planPad.b + 18 + 8, contentH - 30);
+    // Vertically center the plan view box in the available area
+    const planCenterOffset = Math.max(0, Math.floor((contentH - 36 - drawBoxH - 20) / 2));
+    const drawBoxY = contentTop + 36 + planCenterOffset;
     doc.rect(MARGIN, drawBoxY, PW - MARGIN * 2, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Plan View — Aluminum Slat Roof System", MARGIN + 8, drawBoxY + 5);
     doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS | All dims in feet unless noted", MARGIN + 8, drawBoxY + 5, { align: "right", width: PW - MARGIN * 2 - 16 });
@@ -730,7 +761,7 @@ export async function handlePDFExport(req: Request, res: Response) {
       .text("Connection type: Wall-mounted lean-to — No rear posts — Lumon vertical enclosure on 3 sides — Slat roof connects to building wall via concealed ledger",
         MARGIN, drawBoxY + drawBoxH + 4, { width: PW - MARGIN * 2 });
 
-    // ── PAGE 3: FRONT + SIDE ELEVATION ────────────────────────────────────
+    // ── PAGE 3: FRONT + SIDE ELEVATION ────────────────────────────────────────────
     doc.addPage();
     drawPageHeader(doc, project.projectName, "Sheets 04–05 of 07");
     drawPageFooter(doc);
@@ -738,10 +769,25 @@ export async function handlePDFExport(req: Request, res: Response) {
     const elevY = contentTop + 6;
     const elevH = contentH - 10;
 
+    // Calculate natural box heights for front and side elevations
+    const elevPad = { l: 55, r: 30, t: 30, b: 50 };
+    const feInnerW = halfW - elevPad.l - elevPad.r;
+    const feScale = Math.min(feInnerW / dims.widthFt, (elevH - 28 - elevPad.t - elevPad.b) / dims.heightFt);
+    const feDrawH = dims.heightFt * feScale;
+    const feBoxH = Math.min(feDrawH + elevPad.t + elevPad.b + 18 + 8, elevH - 28);
+
+    const sePad = { l: 55, r: 50, t: 30, b: 50 };
+    const seInnerW = halfW - sePad.l - sePad.r;
+    const seScale = Math.min(seInnerW / dims.depthFt, (elevH - 28 - sePad.t - sePad.b) / dims.heightFt);
+    const seDrawH = dims.heightFt * seScale;
+    const seBoxH = Math.min(seDrawH + sePad.t + sePad.b + 18 + 8, elevH - 28);
+    const combinedBoxH = Math.max(feBoxH, seBoxH);
+    // Vertically center the elevation boxes in the available area
+    const elevCenterOffset = Math.max(0, Math.floor((elevH - 28 - combinedBoxH) / 2));
+
     // Front elevation
     drawSectionTitle(doc, "Front Elevation", "SHEET 04", elevY);
-    const feBoxY = elevY + 28;
-    const feBoxH = elevH - 28;
+    const feBoxY = elevY + 28 + elevCenterOffset;
     doc.rect(MARGIN, feBoxY, halfW, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Front Elevation", MARGIN + 8, feBoxY + 5);
     doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("NTS", MARGIN + 8, feBoxY + 5, { align: "right", width: halfW - 16 });
@@ -756,16 +802,25 @@ export async function handlePDFExport(req: Request, res: Response) {
     doc.rect(seX, feBoxY, halfW, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Side Elevation", seX + 8, feBoxY + 5);
     doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("NTS", seX + 8, feBoxY + 5, { align: "right", width: halfW - 16 });
-    doc.rect(seX, feBoxY + 18, halfW, feBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
-    drawSideElevation(doc, dims, seX, feBoxY + 18, halfW, feBoxH - 18);
+    doc.rect(seX, feBoxY + 18, halfW, seBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
+    drawSideElevation(doc, dims, seX, feBoxY + 18, halfW, seBoxH - 18);
 
-    // ── PAGE 4: SECTION A-A ────────────────────────────────────────────────
+    // ── PAGE 4: SECTION A-A ────────────────────────────────────────────
     doc.addPage();
     drawPageHeader(doc, project.projectName, "Sheet 06 of 07");
     drawPageFooter(doc);
     drawSectionTitle(doc, "Section A–A", "SHEET 06", contentTop + 6);
-    const secBoxY = contentTop + 36;
-    const secBoxH = contentH - 80;
+    // Size section box to drawing's natural aspect ratio (depth:height)
+    const secPad = { l: 60, r: 60, t: 30, b: 50 };
+    const secInnerW = (PW - MARGIN * 2) - secPad.l - secPad.r;
+    const secScale = Math.min(secInnerW / dims.depthFt, (contentH - 80 - secPad.t - secPad.b) / dims.heightFt);
+    const secDrawH = dims.heightFt * secScale;
+    const secBoxH = Math.min(secDrawH + secPad.t + secPad.b + 18 + 8, contentH - 80);
+    // Vertically center the section box (leave room for legend below)
+    const legendH = 2 * 26 + 8; // 2 rows of legend items
+    const secAvailH = contentH - 36 - legendH - 20;
+    const secCenterOffset = Math.max(0, Math.floor((secAvailH - secBoxH) / 2));
+    const secBoxY = contentTop + 36 + secCenterOffset;
     doc.rect(MARGIN, secBoxY, PW - MARGIN * 2, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Section A–A — Through Pergola Structure", MARGIN + 8, secBoxY + 5);
     doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS", MARGIN + 8, secBoxY + 5, { align: "right", width: PW - MARGIN * 2 - 16 });
