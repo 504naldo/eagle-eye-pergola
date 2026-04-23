@@ -279,6 +279,6 @@
 - [x] Add prompt editor to EnclosureEditor Renderings tab
 - [x] Add prompt editor to FencingEditor Renderings tab
 - [x] Update rendering generation workflow: show editor before Generate button, allow save-then-generate
-- [ ] Display prompt used for each rendering (tooltip or expandable section)
-- [ ] Vitest: test custom prompt override logic
-- [ ] Save checkpoint
+- [x] Display prompt used for each rendering (tooltip or expandable section)
+- [x] Vitest: test custom prompt override logic
+- [x] Save checkpoint

@@ -859,9 +859,14 @@ export default function ProjectEditor() {
                           <ZoomIn size={28} className="text-white drop-shadow" />
                         </div>
                         <div className="p-3 flex items-center justify-between">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <div className="text-xs font-semibold text-gray-800">{r.label ?? r.style}</div>
                             <div className="text-[10px] text-gray-400 mt-0.5">{new Date(r.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</div>
+                            {r.prompt && (
+                              <div className="text-[9px] text-gray-500 mt-1.5 line-clamp-2 italic border-t border-gray-200 pt-1.5" title={r.prompt}>
+                                Prompt: {r.prompt}
+                              </div>
+                            )}
                           </div>
                           <div className="flex gap-1.5">
                             <a
