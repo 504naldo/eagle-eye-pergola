@@ -321,3 +321,33 @@ export async function deleteReferencePhoto(id: number): Promise<ReferencePhoto |
   }
   return undefined;
 }
+
+// ─── QTO Line Overrides ────────────────────────────────────────────────────────
+import { qtoLineOverrides, InsertQTOLineOverride, QTOLineOverride } from "../drizzle/schema";
+
+export async function getQTOLineOverrides(projectId: number): Promise<QTOLineOverride[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(qtoLineOverrides).where(eq(qtoLineOverrides.projectId, projectId));
+}
+
+export async function upsertQTOLineOverride(data: InsertQTOLineOverride & { projectId: number; lineKey: string }): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: qtoLineOverrides.id }).from(qtoLineOverrides)
+    .where(eq(qtoLineOverrides.projectId, data.projectId) && eq(qtoLineOverrides.lineKey, data.lineKey)).limit(1);
+  
+  if (existing.length > 0) {
+    await db.update(qtoLineOverrides).set(data).where(eq(qtoLineOverrides.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    const result = await db.insert(qtoLineOverrides).values(data);
+    return (result[0] as any).insertId as number;
+  }
+}
+
+export async function deleteQTOLineOverride(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(qtoLineOverrides).where(eq(qtoLineOverrides.id, id));
+}

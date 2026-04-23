@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -713,6 +714,52 @@ High resolution, photorealistic architectural visualization quality.`;
         const project = await getProjectById(input.projectId);
         if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
         return upsertRateOverrides(input.projectId, input.rates);
+      }),
+  }),
+
+  // ─── QTO Line Overrides ────────────────────────────────────────────────────────
+  qto: router({
+    getLineOverrides: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Not found');
+        const { getQTOLineOverrides } = await import('./db');
+        return getQTOLineOverrides(input.projectId);
+      }),
+
+    updateLineItem: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        lineKey: z.string(),
+        customQuantity: z.number().optional(),
+        customUnit: z.string().optional(),
+        customDescription: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        const { upsertQTOLineOverride } = await import('./db');
+        const id = await upsertQTOLineOverride({
+          projectId: input.projectId,
+          lineKey: input.lineKey,
+          customQuantity: input.customQuantity ? input.customQuantity.toString() : undefined,
+          customUnit: input.customUnit,
+          customDescription: input.customDescription,
+        });
+        return { id, success: true };
+      }),
+
+    deleteLineItem: protectedProcedure
+      .input(z.object({ projectId: z.number(), lineKey: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        const { getQTOLineOverrides, deleteQTOLineOverride } = await import('./db');
+        const overrides = await getQTOLineOverrides(input.projectId);
+        const override = overrides.find(o => o.lineKey === input.lineKey);
+        if (override) await deleteQTOLineOverride(override.id);
+        return { success: true };
       }),
   }),
 });

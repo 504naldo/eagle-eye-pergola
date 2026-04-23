@@ -293,3 +293,18 @@
 - [x] Add estimating note that pricing is subject to supplier confirmation
 - [x] Verify QTO renders correctly with all pricing
 - [x] Save checkpoint
+
+
+## Editable QTO Units and Quantities
+
+- [x] Create qto_line_overrides table in database schema for custom unit/quantity edits
+- [x] Add tRPC procedure qto.updateLineItem to save unit/quantity overrides
+- [x] Add tRPC procedure qto.getLineItems to fetch QTO with applied overrides
+- [x] Build EditableQTOTable component with inline edit mode (click to edit, save/cancel buttons)
+- [ ] Add QTO tab to ProjectEditor with editable table
+- [ ] Add QTO tab to CanopyEditor with editable table
+- [ ] Add QTO tab to EnclosureEditor with editable table
+- [ ] Add QTO tab to FencingEditor with editable table
+- [ ] Verify PDF export uses edited quantities/units
+- [ ] Vitest: test QTO override logic and calculations
+- [ ] Save checkpoint

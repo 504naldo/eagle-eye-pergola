@@ -157,3 +157,17 @@ export const referencePhotos = mysqlTable("reference_photos", {
 });
 export type ReferencePhoto = typeof referencePhotos.$inferSelect;
 export type InsertReferencePhoto = typeof referencePhotos.$inferInsert;
+
+// QTO Line Item Overrides (user edits to quantities and units)
+export const qtoLineOverrides = mysqlTable("qto_line_overrides", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  lineKey: varchar("lineKey", { length: 255 }).notNull(),
+  customQuantity: decimal("customQuantity", { precision: 10, scale: 2 }),
+  customUnit: varchar("customUnit", { length: 50 }),
+  customDescription: text("customDescription"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type QTOLineOverride = typeof qtoLineOverrides.$inferSelect;
+export type InsertQTOLineOverride = typeof qtoLineOverrides.$inferInsert;
