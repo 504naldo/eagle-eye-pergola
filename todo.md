@@ -352,3 +352,25 @@
 - [x] Apply to ProjectEditor, CanopyEditor, EnclosureEditor (all 3 editors updated)
 - [x] 51 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Fix Blank Pages in PDF Export
+
+- [ ] Inspect PDF generation flow to identify where blank pages are created
+- [ ] Check pdfExport.ts for empty sheet components and unnecessary page breaks
+- [ ] Check fencingPdfBuilder.ts for conditional rendering of empty sheets
+- [ ] Remove page-break-after:always from final sheets
+- [ ] Filter out null/undefined/empty sheets before rendering
+- [ ] Fix conditional sheet rendering (skip sheets with no content)
+- [ ] Verify each sheet has title block, content, and footer
+- [ ] Generate test PDFs and visually verify no blank pages
+- [ ] Run tests and save checkpoint
+
+## Fix Blank Pages in PDF Export
+
+- [x] Identify root cause: PDFKit auto-creates new pages when doc.text() is called at y > page height (no lineBreak:false)
+- [x] Fix pdfExport.ts: add lineBreak:false to all table row text calls (drawTableRow, drawTableHeader, checklist, scope items, connection note)
+- [x] Fix fencingPdfBuilder.ts: add lineBreak:false and overflow guards to QTO table, material schedule, door schedule, hardware schedule, site verification checklist
+- [x] Also fixed: layout:landscape dimension swap root cause (PDFKit was rendering portrait A3 instead of landscape A3)
+- [x] Verify pergola PDF page count: 9 pages (correct, no blank pages)
+- [x] 51 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint

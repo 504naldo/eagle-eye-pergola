@@ -521,39 +521,44 @@ function sheetQTO(
     const items = qtoItems.filter(i => i.group === groupName);
     curY += 6;
 
-    // Group header
-    doc.rect(x0, curY, w, rowH).fill("#E8E8E8");
-    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text(groupName, x0 + 6, curY + 4);
-    curY += rowH;
+    if (curY + rowH < y0 + h - 22) {
+      // Group header
+      doc.rect(x0, curY, w, rowH).fill("#E8E8E8");
+      doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8).text(groupName, x0 + 6, curY + 4, { lineBreak: false });
+      curY += rowH;
+    } else { curY += rowH; }
 
-    // Column headers
-    doc.rect(x0, curY, w, rowH).fill(DARK);
-    let cx = x0;
-    headers.forEach((hdr, i) => {
-      doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7);
-      if (i === 0) doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8 });
-      else if (i >= 2) doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8, align: "right" });
-      else doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8 });
-      cx += colW[i];
-    });
+    if (curY + rowH < y0 + h - 22) {
+      // Column headers
+      doc.rect(x0, curY, w, rowH).fill(DARK);
+      let cx = x0;
+      headers.forEach((hdr, i) => {
+        doc.fillColor(WHITE).font("Helvetica-Bold").fontSize(7);
+        if (i === 0) doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8, lineBreak: false });
+        else if (i >= 2) doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8, align: "right", lineBreak: false });
+        else doc.text(hdr, cx + 4, curY + 4, { width: colW[i] - 8, lineBreak: false });
+        cx += colW[i];
+      });
+    }
     curY += rowH;
 
     // Rows
     items.forEach((item, ri) => {
       grandTotal += item.lineTotal;
+      if (curY + rowH >= y0 + h - 22) { curY += rowH; return; } // skip overflow rows
       doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
 
-      cx = x0;
+      let cx = x0;
       doc.fillColor(DARK).font("Helvetica").fontSize(7.5)
-        .text(item.description, cx + 4, curY + 4, { width: colW[0] - 8 }); cx += colW[0];
+        .text(item.description, cx + 4, curY + 4, { width: colW[0] - 8, lineBreak: false }); cx += colW[0];
       doc.fillColor(DGRAY).font("Helvetica").fontSize(7)
-        .text(item.unit, cx + 4, curY + 4, { width: colW[1] - 8 }); cx += colW[1];
+        .text(item.unit, cx + 4, curY + 4, { width: colW[1] - 8, lineBreak: false }); cx += colW[1];
       doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5)
-        .text(String(item.qty), cx + 4, curY + 4, { width: colW[2] - 8, align: "right" }); cx += colW[2];
+        .text(String(item.qty), cx + 4, curY + 4, { width: colW[2] - 8, align: "right", lineBreak: false }); cx += colW[2];
       doc.fillColor(DARK).font("Helvetica").fontSize(7.5)
-        .text(`$${item.unitRate.toFixed(2)}`, cx + 4, curY + 4, { width: colW[3] - 8, align: "right" }); cx += colW[3];
+        .text(`$${item.unitRate.toFixed(2)}`, cx + 4, curY + 4, { width: colW[3] - 8, align: "right", lineBreak: false }); cx += colW[3];
       doc.font("Helvetica-Bold").fontSize(7.5)
-        .text(`$${item.lineTotal.toFixed(2)}`, cx + 4, curY + 4, { width: colW[4] - 8, align: "right" });
+        .text(`$${item.lineTotal.toFixed(2)}`, cx + 4, curY + 4, { width: colW[4] - 8, align: "right", lineBreak: false });
 
       doc.strokeColor(MGRAY).lineWidth(0.3)
         .moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
@@ -564,17 +569,21 @@ function sheetQTO(
 
   // Grand total
   curY += 8;
-  doc.rect(x0, curY, w, rowH + 4).fill(GOLD);
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
-    .text("BUDGET TOTAL (excl. GST)", x0 + 8, curY + 5, { width: w / 2 });
-  doc.text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, x0 + 8, curY + 5, { width: w - 16, align: "right" });
+  if (curY + rowH + 4 < y0 + h - 22) {
+    doc.rect(x0, curY, w, rowH + 4).fill(GOLD);
+    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(9)
+      .text("BUDGET TOTAL (excl. GST)", x0 + 8, curY + 5, { width: w / 2, lineBreak: false });
+    doc.text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, x0 + 8, curY + 5, { width: w - 16, align: "right", lineBreak: false });
+  }
   curY += rowH + 4;
 
   // Footnote
   curY += 8;
-  doc.fillColor(DGRAY).font("Helvetica-Oblique").fontSize(6.5)
-    .text("* Budget estimate only. All quantities and rates require field verification and supplier confirmation prior to tender.",
-      x0, curY, { width: w });
+  if (curY + 10 < y0 + h - 22) {
+    doc.fillColor(DGRAY).font("Helvetica-Oblique").fontSize(6.5)
+      .text("* Budget estimate only. All quantities and rates require field verification and supplier confirmation prior to tender.",
+        x0, curY, { width: w, lineBreak: false });
+  }
 
   // Disclaimer banner at bottom
   doc.rect(x0, y0 + h - 22, w, 18).fill(CREAM);
@@ -1619,7 +1628,7 @@ function sheetMaterialSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
   doc.rect(x0, curY, w, rowH).fill(DARK);
   let cx = x0;
   for (let i = 0; i < headers.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(headers[i], cx + 4, curY + 5, { width: colWidths[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(headers[i], cx + 4, curY + 5, { width: colWidths[i] - 8, lineBreak: false });
     cx += colWidths[i];
   }
   curY += rowH;
@@ -1627,13 +1636,14 @@ function sheetMaterialSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
   // Rows
   for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
+    if (curY + rowH >= y0 + h - 30) break; // stop before overflow
     doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
     cx = x0;
     for (let ci = 0; ci < row.length; ci++) {
       if (ci === 0 || ci === 4 || ci === 5) {
-        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8, align: "center" });
+        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8, align: "center", lineBreak: false });
       } else {
-        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8 });
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(row[ci], cx + 4, curY + 5, { width: colWidths[ci] - 8, lineBreak: false });
       }
       cx += colWidths[ci];
     }
@@ -1645,7 +1655,9 @@ function sheetMaterialSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
 
   // Notes
   curY += 12;
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY);
+  if (curY + 12 < y0 + h - 30) {
+    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY, { lineBreak: false });
+  }
   curY += 12;
   const notes = [
     "1. All steel sections to be Grade 350W unless otherwise noted.",
@@ -1654,7 +1666,9 @@ function sheetMaterialSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
     "4. Quantities are approximate. Contractor to verify all quantities on site prior to ordering.",
   ];
   for (const n of notes) {
-    doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w });
+    if (curY + 11 < y0 + h - 30) {
+      doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w, lineBreak: false });
+    }
     curY += 11;
   }
 
@@ -1711,16 +1725,17 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   doc.rect(x0, curY, w, rowH).fill(DARK);
   let cx = x0;
   for (let i = 0; i < dHeaders.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(dHeaders[i], cx + 4, curY + 5, { width: dColW[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(dHeaders[i], cx + 4, curY + 5, { width: dColW[i] - 8, lineBreak: false });
     cx += dColW[i];
   }
   curY += rowH;
 
   for (let ri = 0; ri < dRows.length; ri++) {
+    if (curY + rowH >= y0 + h - 30) break;
     doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
     cx = x0;
     for (let ci = 0; ci < dRows[ri].length; ci++) {
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(dRows[ri][ci], cx + 4, curY + 5, { width: dColW[ci] - 8 });
+      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(dRows[ri][ci], cx + 4, curY + 5, { width: dColW[ci] - 8, lineBreak: false });
       cx += dColW[ci];
     }
     doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
@@ -1749,20 +1764,21 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
   doc.rect(x0, curY, w, rowH).fill(DARK);
   cx = x0;
   for (let i = 0; i < hHeaders.length; i++) {
-    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(hHeaders[i], cx + 4, curY + 5, { width: hColW[i] - 8 });
+    doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(hHeaders[i], cx + 4, curY + 5, { width: hColW[i] - 8, lineBreak: false });
     cx += hColW[i];
   }
   curY += rowH;
 
   const hTableStart = curY;
   for (let ri = 0; ri < hRows.length; ri++) {
+    if (curY + rowH >= y0 + h - 30) break;
     doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? LGRAY : WHITE);
     cx = x0;
     for (let ci = 0; ci < hRows[ri].length; ci++) {
       if (ci === 0 || ci === 4) {
-        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8 });
+        doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8, lineBreak: false });
       } else {
-        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8 });
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(hRows[ri][ci], cx + 4, curY + 5, { width: hColW[ci] - 8, lineBreak: false });
       }
       cx += hColW[ci];
     }
@@ -1773,7 +1789,9 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
 
   // Notes
   curY += 12;
-  doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY);
+  if (curY + 12 < y0 + h - 30) {
+    doc.fillColor(DARK).font("Helvetica-Bold").fontSize(7).text("NOTES:", x0, curY, { lineBreak: false });
+  }
   curY += 12;
   const notes = [
     "1. All hardware to be commercial grade. Substitutions require written approval.",
@@ -1782,7 +1800,9 @@ function sheetDoorSchedule(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fencin
     "4. All exposed hardware to be powder coated black to match frame unless noted as stainless steel.",
   ];
   for (const n of notes) {
-    doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w });
+    if (curY + 11 < y0 + h - 30) {
+      doc.fillColor(DARK).font("Helvetica").fontSize(7).text(n, x0, curY, { width: w, lineBreak: false });
+    }
     curY += 11;
   }
 
@@ -1840,7 +1860,7 @@ function sheetSiteVerification(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
   let curY = y0 + 8;
 
   doc.fillColor(DARK).font("Helvetica-Bold").fontSize(8)
-    .text("FIELD VERIFICATION CHECKLIST — Complete prior to fabrication. Return signed copy to Eagle Eye Management Services.", x0, curY, { width: w });
+    .text("FIELD VERIFICATION CHECKLIST — Complete prior to fabrication. Return signed copy to Eagle Eye Management Services.", x0, curY, { width: w, lineBreak: false });
   curY += 20;
 
   const sections: [string, [string, string, string][]][] = [
@@ -1893,7 +1913,7 @@ function sheetSiteVerification(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
     doc.rect(x0, curY, w, rowH).fill(DARK);
     let cx = x0;
     for (let i = 0; i < colHeaders.length; i++) {
-      doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(colHeaders[i], cx + 4, curY + 5, { width: colW[i] - 8 });
+      doc.fillColor(GOLD).font("Helvetica-Bold").fontSize(7).text(colHeaders[i], cx + 4, curY + 5, { width: colW[i] - 8, lineBreak: false });
       cx += colW[i];
     }
     curY += rowH;
@@ -1903,9 +1923,11 @@ function sheetSiteVerification(doc: PDFKit.PDFDocument, ctx: PageCtx, params: Fe
       const [item, field, design] = items[ri];
       doc.rect(x0, curY, w, rowH).fill(ri % 2 === 0 ? WHITE : LGRAY);
       cx = x0;
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(item, cx + 4, curY + 5, { width: colW[0] - 8 }); cx += colW[0];
-      doc.fillColor(DGRAY).font("Helvetica").fontSize(7.5).text(field, cx + 4, curY + 5, { width: colW[1] - 8 }); cx += colW[1];
-      doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(design, cx + 4, curY + 5, { width: colW[2] - 8 }); cx += colW[2];
+      if (curY + rowH < y0 + h - 30) {
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(item, cx + 4, curY + 5, { width: colW[0] - 8, lineBreak: false }); cx += colW[0];
+        doc.fillColor(DGRAY).font("Helvetica").fontSize(7.5).text(field, cx + 4, curY + 5, { width: colW[1] - 8, lineBreak: false }); cx += colW[1];
+        doc.fillColor(DARK).font("Helvetica").fontSize(7.5).text(design, cx + 4, curY + 5, { width: colW[2] - 8, lineBreak: false }); cx += colW[2];
+      } else { cx += colW[0] + colW[1] + colW[2]; }
       doc.strokeColor(MGRAY).lineWidth(0.5).rect(cx + 4, curY + 4, colW[3] - 8, rowH - 6).stroke();
       doc.strokeColor(MGRAY).lineWidth(0.3).moveTo(x0, curY + rowH).lineTo(x0 + w, curY + rowH).stroke();
       curY += rowH;

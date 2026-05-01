@@ -318,7 +318,7 @@ function drawTableHeader(doc: PDFKit.PDFDocument, cols: { label: string; x: numb
   doc.rect(MARGIN, y, PW - MARGIN * 2, rowH).fill(BLACK);
   cols.forEach(col => {
     doc.fontSize(8).fillColor("white").font("Helvetica-Bold")
-      .text(col.label, col.x, y + 5, { width: col.w, align: (col.align as any) || "left" });
+      .text(col.label, col.x, y + 5, { width: col.w, align: (col.align as any) || "left", lineBreak: false });
   });
   return y + rowH;
 }
@@ -330,7 +330,7 @@ function drawTableRow(doc: PDFKit.PDFDocument, cells: { text: string; x: number;
     doc.fontSize(8.5)
       .fillColor(cell.color || BLACK)
       .font(cell.bold ? "Helvetica-Bold" : "Helvetica")
-      .text(cell.text, cell.x, y + 4, { width: cell.w, align: (cell.align as any) || "left" });
+      .text(cell.text, cell.x, y + 4, { width: cell.w, align: (cell.align as any) || "left", lineBreak: false });
   });
   return y + rowH;
 }
@@ -759,7 +759,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     drawPlanView(doc, dims, MARGIN, drawBoxY + 18, PW - MARGIN * 2, drawBoxH - 18);
     doc.fontSize(8).fillColor(GRAY).font("Helvetica")
       .text("Connection type: Wall-mounted lean-to — No rear posts — Lumon vertical enclosure on 3 sides — Slat roof connects to building wall via concealed ledger",
-        MARGIN, drawBoxY + drawBoxH + 4, { width: PW - MARGIN * 2 });
+        MARGIN, drawBoxY + drawBoxH + 4, { width: PW - MARGIN * 2, lineBreak: false });
 
     // ── PAGE 3: FRONT + SIDE ELEVATION ────────────────────────────────────────────
     doc.addPage();
@@ -933,11 +933,13 @@ export async function handlePDFExport(req: Request, res: Response) {
         } else {
           doc.rect(cx2 + 4, clColY[clCol] + 4, 12, 12).stroke("#9CA3AF").strokeColor("#9CA3AF").lineWidth(1.5);
         }
-        doc.fontSize(8.5).fillColor(item.checked ? GRAY : BLACK).font("Helvetica")
-          .text(item.label, cx2 + 22, clColY[clCol] + 5, { width: clColW - 26 });
+        if (clColY[clCol] + 20 < PH - 30) {
+          doc.fontSize(8.5).fillColor(item.checked ? GRAY : BLACK).font("Helvetica")
+            .text(item.label, cx2 + 22, clColY[clCol] + 5, { width: clColW - 26, lineBreak: false });
+        }
         clColY[clCol] += 20;
-        if (item.fieldNote) {
-          doc.fontSize(7.5).fillColor(GRAY).font("Helvetica").text(item.fieldNote, cx2 + 22, clColY[clCol] - 4, { width: clColW - 26 });
+        if (item.fieldNote && clColY[clCol] - 4 + 12 < PH - 30) {
+          doc.fontSize(7.5).fillColor(GRAY).font("Helvetica").text(item.fieldNote, cx2 + 22, clColY[clCol] - 4, { width: clColW - 26, lineBreak: false });
           clColY[clCol] += 12;
         }
       });
@@ -976,11 +978,14 @@ export async function handlePDFExport(req: Request, res: Response) {
       // Section header
       doc.rect(MARGIN, scY, PW - MARGIN * 2, 18).fill(scopeTypeColors[type]);
       doc.rect(MARGIN, scY, 3, 18).fill(scopeTypeBorderColors[type]);
-      doc.fontSize(9).fillColor(scopeTypeBorderColors[type]).font("Helvetica-Bold").text(scopeTypeLabels[type], MARGIN + 8, scY + 5);
+      if (scY + 18 < PH - 30) {
+        doc.fontSize(9).fillColor(scopeTypeBorderColors[type]).font("Helvetica-Bold").text(scopeTypeLabels[type], MARGIN + 8, scY + 5, { lineBreak: false });
+      }
       scY += 18;
 
       items.forEach((item, idx) => {
         const rowH = 18;
+        if (scY + rowH >= PH - 30) return; // skip rows that would overflow
         doc.rect(MARGIN, scY, PW - MARGIN * 2, rowH).fill(idx % 2 === 0 ? "white" : LIGHT_GRAY);
         doc.rect(MARGIN, scY, 3, rowH).fill(scopeTypeBorderColors[type]);
 
@@ -988,10 +993,10 @@ export async function handlePDFExport(req: Request, res: Response) {
         const badgeW = 70;
         doc.rect(MARGIN + 6, scY + 4, badgeW, 10).fill(scopeTypeColors[type]);
         doc.fontSize(7).fillColor(scopeTypeBorderColors[type]).font("Helvetica-Bold")
-          .text(scopeBadgeText[type], MARGIN + 8, scY + 5, { width: badgeW - 4 });
+          .text(scopeBadgeText[type], MARGIN + 8, scY + 5, { width: badgeW - 4, lineBreak: false });
 
         doc.fontSize(8.5).fillColor("#374151").font("Helvetica")
-          .text(item.text, MARGIN + badgeW + 12, scY + 4, { width: PW - MARGIN * 2 - badgeW - 18 });
+          .text(item.text, MARGIN + badgeW + 12, scY + 4, { width: PW - MARGIN * 2 - badgeW - 18, lineBreak: false });
         scY += rowH;
       });
       scY += 8;
