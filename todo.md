@@ -340,3 +340,15 @@
 - [x] Visually verified all 9 pages of live Milestones PDF render correctly after fix
 - [x] 51 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Refine Mobile Rendering Screen UI
+
+- [x] Reorder sections: AI Rendering Prompt first (primary focus with gold accent bar)
+- [x] Add helper text to prompt section: "Describe what the rendering should show. Use the project photo and current parameters."
+- [x] Rename "Generate New Rendering" section to "Choose View" with helper text: "Select the rendering angle or mood." (gray accent bar)
+- [x] Style view options (Day/Dusk/Interior/Aerial) as selectable options, not primary actions (grid layout, subtle styling)
+- [x] Keep only one main CTA: "Generate Rendering" at bottom (full-width button, gold background)
+- [x] Verify visual hierarchy: Prompt → Choose View → Generate Rendering (tested on mobile preview)
+- [x] Apply to ProjectEditor, CanopyEditor, EnclosureEditor (all 3 editors updated)
+- [x] 51 vitest tests passing, 0 TypeScript errors
+- [x] Save checkpoint

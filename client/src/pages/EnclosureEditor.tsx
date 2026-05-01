@@ -358,8 +358,13 @@ export default function EnclosureEditor({ projectId }: Props) {
         {/* ── AI Renderings ── */}
         <TabsContent value="renderings">
           <div className="space-y-4">
-            {/* Prompt Editor */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            {/* ── AI Rendering Prompt (Primary Section) ── */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 pb-6 border-b">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 bg-[#C9A84C] rounded-full" />
+                <h3 className="font-semibold text-gray-900">AI Rendering Prompt</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">Describe what the rendering should show. Use the project photo and current parameters.</p>
               <PromptEditor
                 defaultPrompt="AI will generate a prompt based on your enclosure parameters..."
                 onPromptChange={setCustomPrompt}
@@ -367,9 +372,14 @@ export default function EnclosureEditor({ projectId }: Props) {
               />
             </div>
 
+            {/* ── Choose View (Secondary Section) ── */}
             <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-widest mb-3">Generate AI Rendering</h3>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 bg-gray-300 rounded-full" />
+                <h3 className="font-semibold text-gray-900">Choose View</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">Select the rendering angle or mood.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
                 {RENDERING_STYLES.map(s => (
                   <button
                     key={s.value}
@@ -384,6 +394,10 @@ export default function EnclosureEditor({ projectId }: Props) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* ── Main CTA (Generate Rendering) ── */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
               <Button
                 onClick={() => generateRenderingMutation.mutate({
                   projectId,
@@ -398,7 +412,7 @@ export default function EnclosureEditor({ projectId }: Props) {
                   customPrompt: customPrompt || undefined,
                 })}
                 disabled={generateRenderingMutation.isPending}
-                className="gap-2 font-semibold"
+                className="w-full gap-2 font-semibold"
                 style={{ backgroundColor: "#C9A84C", color: "#111111" }}
               >
                 {generateRenderingMutation.isPending ? <><Loader2 size={14} className="animate-spin" /> Generating…</> : <><Wand2 size={14} /> Generate Rendering</>}
