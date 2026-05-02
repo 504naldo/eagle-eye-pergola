@@ -762,5 +762,51 @@ High resolution, photorealistic architectural visualization quality.`;
         return { success: true };
       }),
   }),
+
+  // ─── Phased Enclosure ────────────────────────────────────────────────────────
+  phasedEnclosure: router({
+    getParams: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        const { getPhasedEnclosureParams } = await import('./db');
+        return getPhasedEnclosureParams(input.projectId);
+      }),
+
+    upsertParams: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        approvedDrawingUrl: z.string().optional(),
+        approvedDrawingFileKey: z.string().optional(),
+        approvedDrawingName: z.string().optional(),
+        approvedDrawingLocked: z.boolean().optional(),
+        scopeMode: z.enum(['phase1Only', 'phase2Only', 'fullBuildout', 'compare']).optional(),
+        phase1Json: z.any().optional(),
+        phase2Json: z.any().optional(),
+        dimensionsJson: z.any().optional(),
+        pricingJson: z.any().optional(),
+        fieldNotesJson: z.any().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        const { upsertPhasedEnclosureParams } = await import('./db');
+        const id = await upsertPhasedEnclosureParams({
+          projectId: input.projectId,
+          approvedDrawingUrl: input.approvedDrawingUrl ?? null,
+          approvedDrawingFileKey: input.approvedDrawingFileKey ?? null,
+          approvedDrawingName: input.approvedDrawingName ?? null,
+          approvedDrawingLocked: input.approvedDrawingLocked ?? true,
+          scopeMode: input.scopeMode ?? 'fullBuildout',
+          phase1Json: input.phase1Json ?? null,
+          phase2Json: input.phase2Json ?? null,
+          dimensionsJson: input.dimensionsJson ?? null,
+          pricingJson: input.pricingJson ?? null,
+          fieldNotesJson: input.fieldNotesJson ?? null,
+        });
+        return { id };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

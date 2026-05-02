@@ -351,3 +351,27 @@ export async function deleteQTOLineOverride(id: number): Promise<void> {
   if (!db) return;
   await db.delete(qtoLineOverrides).where(eq(qtoLineOverrides.id, id));
 }
+
+// ─── Phased Enclosure Params ──────────────────────────────────────────────────
+import { phasedEnclosureParams, PhasedEnclosureParam, InsertPhasedEnclosureParam } from "../drizzle/schema";
+
+export async function getPhasedEnclosureParams(projectId: number): Promise<PhasedEnclosureParam | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(phasedEnclosureParams).where(eq(phasedEnclosureParams.projectId, projectId)).limit(1);
+  return rows[0];
+}
+
+export async function upsertPhasedEnclosureParams(data: InsertPhasedEnclosureParam & { projectId: number }): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: phasedEnclosureParams.id }).from(phasedEnclosureParams)
+    .where(eq(phasedEnclosureParams.projectId, data.projectId)).limit(1);
+  if (existing.length > 0) {
+    await db.update(phasedEnclosureParams).set(data).where(eq(phasedEnclosureParams.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    const result = await db.insert(phasedEnclosureParams).values(data);
+    return (result[0] as any).insertId as number;
+  }
+}

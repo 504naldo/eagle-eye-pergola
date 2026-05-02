@@ -33,8 +33,8 @@ export const projects = mysqlTable("projects", {
   projectName: varchar("projectName", { length: 255 }).notNull(),
   clientName: varchar("clientName", { length: 255 }),
   location: varchar("location", { length: 500 }),
-  // Multi-scope: pergola | canopy | enclosure | fencing
-  scopeType: mysqlEnum("scopeType", ["pergola", "canopy", "enclosure", "fencing"]).default("pergola").notNull(),
+  // Multi-scope: pergola | canopy | enclosure | fencing | phasedEnclosure
+  scopeType: mysqlEnum("scopeType", ["pergola", "canopy", "enclosure", "fencing", "phasedEnclosure"]).default("pergola").notNull(),
   // Generic JSON inputs for canopy/enclosure modules (pergola still uses project_params)
   inputsJson: json("inputsJson"),
   status: mysqlEnum("status", ["draft", "in_review", "approved", "archived"]).default("draft").notNull(),
@@ -157,6 +157,33 @@ export const referencePhotos = mysqlTable("reference_photos", {
 });
 export type ReferencePhoto = typeof referencePhotos.$inferSelect;
 export type InsertReferencePhoto = typeof referencePhotos.$inferInsert;
+
+// ─── Phased Enclosure Parameters ────────────────────────────────────────────
+export const phasedEnclosureParams = mysqlTable("phased_enclosure_params", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  // Approved drawing reference (locked, not modified)
+  approvedDrawingUrl: text("approvedDrawingUrl"),
+  approvedDrawingFileKey: varchar("approvedDrawingFileKey", { length: 500 }),
+  approvedDrawingName: varchar("approvedDrawingName", { length: 255 }),
+  approvedDrawingLocked: boolean("approvedDrawingLocked").default(true),
+  // Scope mode: phase1Only | phase2Only | fullBuildout | compare
+  scopeMode: mysqlEnum("scopeMode", ["phase1Only", "phase2Only", "fullBuildout", "compare"]).default("fullBuildout"),
+  // Phase 1 params JSON (Lumon lower glass)
+  phase1Json: json("phase1Json"),
+  // Phase 2 params JSON (louvered pergola)
+  phase2Json: json("phase2Json"),
+  // Dimensions summary JSON
+  dimensionsJson: json("dimensionsJson"),
+  // Pricing inputs JSON (unit rates per phase)
+  pricingJson: json("pricingJson"),
+  // Field verification notes JSON
+  fieldNotesJson: json("fieldNotesJson"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PhasedEnclosureParam = typeof phasedEnclosureParams.$inferSelect;
+export type InsertPhasedEnclosureParam = typeof phasedEnclosureParams.$inferInsert;
 
 // QTO Line Item Overrides (user edits to quantities and units)
 export const qtoLineOverrides = mysqlTable("qto_line_overrides", {

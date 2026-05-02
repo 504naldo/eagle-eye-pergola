@@ -9,6 +9,7 @@ import ProjectEditor from "./pages/ProjectEditor";
 import CanopyEditor from "./pages/CanopyEditor";
 import EnclosureEditor from "./pages/EnclosureEditor";
 import FencingEditor from "./pages/FencingEditor";
+import PhasedEnclosureEditor from "./pages/PhasedEnclosureEditor";
 import DrawingPreview from "./pages/DrawingPreview";
 import Home from "./pages/Home";
 import { trpc } from "@/lib/trpc";
@@ -38,6 +39,7 @@ function ProjectRouter() {
   if (scope === "canopy") return <CanopyEditor projectId={projectId} />;
   if (scope === "enclosure") return <EnclosureEditor projectId={projectId} />;
   if (scope === "fencing") return <FencingEditor projectId={projectId} />;
+  if (scope === "phasedEnclosure") return <PhasedEnclosureEditor />;
   // Default: pergola — ProjectEditor uses useParams internally
   return <ProjectEditor />;
 }

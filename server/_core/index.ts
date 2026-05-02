@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handlePDFExport } from "../pdfExport";
+import { handlePhasedEnclosurePDFExport } from "../phasedEnclosurePdfExport";
 import { multerMiddleware, handleFileUpload } from "../fileUpload";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -39,6 +40,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // PDF Export route
   app.get("/api/export/pdf/:id", handlePDFExport);
+  // Phased Enclosure Supplemental PDF Export
+  app.get("/api/export/phased-enclosure-pdf/:id", handlePhasedEnclosurePDFExport);
   // File upload route (server-side S3 via storagePut)
   app.post("/api/upload/:projectId", multerMiddleware, handleFileUpload);
 

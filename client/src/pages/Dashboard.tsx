@@ -51,9 +51,17 @@ const SCOPE_META: Record<string, { label: string; color: string; bg: string; bor
     description: "SHS-framed welded wire mesh or chain link security fencing with optional gate",
     placeholder: "e.g. Parkade Bicycle Room — Level B1",
   },
+  phasedEnclosure: {
+    label: "Phased Enclosure",
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+    borderColor: "#C4B5FD",
+    description: "Phased patio enclosure with city-approved drawing reference, Phase 1 (Lumon lower glass) and Phase 2 (louvered pergola)",
+    placeholder: "e.g. Milestones Abbotsford — Phased Patio",
+  },
 };
 
-type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing";
+type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing" | "phasedEnclosure";
 
 export default function Dashboard() {
   const { isAuthenticated, loading } = useAuth();
@@ -141,7 +149,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects?.map(project => {
               const scope = (project.scopeType ?? "pergola") as ScopeType;
-              const meta = SCOPE_META[scope] ?? SCOPE_META.pergola;
+              const meta = SCOPE_META[scope as keyof typeof SCOPE_META] ?? SCOPE_META.pergola;
               return (
                 <div key={project.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                   {/* Card header */}
@@ -152,7 +160,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                       <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: meta.borderColor + "66", color: meta.color }}>
-                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : "Enclosure"}
+                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : scope === "phasedEnclosure" ? "Phased Enclosure" : "Enclosure"}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium status-${project.status}`}>
                         {STATUS_LABELS[project.status]}
@@ -248,7 +256,7 @@ export default function Dashboard() {
                     <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: selectedScope === type ? meta.color + "30" : "#F3F4F6" }}>
                       <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: selectedScope === type ? meta.color : "#9CA3AF" }} />
                     </div>
-                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : type === "fencing" ? "Fencing" : "Enclosure"}</span>
+                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : type === "fencing" ? "Fencing" : type === "phasedEnclosure" ? "Phased" : "Enclosure"}</span>
                   </button>
                 ))}
               </div>
@@ -290,7 +298,7 @@ export default function Dashboard() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button
-              onClick={() => createMutation.mutate({ ...form, scopeType: selectedScope })}
+              onClick={() => createMutation.mutate({ ...form, scopeType: selectedScope as any })}
               disabled={!form.projectName.trim() || createMutation.isPending}
               className="bg-[#C9A84C] hover:bg-[#A07830] text-gray-900"
             >

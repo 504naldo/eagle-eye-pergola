@@ -57,6 +57,13 @@
       "when": 1776965201979,
       "tag": "0007_light_living_tribunal",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1777682635786,
+      "tag": "0008_heavy_microchip",
+      "breakpoints": true
     }
   ]
 }
