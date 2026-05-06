@@ -126,6 +126,40 @@ export function calculateGrandTotal(items: QTOItem[]): number {
   return Math.round(items.reduce((sum, i) => sum + i.lineTotal, 0) * 100) / 100;
 }
 
+// ─── Glazing Area Breakdown ───────────────────────────────────────────────────
+
+export interface GlazingAreaBreakdown {
+  frontFt2: number;
+  leftFt2: number;
+  rightFt2: number;
+  totalFt2: number;
+  totalM2: number;
+  glassHeightFt: number;
+  frontLengthFt: number;
+  leftLengthFt: number;
+  rightLengthFt: number;
+}
+
+export function calculateGlazingArea(p: PergolaParams): GlazingAreaBreakdown {
+  const glassH = p.glassWallHeightFt ?? p.heightFt;
+  const frontFt2 = p.glassFront ? Math.round(p.widthFt * glassH * 100) / 100 : 0;
+  const leftFt2  = p.glassLeft  ? Math.round(p.depthFt * glassH * 100) / 100 : 0;
+  const rightFt2 = p.glassRight ? Math.round(p.depthFt * glassH * 100) / 100 : 0;
+  const totalFt2 = Math.round((frontFt2 + leftFt2 + rightFt2) * 100) / 100;
+  const totalM2  = Math.round(totalFt2 * 0.0929 * 100) / 100;
+  return {
+    frontFt2,
+    leftFt2,
+    rightFt2,
+    totalFt2,
+    totalM2,
+    glassHeightFt: glassH,
+    frontLengthFt: p.glassFront ? p.widthFt : 0,
+    leftLengthFt:  p.glassLeft  ? p.depthFt : 0,
+    rightLengthFt: p.glassRight ? p.depthFt : 0,
+  };
+}
+
 // ─── SVG Drawing Dimensions ───────────────────────────────────────────────────
 
 export interface DrawingDimensions {

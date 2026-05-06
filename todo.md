@@ -478,3 +478,13 @@
 - [x] Update ModelViewer3D to use glassWallHeightFt for glass panel height in 3D scene
 - [x] Write vitest tests for glass wall height QTO calculation (3 new tests, 80 total passing)
 - [x] Save checkpoint
+
+## Auto Glazing Area Calculation + Glass Tint/Material in 3D Viewer
+
+- [x] Add live glazing area summary card in ProjectEditor Parameters tab (Lumon section) showing front, left, right, and total area in both ft² and m²
+- [x] Add glassTint field (clear, bronze, grey, blue, green) to PergolaModel3DParams
+- [x] Add glassMaterial field (standard, frosted, reflective) to PergolaModel3DParams
+- [x] Add glass controls panel to ModelViewer3D: tint color picker + material type selector
+- [x] Update GlassPanel in ModelViewer3D to apply tint color and material properties (opacity, roughness, metalness, envMapIntensity)
+- [x] Write vitest tests for glazing area calculation (12 new tests, 93 total passing)
+- [x] Save checkpoint

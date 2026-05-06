@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, Suspense, useMemo } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
   Grid,
@@ -11,7 +11,9 @@ import {
 import * as THREE from "three";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Sun, Moon } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Download, Sun, Moon, Sliders } from "lucide-react";
 import { toast } from "sonner";
 import { exportSceneAsGLB } from "@/lib/exportGLB";
 
@@ -27,9 +29,41 @@ export interface PergolaModel3DParams {
   louverSpacingIn: number;
   louverSizeIn: number;
   hasGlass: boolean;
-  glassWallHeightFt?: number;  // Height of glass wall panels (ft), defaults to heightFt
+  glassWallHeightFt?: number;
   finishColor: string;
 }
+
+export type GlassTint = "clear" | "bronze" | "grey" | "blue" | "green";
+export type GlassMaterial = "standard" | "frosted" | "reflective";
+
+interface GlassTintOption {
+  value: GlassTint;
+  label: string;
+  color: string;
+  opacity: number;
+}
+
+interface GlassMaterialOption {
+  value: GlassMaterial;
+  label: string;
+  roughness: number;
+  metalness: number;
+  opacity: number;
+}
+
+const GLASS_TINTS: GlassTintOption[] = [
+  { value: "clear",   label: "Clear",        color: "#c8e8f8", opacity: 0.20 },
+  { value: "bronze",  label: "Bronze",       color: "#b8864e", opacity: 0.30 },
+  { value: "grey",    label: "Grey",         color: "#8a8a8a", opacity: 0.28 },
+  { value: "blue",    label: "Blue",         color: "#4a90d9", opacity: 0.28 },
+  { value: "green",   label: "Green",        color: "#4aaa6a", opacity: 0.28 },
+];
+
+const GLASS_MATERIALS: GlassMaterialOption[] = [
+  { value: "standard",   label: "Standard",   roughness: 0.05, metalness: 0.0,  opacity: 1.0 },
+  { value: "frosted",    label: "Frosted",    roughness: 0.65, metalness: 0.0,  opacity: 1.2 },
+  { value: "reflective", label: "Reflective", roughness: 0.02, metalness: 0.35, opacity: 0.85 },
+];
 
 // ─── Unit conversion ─────────────────────────────────────────────────────────
 
@@ -69,23 +103,29 @@ function AlumBox({
   );
 }
 
-function GlassBox({
+function GlassPanel({
   position,
   size,
+  tintOption,
+  materialOption,
 }: {
   position: [number, number, number];
   size: [number, number, number];
+  tintOption: GlassTintOption;
+  materialOption: GlassMaterialOption;
 }) {
+  const finalOpacity = Math.min(tintOption.opacity * materialOption.opacity, 0.85);
   return (
     <mesh position={position} castShadow receiveShadow>
       <boxGeometry args={size} />
       <meshPhysicalMaterial
-        color="#a8d8ea"
+        color={tintOption.color}
         transparent
-        opacity={0.22}
-        roughness={0.05}
-        metalness={0.0}
+        opacity={finalOpacity}
+        roughness={materialOption.roughness}
+        metalness={materialOption.metalness}
         side={THREE.DoubleSide}
+        envMapIntensity={materialOption.value === "reflective" ? 1.8 : 0.4}
       />
     </mesh>
   );
@@ -95,9 +135,13 @@ function GlassBox({
 
 function PergolaScene({
   params,
+  glassTint,
+  glassMaterial,
   groupRef,
 }: {
   params: PergolaModel3DParams;
+  glassTint: GlassTint;
+  glassMaterial: GlassMaterial;
   groupRef: React.RefObject<THREE.Group | null>;
 }) {
   const {
@@ -119,6 +163,9 @@ function PergolaScene({
 
   const n = Math.max(postCount, 2);
 
+  const tintOption     = GLASS_TINTS.find(t => t.value === glassTint)     ?? GLASS_TINTS[0];
+  const materialOption = GLASS_MATERIALS.find(m => m.value === glassMaterial) ?? GLASS_MATERIALS[0];
+
   // Post X positions
   const postXs = useMemo(() => {
     return Array.from({ length: n }, (_, i) => -W / 2 + (i / (n - 1)) * W);
@@ -129,6 +176,8 @@ function PergolaScene({
     const count = Math.max(Math.floor(D / louverSpacing), 1);
     return Array.from({ length: count + 1 }, (_, i) => -D / 2 + i * louverSpacing);
   }, [D, louverSpacing]);
+
+  const GH = ft(glassWallHeightFt ?? heightFt);
 
   return (
     <group ref={groupRef}>
@@ -158,11 +207,15 @@ function PergolaScene({
         <AlumBox key={`ls${i}`} position={[0, roofY, z]} size={[W, louverThick, louverW]} color={finishColor} />
       ))}
 
-      {/* Glass wall panels — sized to glassWallHeightFt (or full heightFt if not set) */}
-      {hasGlass && (() => {
-        const GH = ft(glassWallHeightFt ?? heightFt);
-        return <GlassBox position={[0, GH / 2, D / 2]} size={[W, GH, 0.012]} />;
-      })()}
+      {/* Glass wall panels — sized to glassWallHeightFt */}
+      {hasGlass && (
+        <GlassPanel
+          position={[0, GH / 2, D / 2]}
+          size={[W, GH, 0.012]}
+          tintOption={tintOption}
+          materialOption={materialOption}
+        />
+      )}
 
       {/* Concrete slab */}
       <mesh position={[0, -0.02, 0]} receiveShadow>
@@ -177,9 +230,13 @@ function PergolaScene({
 
 function SceneContent({
   params,
+  glassTint,
+  glassMaterial,
   groupRef,
 }: {
   params: PergolaModel3DParams;
+  glassTint: GlassTint;
+  glassMaterial: GlassMaterial;
   groupRef: React.RefObject<THREE.Group | null>;
 }) {
   const W = ft(params.widthFt);
@@ -238,7 +295,12 @@ function SceneContent({
         infiniteGrid
       />
 
-      <PergolaScene params={params} groupRef={groupRef} />
+      <PergolaScene
+        params={params}
+        glassTint={glassTint}
+        glassMaterial={glassMaterial}
+        groupRef={groupRef}
+      />
     </>
   );
 }
@@ -257,6 +319,9 @@ export default function ModelViewer3D({
   const groupRef = useRef<THREE.Group | null>(null);
   const [exporting, setExporting] = useState(false);
   const [darkBg, setDarkBg] = useState(true);
+  const [showGlassControls, setShowGlassControls] = useState(false);
+  const [glassTint, setGlassTint] = useState<GlassTint>("clear");
+  const [glassMaterial, setGlassMaterial] = useState<GlassMaterial>("standard");
 
   const handleExportGLB = useCallback(async () => {
     if (!groupRef.current) {
@@ -277,6 +342,7 @@ export default function ModelViewer3D({
   }, [projectName]);
 
   const bg = darkBg ? "#1a1a1a" : "#e8e8e8";
+  const activeTint = GLASS_TINTS.find(t => t.value === glassTint) ?? GLASS_TINTS[0];
 
   return (
     <div
@@ -285,6 +351,17 @@ export default function ModelViewer3D({
     >
       {/* Toolbar */}
       <div className="absolute top-3 right-3 z-10 flex gap-2">
+        {params.hasGlass && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs bg-black/60 border-white/20 text-white hover:bg-black/80 backdrop-blur"
+            onClick={() => setShowGlassControls(v => !v)}
+          >
+            <Sliders size={13} className="mr-1" />
+            Glass
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -305,6 +382,54 @@ export default function ModelViewer3D({
           {exporting ? "Exporting…" : "Download .glb"}
         </Button>
       </div>
+
+      {/* Glass controls panel */}
+      {params.hasGlass && showGlassControls && (
+        <div className="absolute top-12 right-3 z-10 bg-black/80 backdrop-blur border border-white/15 rounded-xl p-3 w-52 space-y-3">
+          <p className="text-xs font-semibold text-white/80 uppercase tracking-widest">Glass Options</p>
+
+          {/* Tint selector */}
+          <div>
+            <Label className="text-xs text-white/60 mb-1 block">Tint</Label>
+            <div className="flex gap-1.5 flex-wrap">
+              {GLASS_TINTS.map(t => (
+                <button
+                  key={t.value}
+                  title={t.label}
+                  onClick={() => setGlassTint(t.value)}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    glassTint === t.value ? "border-white scale-110" : "border-white/30 hover:border-white/60"
+                  }`}
+                  style={{ backgroundColor: t.color }}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-white/40 mt-1">{activeTint.label}</p>
+          </div>
+
+          {/* Material selector */}
+          <div>
+            <Label className="text-xs text-white/60 mb-1 block">Material</Label>
+            <Select value={glassMaterial} onValueChange={v => setGlassMaterial(v as GlassMaterial)}>
+              <SelectTrigger className="h-7 text-xs bg-white/10 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GLASS_MATERIALS.map(m => (
+                  <SelectItem key={m.value} value={m.value} className="text-xs">
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-white/40 mt-1">
+              {glassMaterial === "standard"   && "Clear float glass — low reflectivity"}
+              {glassMaterial === "frosted"    && "Acid-etched — diffused, privacy glass"}
+              {glassMaterial === "reflective" && "Sputter-coated — high solar reflectance"}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Dimension badges */}
       <div className="absolute bottom-3 left-3 z-10 flex gap-1.5 flex-wrap">
@@ -328,6 +453,15 @@ export default function ModelViewer3D({
             Glass: {params.glassWallHeightFt}′
           </Badge>
         )}
+        {params.hasGlass && (
+          <Badge
+            variant="outline"
+            className="text-xs backdrop-blur border-white/20 text-white"
+            style={{ backgroundColor: activeTint.color + "55" }}
+          >
+            {activeTint.label} · {glassMaterial}
+          </Badge>
+        )}
         <Badge
           variant="outline"
           className="text-xs bg-black/60 border-white/20 text-white backdrop-blur"
@@ -349,7 +483,12 @@ export default function ModelViewer3D({
         style={{ background: bg, width: "100%", height: "100%", minHeight: 420 }}
       >
         <Suspense fallback={<Loader />}>
-          <SceneContent params={params} groupRef={groupRef} />
+          <SceneContent
+            params={params}
+            glassTint={glassTint}
+            glassMaterial={glassMaterial}
+            groupRef={groupRef}
+          />
         </Suspense>
       </Canvas>
     </div>

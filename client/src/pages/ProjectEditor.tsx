@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
-import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
+import { calculateQTO, calculateGrandTotal, calculateGlazingArea, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
 import ModelViewer3D from "@/components/ModelViewer3D";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
@@ -424,8 +424,64 @@ export default function ProjectEditor() {
                       placeholder="8.00"
                     />
                   </div>
-                </div>
 
+                  {/* Glazing Area Summary */}
+                  {(form.glassFront || form.glassLeft || form.glassRight) && (() => {
+                    const glazing = calculateGlazingArea(pergolaParams);
+                    return (
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-widest">Glazing Area Summary</p>
+                        <table className="w-full text-xs text-gray-700">
+                          <thead>
+                            <tr className="text-gray-500">
+                              <th className="text-left font-medium pb-1">Face</th>
+                              <th className="text-right font-medium pb-1">Length</th>
+                              <th className="text-right font-medium pb-1">Height</th>
+                              <th className="text-right font-medium pb-1">Area (ft²)</th>
+                              <th className="text-right font-medium pb-1">Area (m²)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-blue-100">
+                            {form.glassFront && (
+                              <tr>
+                                <td className="py-0.5">Front</td>
+                                <td className="text-right">{glazing.frontLengthFt.toFixed(2)}'</td>
+                                <td className="text-right">{glazing.glassHeightFt.toFixed(2)}'</td>
+                                <td className="text-right font-medium">{glazing.frontFt2.toFixed(1)}</td>
+                                <td className="text-right">{(glazing.frontFt2 * 0.0929).toFixed(1)}</td>
+                              </tr>
+                            )}
+                            {form.glassLeft && (
+                              <tr>
+                                <td className="py-0.5">Left</td>
+                                <td className="text-right">{glazing.leftLengthFt.toFixed(2)}'</td>
+                                <td className="text-right">{glazing.glassHeightFt.toFixed(2)}'</td>
+                                <td className="text-right font-medium">{glazing.leftFt2.toFixed(1)}</td>
+                                <td className="text-right">{(glazing.leftFt2 * 0.0929).toFixed(1)}</td>
+                              </tr>
+                            )}
+                            {form.glassRight && (
+                              <tr>
+                                <td className="py-0.5">Right</td>
+                                <td className="text-right">{glazing.rightLengthFt.toFixed(2)}'</td>
+                                <td className="text-right">{glazing.glassHeightFt.toFixed(2)}'</td>
+                                <td className="text-right font-medium">{glazing.rightFt2.toFixed(1)}</td>
+                                <td className="text-right">{(glazing.rightFt2 * 0.0929).toFixed(1)}</td>
+                              </tr>
+                            )}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t border-blue-300 font-semibold text-blue-800">
+                              <td colSpan={3} className="pt-1">Total Glazing Area</td>
+                              <td className="text-right pt-1">{glazing.totalFt2.toFixed(1)} ft²</td>
+                              <td className="text-right pt-1">{glazing.totalM2.toFixed(1)} m²</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
                 {/* Finish & Extras */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest border-b pb-2">Finish & Extras</h3>
