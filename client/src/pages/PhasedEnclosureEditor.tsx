@@ -50,6 +50,7 @@ function Section({
   collapsible = false,
   defaultOpen = true,
   accent = "gold",
+  action,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -59,6 +60,7 @@ function Section({
   collapsible?: boolean;
   defaultOpen?: boolean;
   accent?: "gold" | "gray" | "blue" | "green" | "red";
+  action?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const accentColors: Record<string, string> = {
@@ -70,25 +72,28 @@ function Section({
   };
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden mb-4">
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
-        onClick={() => collapsible && setOpen((o) => !o)}
-        type="button"
-      >
-        <div className={`w-1 h-6 rounded-full ${accentColors[accent]} flex-shrink-0`} />
-        <span className="text-card-foreground">{icon}</span>
-        <span className="font-semibold text-sm flex-1 text-card-foreground">{title}</span>
-        {badge && (
-          <Badge variant={badgeVariant} className="text-xs mr-2">
-            {badge}
-          </Badge>
-        )}
-        {collapsible && (
-          <span className="text-muted-foreground">
-            {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </span>
-        )}
-      </button>
+      <div className="w-full flex items-center gap-3 px-4 py-3 text-left">
+        <button
+          className="flex-1 flex items-center gap-3 hover:bg-muted/30 transition-colors rounded -mx-3 px-3"
+          onClick={() => collapsible && setOpen((o) => !o)}
+          type="button"
+        >
+          <div className={`w-1 h-6 rounded-full ${accentColors[accent]} flex-shrink-0`} />
+          <span className="text-card-foreground">{icon}</span>
+          <span className="font-semibold text-sm text-card-foreground">{title}</span>
+          {badge && (
+            <Badge variant={badgeVariant} className="text-xs">
+              {badge}
+            </Badge>
+          )}
+          {collapsible && (
+            <span className="text-muted-foreground ml-auto">
+              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </span>
+          )}
+        </button>
+        {action && <div className="flex-shrink-0">{action}</div>}
+      </div>
       {open && <div className="px-4 pb-4 pt-1">{children}</div>}
     </div>
   );
@@ -176,6 +181,8 @@ export default function PhasedEnclosureEditor() {
   );
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"editor" | "qto" | "checklist">("editor");
+  const [showDimensionsEditor, setShowDimensionsEditor] = useState(false);
+  const [customDimensions, setCustomDimensions] = useState<Array<{label: string; value: string; unit: string}>>(savedParams?.customDimensions ? (savedParams.customDimensions as Array<{label: string; value: string; unit: string}>) : []);
 
   // ── Load saved params ──
   useEffect(() => {
@@ -186,6 +193,7 @@ export default function PhasedEnclosureEditor() {
     if (savedParams.pricingJson) setPricing(savedParams.pricingJson as PricingInputs);
     if (savedParams.fieldNotesJson) setFieldNotes(savedParams.fieldNotesJson as FieldNotesData);
     if (savedParams.approvedDrawingName) setApprovedDrawingName(savedParams.approvedDrawingName);
+    if (savedParams.customDimensions) setCustomDimensions(savedParams.customDimensions as Array<{label: string; value: string; unit: string}>);
   }, [savedParams]);
 
   // ── Computed values ──
@@ -207,6 +215,7 @@ export default function PhasedEnclosureEditor() {
         dimensionsJson: dimensions,
         pricingJson: pricing,
         fieldNotesJson: fieldNotes,
+        customDimensions: customDimensions,
       });
       utils.phasedEnclosure.getParams.invalidate({ projectId });
       toast.success("Phased enclosure parameters saved.");
@@ -593,6 +602,7 @@ export default function PhasedEnclosureEditor() {
               accent="gray"
               collapsible
               defaultOpen={false}
+              action={<Button size="sm" variant="outline" onClick={() => setShowDimensionsEditor(true)}>Edit Dimensions</Button>}
             >
               <div className="space-y-2 text-xs">
                 <div className="font-semibold text-muted-foreground uppercase tracking-wide text-xs mb-2">Patio Overall</div>
@@ -982,6 +992,103 @@ export default function PhasedEnclosureEditor() {
           {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
+
+      {/* Dimensions Editor Modal */}
+      {showDimensionsEditor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl border border-border max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Custom Dimensions</h3>
+              <button
+                onClick={() => setShowDimensionsEditor(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {customDimensions.map((dim, idx) => (
+                <div key={idx} className="flex gap-2 items-end">
+                  <Input
+                    placeholder="Label"
+                    value={dim.label}
+                    onChange={(e) => {
+                      const updated = [...customDimensions];
+                      updated[idx] = { ...dim, label: e.target.value };
+                      setCustomDimensions(updated);
+                    }}
+                    className="text-xs flex-1"
+                  />
+                  <Input
+                    placeholder="Value"
+                    value={dim.value}
+                    onChange={(e) => {
+                      const updated = [...customDimensions];
+                      updated[idx] = { ...dim, value: e.target.value };
+                      setCustomDimensions(updated);
+                    }}
+                    className="text-xs flex-1"
+                  />
+                  <Input
+                    placeholder="Unit"
+                    value={dim.unit}
+                    onChange={(e) => {
+                      const updated = [...customDimensions];
+                      updated[idx] = { ...dim, unit: e.target.value };
+                      setCustomDimensions(updated);
+                    }}
+                    className="text-xs flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      setCustomDimensions(customDimensions.filter((_, i) => i !== idx));
+                    }}
+                    className="text-xs"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setCustomDimensions([...customDimensions, { label: "", value: "", unit: "" }]);
+                }}
+                className="w-full text-xs"
+              >
+                + Add Dimension
+              </Button>
+            </div>
+
+            <div className="border-t border-border px-4 py-3 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDimensionsEditor(false)}
+                className="flex-1 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowDimensionsEditor(false);
+                  toast.success("Custom dimensions updated.");
+                }}
+                className="flex-1 text-xs bg-amber-500 hover:bg-amber-600 text-black"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

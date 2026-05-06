@@ -64,6 +64,13 @@
       "when": 1777682635786,
       "tag": "0008_heavy_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1778080415810,
+      "tag": "0009_wise_jack_flag",
+      "breakpoints": true
     }
   ]
 }

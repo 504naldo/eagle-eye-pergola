@@ -146,6 +146,12 @@ export interface FieldNotesData {
 
 // ─── Full Phased Enclosure Params ─────────────────────────────────────────────
 
+export interface CustomDimension {
+  label: string;
+  value: string;
+  unit: string;
+}
+
 export interface PhasedEnclosureData {
   approvedDrawingUrl?: string;
   approvedDrawingFileKey?: string;
@@ -157,6 +163,7 @@ export interface PhasedEnclosureData {
   dimensions: DimensionsSummary;
   pricing: PricingInputs;
   fieldNotes: FieldNotesData;
+  customDimensions?: CustomDimension[];
 }
 
 // ─── Default Milestones Parameters ───────────────────────────────────────────

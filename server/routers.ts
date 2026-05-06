@@ -787,6 +787,7 @@ High resolution, photorealistic architectural visualization quality.`;
         dimensionsJson: z.any().optional(),
         pricingJson: z.any().optional(),
         fieldNotesJson: z.any().optional(),
+        customDimensions: z.any().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const project = await getProjectById(input.projectId);
@@ -804,6 +805,7 @@ High resolution, photorealistic architectural visualization quality.`;
           dimensionsJson: input.dimensionsJson ?? null,
           pricingJson: input.pricingJson ?? null,
           fieldNotesJson: input.fieldNotesJson ?? null,
+          customDimensions: input.customDimensions ?? null,
         });
         return { id };
       }),

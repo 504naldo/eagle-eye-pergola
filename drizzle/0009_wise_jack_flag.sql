@@ -1,0 +1,1 @@
+ALTER TABLE `phased_enclosure_params` ADD `customDimensions` json;

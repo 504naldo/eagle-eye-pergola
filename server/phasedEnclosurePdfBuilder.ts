@@ -473,6 +473,7 @@ function sheetDimensionsSummary(
   phase2: Phase2Params,
   date: string,
   sheetOf: string,
+  customDimensions?: Array<{label: string; value: string; unit: string}>,
 ) {
   const x0 = MARGIN;
   const y0 = MARGIN;
@@ -545,6 +546,20 @@ function sheetDimensionsSummary(
       { text: p2Rows[i][0], width: 220 },
       { text: p2Rows[i][1], width: w - 220 },
     ], false, i % 2 === 1);
+  }
+  cy += 10;
+  // Custom dimensions (if any)
+  if (customDimensions && customDimensions.length > 0) {
+    cy = drawSectionHeader(doc, x0, cy, w, "Custom Dimensions", C.black);
+    for (let i = 0; i < customDimensions.length; i++) {
+      if (cy + 14 > PH - MARGIN - 52 - 20) break;
+      const dim = customDimensions[i];
+      const valueWithUnit = dim.unit ? `${dim.value} ${dim.unit}` : dim.value;
+      cy = drawTableRow(doc, x0, cy, w, [
+        { text: dim.label, width: 220 },
+        { text: valueWithUnit, width: w - 220 },
+      ], false, i % 2 === 1);
+    }
   }
 
   drawTitleBlock(doc, projectName, "DIMENSIONS SUMMARY", "DIM-01", sheetOf, date);
@@ -730,6 +745,7 @@ export interface PhasedEnclosurePDFOptions {
   phase2: Phase2Params;
   pricing: PricingInputs;
   fieldNotes: FieldNotesData;
+  customDimensions?: Array<{label: string; value: string; unit: string}>;
 }
 
 export function buildPhasedEnclosurePDF(opts: PhasedEnclosurePDFOptions): Buffer {
@@ -741,6 +757,7 @@ export function buildPhasedEnclosurePDF(opts: PhasedEnclosurePDFOptions): Buffer
     phase2,
     pricing,
     fieldNotes,
+    customDimensions,
   } = opts;
 
   const date = new Date().toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
@@ -783,7 +800,7 @@ export function buildPhasedEnclosurePDF(opts: PhasedEnclosurePDFOptions): Buffer
 
   // Sheet 4: Dimensions Summary
   doc.addPage();
-  sheetDimensionsSummary(doc, projectName, phase1, phase2, date, nextSheet());
+  sheetDimensionsSummary(doc, projectName, phase1, phase2, date, nextSheet(), customDimensions);
 
   // Sheet 5: Assumptions / Exclusions
   doc.addPage();

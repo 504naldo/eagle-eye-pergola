@@ -442,3 +442,14 @@
 - [x] Updated Milestones project to phasedEnclosure scope type
 - [x] 51 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+
+## Add Custom Dimensions Editor to Phased Enclosure
+
+- [ ] Add customDimensions field to phased_enclosure_params table (JSON array of {label, value, unit})
+- [ ] Update PhasedEnclosureParams interface to include customDimensions
+- [ ] Add "Edit Dimensions" button to Dimensions Summary section in PhasedEnclosureEditor
+- [ ] Build DimensionsEditor modal/dialog with add/edit/delete custom dimension rows
+- [ ] Wire custom dimensions to PDF export (Dimensions Summary sheet)
+- [ ] Test custom dimensions on Milestones project
+- [ ] Save checkpoint

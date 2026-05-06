@@ -179,6 +179,8 @@ export const phasedEnclosureParams = mysqlTable("phased_enclosure_params", {
   pricingJson: json("pricingJson"),
   // Field verification notes JSON
   fieldNotesJson: json("fieldNotesJson"),
+  // Custom dimensions JSON (user-added dimensions beyond pre-calculated ones)
+  customDimensions: json("customDimensions"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

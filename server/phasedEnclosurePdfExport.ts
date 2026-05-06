@@ -30,6 +30,7 @@ export async function handlePhasedEnclosurePDFExport(req: Request, res: Response
     const fieldNotes = saved?.fieldNotesJson ?? getDefaultMilestonesFieldNotes();
     const scopeMode = saved?.scopeMode ?? "fullBuildout";
     const approvedDrawingName = saved?.approvedDrawingName ?? "17015_abbotsfordpatio-ID101.pdf";
+    const customDimensions = saved?.customDimensions ?? [];
 
     const pdfBuffer = buildPhasedEnclosurePDF({
       projectName: project.projectName,
@@ -39,6 +40,7 @@ export async function handlePhasedEnclosurePDFExport(req: Request, res: Response
       phase2: phase2 as any,
       pricing: pricing as any,
       fieldNotes: fieldNotes as any,
+      customDimensions: customDimensions as any,
     });
 
     const filename = `${project.projectName.replace(/[^a-zA-Z0-9]/g, "_")}_Supplemental_Package.pdf`;
