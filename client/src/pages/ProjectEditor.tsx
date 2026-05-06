@@ -51,6 +51,7 @@ export default function ProjectEditor() {
     slatSpacingIn: "4.00",
     glassFront: true, glassLeft: true, glassRight: true,
     glassWallHeightFt: "8.00",
+    railWidthIn: "2.00",
     finishColor: "Matte Black", ledLighting: true,
   });
 
@@ -73,6 +74,7 @@ export default function ProjectEditor() {
         glassLeft: projectParams.glassLeft ?? true,
         glassRight: projectParams.glassRight ?? true,
         glassWallHeightFt: projectParams.glassWallHeightFt ?? "8.00",
+        railWidthIn: projectParams.railWidthIn ?? "2.00",
         finishColor: projectParams.finishColor ?? "Matte Black",
         ledLighting: projectParams.ledLighting ?? true,
       });
@@ -112,6 +114,7 @@ export default function ProjectEditor() {
     glassLeft: form.glassLeft,
     glassRight: form.glassRight,
     glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
+    railWidthIn: parseFloat(form.railWidthIn) || 2,
     finishColor: form.finishColor,
     ledLighting: form.ledLighting,
   };
@@ -410,21 +413,36 @@ export default function ProjectEditor() {
                       />
                     </div>
                   ))}
-                  <div>
-                    <Label className="text-xs">Glass Wall Height (ft)</Label>
-                    <p className="text-xs text-gray-400 mb-1">Height of Lumon glass panels from slab to top rail</p>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      max="20"
-                      value={form.glassWallHeightFt}
-                      onChange={e => setForm(f => ({ ...f, glassWallHeightFt: e.target.value }))}
-                      className="mt-1 text-sm"
-                      placeholder="8.00"
-                    />
+                   <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Glass Wall Height (ft)</Label>
+                      <p className="text-xs text-gray-400 mb-1">Height from slab to top rail</p>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        max="20"
+                        value={form.glassWallHeightFt}
+                        onChange={e => setForm(f => ({ ...f, glassWallHeightFt: e.target.value }))}
+                        className="mt-1 text-sm"
+                        placeholder="8.00"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Rail Width (in)</Label>
+                      <p className="text-xs text-gray-400 mb-1">Top &amp; bottom rail profile width</p>
+                      <Input
+                        type="number"
+                        step="0.25"
+                        min="0.5"
+                        max="6"
+                        value={form.railWidthIn}
+                        onChange={e => setForm(f => ({ ...f, railWidthIn: e.target.value }))}
+                        className="mt-1 text-sm"
+                        placeholder="2.00"
+                      />
+                    </div>
                   </div>
-
                   {/* Glazing Area Summary */}
                   {(form.glassFront || form.glassLeft || form.glassRight) && (() => {
                     const glazing = calculateGlazingArea(pergolaParams);
@@ -1028,6 +1046,7 @@ export default function ProjectEditor() {
                   louverSizeIn: 6,
                   hasGlass: form.glassFront || form.glassLeft || form.glassRight,
                   glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
+                  railWidthIn: parseFloat(form.railWidthIn) || 2,
                   finishColor: form.finishColor === "Matte Black" ? "#2a2a2a"
                     : form.finishColor === "Matte White" ? "#e8e8e8"
                     : form.finishColor === "Bronze" ? "#6b4c2a"

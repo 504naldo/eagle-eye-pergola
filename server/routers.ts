@@ -158,6 +158,7 @@ export const appRouter = router({
         glassLeft: z.boolean().optional(),
         glassRight: z.boolean().optional(),
         glassWallHeightFt: z.string().optional(),
+        railWidthIn: z.string().optional(),
         finishColor: z.string().optional(),
         ledLighting: z.boolean().optional(),
       }))

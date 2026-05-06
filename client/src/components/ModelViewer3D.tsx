@@ -30,6 +30,7 @@ export interface PergolaModel3DParams {
   louverSizeIn: number;
   hasGlass: boolean;
   glassWallHeightFt?: number;
+  railWidthIn?: number;         // Width of top/bottom rails (inches), defaults to 2
   finishColor: string;
 }
 
@@ -147,7 +148,7 @@ function PergolaScene({
   const {
     widthFt, depthFt, heightFt, postCount,
     postSizeIn, beamSizeIn, louverSpacingIn, louverSizeIn,
-    hasGlass, glassWallHeightFt, finishColor,
+    hasGlass, glassWallHeightFt, railWidthIn, finishColor,
   } = params;
 
   const W = ft(widthFt);
@@ -177,8 +178,9 @@ function PergolaScene({
     return Array.from({ length: count + 1 }, (_, i) => -D / 2 + i * louverSpacing);
   }, [D, louverSpacing]);
 
-  const GH = ft(glassWallHeightFt ?? heightFt);
-
+   const GH = ft(glassWallHeightFt ?? heightFt);
+  const RW = inch(railWidthIn ?? 2);  // Rail width in scene units
+  const railThick = inch(2.5);        // Rail depth (front-to-back)
   return (
     <group ref={groupRef}>
       {/* Posts — front row */}
@@ -207,14 +209,21 @@ function PergolaScene({
         <AlumBox key={`ls${i}`} position={[0, roofY, z]} size={[W, louverThick, louverW]} color={finishColor} />
       ))}
 
-      {/* Glass wall panels — sized to glassWallHeightFt */}
+      {/* Glass wall panels with top/bottom rails */}
       {hasGlass && (
-        <GlassPanel
-          position={[0, GH / 2, D / 2]}
-          size={[W, GH, 0.012]}
-          tintOption={tintOption}
-          materialOption={materialOption}
-        />
+        <>
+          {/* Top rail */}
+          <AlumBox position={[0, GH - RW / 2, D / 2 + railThick / 2]} size={[W, RW, railThick]} color={finishColor} />
+          {/* Bottom rail */}
+          <AlumBox position={[0, RW / 2, D / 2 + railThick / 2]} size={[W, RW, railThick]} color={finishColor} />
+          {/* Glass infill between rails */}
+          <GlassPanel
+            position={[0, GH / 2, D / 2]}
+            size={[W, Math.max(GH - RW * 2, 0.01), 0.012]}
+            tintOption={tintOption}
+            materialOption={materialOption}
+          />
+        </>
       )}
 
       {/* Concrete slab */}

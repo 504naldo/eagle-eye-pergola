@@ -1,0 +1,1 @@
+ALTER TABLE `project_params` ADD `railWidthIn` decimal(8,2) DEFAULT '2.00';

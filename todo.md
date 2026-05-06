@@ -488,3 +488,15 @@
 - [x] Update GlassPanel in ModelViewer3D to apply tint color and material properties (opacity, roughness, metalness, envMapIntensity)
 - [x] Write vitest tests for glazing area calculation (12 new tests, 93 total passing)
 - [x] Save checkpoint
+
+## Add Rail Width Parameter
+
+- [x] Add `railWidthIn` column to project_params schema (decimal, default 2.0 in)
+- [x] Push DB migration
+- [x] Add railWidthIn to PergolaParams interface in shared/geometry.ts
+- [x] Update calculateQTO() to use railWidthIn for top/bottom rail line items (basis text shows rail width)
+- [x] Add Rail Width input to ProjectEditor Parameters form (side-by-side with Glass Wall Height)
+- [x] Update tRPC params.save to accept and persist railWidthIn
+- [x] Update ModelViewer3D to render top and bottom rails using railWidthIn
+- [x] Write vitest tests for rail width QTO calculation (4 new tests, 97 total passing)
+- [x] Save checkpoint

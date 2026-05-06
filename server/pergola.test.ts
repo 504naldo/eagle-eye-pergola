@@ -166,3 +166,45 @@ describe("glassWallHeightFt parameter", () => {
     expect(shortArea).toBeLessThan(fullArea);
   });
 });
+
+// ─── Rail Width Tests ─────────────────────────────────────────────────────────
+
+describe("railWidthIn parameter", () => {
+  const glassParams: PergolaParams = {
+    widthFt: 20, depthFt: 10, heightFt: 10,
+    postCount: 3, postSpacingFt: 10,
+    slatType: "fixed", slatSpacingIn: 4,
+    glassFront: true, glassLeft: false, glassRight: false,
+    glassWallHeightFt: 8,
+    finishColor: "Matte Black", ledLighting: false,
+  };
+
+  it("includes rail width in top rail basis text when set", () => {
+    const items = calculateQTO({ ...glassParams, railWidthIn: 3 });
+    const topRail = items.find(i => i.description === "Glass top rail (integrated to fascia beam)");
+    expect(topRail).toBeDefined();
+    expect(topRail!.basis).toContain('3"');
+  });
+
+  it("includes rail width in bottom track basis text when set", () => {
+    const items = calculateQTO({ ...glassParams, railWidthIn: 3 });
+    const bottomTrack = items.find(i => i.description === "Glass bottom track / sill");
+    expect(bottomTrack).toBeDefined();
+    expect(bottomTrack!.basis).toContain('3"');
+  });
+
+  it("defaults to 2 inch rail width when not set", () => {
+    const items = calculateQTO(glassParams);
+    const topRail = items.find(i => i.description === "Glass top rail (integrated to fascia beam)");
+    expect(topRail!.basis).toContain('2"');
+  });
+
+  it("rail width does not affect glass panel area quantity", () => {
+    const narrow = calculateQTO({ ...glassParams, railWidthIn: 1 });
+    const wide   = calculateQTO({ ...glassParams, railWidthIn: 6 });
+    const narrowPanel = narrow.find(i => i.description === "Lumon panels (vertical enclosure)")!.qty;
+    const widePanel   = wide.find(i => i.description === "Lumon panels (vertical enclosure)")!.qty;
+    // Panel area is based on glassWallHeightFt, not rail width
+    expect(narrowPanel).toBe(widePanel);
+  });
+});
