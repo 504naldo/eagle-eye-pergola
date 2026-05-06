@@ -114,3 +114,55 @@ describe("auth.logout", () => {
     expect(true).toBe(true);
   });
 });
+
+// ─── Glass Wall Height Tests ──────────────────────────────────────────────────
+
+describe("glassWallHeightFt parameter", () => {
+  it("uses glassWallHeightFt for glass area when set", () => {
+    const params: PergolaParams = {
+      widthFt: 20, depthFt: 10, heightFt: 10,
+      postCount: 3, postSpacingFt: 10,
+      slatType: "fixed", slatSpacingIn: 4,
+      glassFront: true, glassLeft: false, glassRight: false,
+      glassWallHeightFt: 8,
+      finishColor: "Matte Black", ledLighting: false,
+    };
+    const items = calculateQTO(params);
+    const lumon = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    // Area = 20 * 8 * 0.0929 = 14.864 m² → rounded to 14.9
+    expect(lumon).toBeDefined();
+    expect(lumon!.qty).toBeCloseTo(14.9, 0);
+    expect(lumon!.basis).toContain("H: 8.0'");
+  });
+
+  it("falls back to heightFt when glassWallHeightFt is not set", () => {
+    const params: PergolaParams = {
+      widthFt: 20, depthFt: 10, heightFt: 10,
+      postCount: 3, postSpacingFt: 10,
+      slatType: "fixed", slatSpacingIn: 4,
+      glassFront: true, glassLeft: false, glassRight: false,
+      finishColor: "Matte Black", ledLighting: false,
+    };
+    const items = calculateQTO(params);
+    const lumon = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    // Area = 20 * 10 * 0.0929 = 18.58 m² → rounded to 18.6
+    expect(lumon).toBeDefined();
+    expect(lumon!.qty).toBeCloseTo(18.6, 0);
+    expect(lumon!.basis).toContain("H: 10.0'");
+  });
+
+  it("smaller glass height produces less area than full height", () => {
+    const base: PergolaParams = {
+      widthFt: 30, depthFt: 12, heightFt: 10,
+      postCount: 4, postSpacingFt: 10,
+      slatType: "fixed", slatSpacingIn: 4,
+      glassFront: true, glassLeft: true, glassRight: true,
+      finishColor: "Matte Black", ledLighting: false,
+    };
+    const withShortGlass = calculateQTO({ ...base, glassWallHeightFt: 7 });
+    const withFullHeight = calculateQTO(base);
+    const shortArea = withShortGlass.find(i => i.description === "Lumon panels (vertical enclosure)")!.qty;
+    const fullArea = withFullHeight.find(i => i.description === "Lumon panels (vertical enclosure)")!.qty;
+    expect(shortArea).toBeLessThan(fullArea);
+  });
+});

@@ -65,6 +65,7 @@ export const projectParams = mysqlTable("project_params", {
   glassFront: boolean("glassFront").default(true),
   glassLeft: boolean("glassLeft").default(true),
   glassRight: boolean("glassRight").default(true),
+  glassWallHeightFt: decimal("glassWallHeightFt", { precision: 8, scale: 2 }).default("8.00"),
   // Connection type
   connectionType: mysqlEnum("connectionType", ["wall_mounted_lean_to"]).default("wall_mounted_lean_to").notNull(),
   // Finish & extras

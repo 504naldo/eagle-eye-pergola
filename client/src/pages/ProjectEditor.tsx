@@ -50,6 +50,7 @@ export default function ProjectEditor() {
     slatType: "fixed" as "fixed" | "operable",
     slatSpacingIn: "4.00",
     glassFront: true, glassLeft: true, glassRight: true,
+    glassWallHeightFt: "8.00",
     finishColor: "Matte Black", ledLighting: true,
   });
 
@@ -71,6 +72,7 @@ export default function ProjectEditor() {
         glassFront: projectParams.glassFront ?? true,
         glassLeft: projectParams.glassLeft ?? true,
         glassRight: projectParams.glassRight ?? true,
+        glassWallHeightFt: projectParams.glassWallHeightFt ?? "8.00",
         finishColor: projectParams.finishColor ?? "Matte Black",
         ledLighting: projectParams.ledLighting ?? true,
       });
@@ -109,6 +111,7 @@ export default function ProjectEditor() {
     glassFront: form.glassFront,
     glassLeft: form.glassLeft,
     glassRight: form.glassRight,
+    glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
     finishColor: form.finishColor,
     ledLighting: form.ledLighting,
   };
@@ -407,6 +410,20 @@ export default function ProjectEditor() {
                       />
                     </div>
                   ))}
+                  <div>
+                    <Label className="text-xs">Glass Wall Height (ft)</Label>
+                    <p className="text-xs text-gray-400 mb-1">Height of Lumon glass panels from slab to top rail</p>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="1"
+                      max="20"
+                      value={form.glassWallHeightFt}
+                      onChange={e => setForm(f => ({ ...f, glassWallHeightFt: e.target.value }))}
+                      className="mt-1 text-sm"
+                      placeholder="8.00"
+                    />
+                  </div>
                 </div>
 
                 {/* Finish & Extras */}
@@ -954,6 +971,7 @@ export default function ProjectEditor() {
                   louverSpacingIn: parseFloat(form.slatSpacingIn) || 4,
                   louverSizeIn: 6,
                   hasGlass: form.glassFront || form.glassLeft || form.glassRight,
+                  glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
                   finishColor: form.finishColor === "Matte Black" ? "#2a2a2a"
                     : form.finishColor === "Matte White" ? "#e8e8e8"
                     : form.finishColor === "Bronze" ? "#6b4c2a"

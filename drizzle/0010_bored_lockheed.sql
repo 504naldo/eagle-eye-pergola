@@ -1,0 +1,1 @@
+ALTER TABLE `project_params` ADD `glassWallHeightFt` decimal(8,2) DEFAULT '8.00';

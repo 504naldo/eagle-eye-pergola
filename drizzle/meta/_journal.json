@@ -71,6 +71,13 @@
       "when": 1778080415810,
       "tag": "0009_wise_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1778082395037,
+      "tag": "0010_bored_lockheed",
+      "breakpoints": true
     }
   ]
 }

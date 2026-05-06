@@ -27,6 +27,7 @@ export interface PergolaModel3DParams {
   louverSpacingIn: number;
   louverSizeIn: number;
   hasGlass: boolean;
+  glassWallHeightFt?: number;  // Height of glass wall panels (ft), defaults to heightFt
   finishColor: string;
 }
 
@@ -102,7 +103,7 @@ function PergolaScene({
   const {
     widthFt, depthFt, heightFt, postCount,
     postSizeIn, beamSizeIn, louverSpacingIn, louverSizeIn,
-    hasGlass, finishColor,
+    hasGlass, glassWallHeightFt, finishColor,
   } = params;
 
   const W = ft(widthFt);
@@ -157,10 +158,11 @@ function PergolaScene({
         <AlumBox key={`ls${i}`} position={[0, roofY, z]} size={[W, louverThick, louverW]} color={finishColor} />
       ))}
 
-      {/* Glass panel (front face) */}
-      {hasGlass && (
-        <GlassBox position={[0, H / 2, D / 2]} size={[W, H, 0.012]} />
-      )}
+      {/* Glass wall panels — sized to glassWallHeightFt (or full heightFt if not set) */}
+      {hasGlass && (() => {
+        const GH = ft(glassWallHeightFt ?? heightFt);
+        return <GlassBox position={[0, GH / 2, D / 2]} size={[W, GH, 0.012]} />;
+      })()}
 
       {/* Concrete slab */}
       <mesh position={[0, -0.02, 0]} receiveShadow>
@@ -318,6 +320,14 @@ export default function ModelViewer3D({
         >
           H: {params.heightFt}′
         </Badge>
+        {params.hasGlass && params.glassWallHeightFt && (
+          <Badge
+            variant="outline"
+            className="text-xs bg-black/60 border-white/20 text-white backdrop-blur"
+          >
+            Glass: {params.glassWallHeightFt}′
+          </Badge>
+        )}
         <Badge
           variant="outline"
           className="text-xs bg-black/60 border-white/20 text-white backdrop-blur"

@@ -12,6 +12,7 @@ export interface PergolaParams {
   glassFront: boolean;
   glassLeft: boolean;
   glassRight: boolean;
+  glassWallHeightFt?: number;  // Height of glass wall panels (ft), defaults to heightFt
   finishColor: string;
   ledLighting: boolean;
 }
@@ -68,10 +69,11 @@ export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, nu
   const frontBeamLengthM = widthM;
   const rearBeamLengthM = widthM;
 
-  const frontGlassArea = p.glassFront ? p.widthFt * p.heightFt * 0.0929 : 0;
+  const glassH = p.glassWallHeightFt ?? p.heightFt;  // Use dedicated glass height if set
+  const frontGlassArea = p.glassFront ? p.widthFt * glassH * 0.0929 : 0;
   const sideGlassArea =
-    (p.glassLeft ? 1 : 0) * p.depthFt * p.heightFt * 0.0929 +
-    (p.glassRight ? 1 : 0) * p.depthFt * p.heightFt * 0.0929;
+    (p.glassLeft ? 1 : 0) * p.depthFt * glassH * 0.0929 +
+    (p.glassRight ? 1 : 0) * p.depthFt * glassH * 0.0929;
   const totalGlassM2 = frontGlassArea + sideGlassArea;
 
   const glassPerimeterM =
@@ -105,7 +107,7 @@ export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, nu
 
     // ── Lumon Enclosure ─────────────────────────────────────────────────────────────────────────────
     ...(totalGlassM2 > 0 ? [
-      withRate({ category: "Lumon Enclosure", description: "Lumon panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}` }, undefined, ro),
+      withRate({ category: "Lumon Enclosure", description: "Lumon panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}, H: ${glassH.toFixed(1)}'` }, undefined, ro),
       withRate({ category: "Lumon Enclosure", description: "Glass top rail (integrated to fascia beam)", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Top rail at glass-to-beam connection" }, undefined, ro),
       withRate({ category: "Lumon Enclosure", description: "Glass bottom track / sill", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: "Bottom track at slab level" }, undefined, ro),
     ] : []),

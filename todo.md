@@ -466,3 +466,15 @@
 - [x] Mobile-friendly orbit controls (touch pan/rotate/zoom)
 - [x] Write vitest tests for 3D geometry helpers (17 tests)
 - [x] Save checkpoint
+
+## Add Glass Wall Height Parameter
+
+- [x] Add `glassWallHeightFt` field to project_params schema (default 8.0 ft)
+- [x] Push DB migration
+- [x] Add glassWallHeightFt to PergolaParams interface in shared/geometry.ts
+- [x] Update calculateQTO() to use glassWallHeightFt for glass area calculations
+- [x] Add Glass Wall Height input to ProjectEditor parameter form (Lumon Enclosure section)
+- [x] Update tRPC params.save to accept and persist glassWallHeightFt
+- [x] Update ModelViewer3D to use glassWallHeightFt for glass panel height in 3D scene
+- [x] Write vitest tests for glass wall height QTO calculation (3 new tests, 80 total passing)
+- [x] Save checkpoint
