@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
 import { calculateQTO, calculateGrandTotal, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
+import ModelViewer3D from "@/components/ModelViewer3D";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
 import { RatesTab } from "@/components/RatesTab";
 import { PromptEditor } from "@/components/PromptEditor";
@@ -315,6 +316,7 @@ export default function ProjectEditor() {
                 { value: "reference", label: "Reference Photos", shortLabel: "Ref Photos" },
                 { value: "rates", label: "Unit Rates", shortLabel: "Rates" },
                 { value: "files", label: "Files", shortLabel: "Files" },
+                { value: "model3d", label: "3D Model", shortLabel: "3D" },
               ].map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value} className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm whitespace-nowrap">
                   <span className="hidden sm:inline">{tab.label}</span>
@@ -929,6 +931,37 @@ export default function ProjectEditor() {
                 <span className="text-xs text-gray-400">— Photos, drawings, documents</span>
               </div>
               {project && <FilesTab projectId={project.id} />}
+            </div>
+          </TabsContent>
+
+          {/* ── 3D Model Tab ── */}
+          <TabsContent value="model3d">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                <h2 className="text-sm font-semibold text-gray-900">3D Model</h2>
+                <span className="text-xs text-gray-400">— Parametric model from your dimensions. Download as .glb to open in Blender, SketchUp, or Windows 3D Viewer.</span>
+              </div>
+              <ModelViewer3D
+                projectName={project?.projectName ?? "Pergola"}
+                params={{
+                  widthFt: parseFloat(form.widthFt) || 58,
+                  depthFt: parseFloat(form.depthFt) || 15.67,
+                  heightFt: parseFloat(form.heightFt) || 10,
+                  postCount: form.postCount,
+                  postSizeIn: 6,
+                  beamSizeIn: 8,
+                  louverSpacingIn: parseFloat(form.slatSpacingIn) || 4,
+                  louverSizeIn: 6,
+                  hasGlass: form.glassFront || form.glassLeft || form.glassRight,
+                  finishColor: form.finishColor === "Matte Black" ? "#2a2a2a"
+                    : form.finishColor === "Matte White" ? "#e8e8e8"
+                    : form.finishColor === "Bronze" ? "#6b4c2a"
+                    : form.finishColor === "Silver" ? "#a0a0a0"
+                    : "#2a2a2a",
+                }}
+                className="h-[520px]"
+              />
             </div>
           </TabsContent>
 

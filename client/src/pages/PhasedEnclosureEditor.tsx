@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ModelViewer3D from "@/components/ModelViewer3D";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -180,7 +181,7 @@ export default function PhasedEnclosureEditor() {
     "McMillan Design — Milestones Proposed Patio (ID101, April 2025)"
   );
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"editor" | "qto" | "checklist">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "qto" | "checklist" | "model3d">("editor");
   const [showDimensionsEditor, setShowDimensionsEditor] = useState(false);
   const [customDimensions, setCustomDimensions] = useState<Array<{label: string; value: string; unit: string}>>(savedParams?.customDimensions ? (savedParams.customDimensions as Array<{label: string; value: string; unit: string}>) : []);
 
@@ -273,7 +274,7 @@ export default function PhasedEnclosureEditor() {
 
       {/* Tab bar */}
       <div className="flex gap-1 mx-4 mt-4 bg-muted/30 rounded-lg p-1">
-        {(["editor", "qto", "checklist"] as const).map((tab) => (
+        {(["editor", "qto", "checklist", "model3d"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -284,7 +285,7 @@ export default function PhasedEnclosureEditor() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "editor" ? "Scope Editor" : tab === "qto" ? "QTO / Pricing" : "Field Checklist"}
+            {tab === "editor" ? "Scope Editor" : tab === "qto" ? "QTO / Pricing" : tab === "checklist" ? "Field Checklist" : "3D Model"}
           </button>
         ))}
       </div>
@@ -970,10 +971,36 @@ export default function PhasedEnclosureEditor() {
                 />
               </div>
             </div>
-          </>
+           </>
+        )}
+        {activeTab === "model3d" && (
+          <div className="py-2">
+            <p className="text-xs text-muted-foreground mb-3">
+              Parametric 3D model built from your Phase 1 &amp; Phase 2 dimensions. Download as .glb to open in Blender, SketchUp, or Windows 3D Viewer.
+            </p>
+            <ModelViewer3D
+              projectName={project?.projectName ?? "Phased Enclosure"}
+              params={{
+                widthFt: phase1.frontWidthFt ?? 58,
+                depthFt: phase1.sideDepthFt ?? 15.67,
+                heightFt: phase2.totalUnitHeightFt ?? 10,
+                postCount: phase2.frontSections ?? 5,
+                postSizeIn: phase2.postSizeIn ?? 6,
+                beamSizeIn: phase2.beamSizeIn ?? 8,
+                louverSpacingIn: 4,
+                louverSizeIn: 6,
+                hasGlass: true,
+                finishColor: phase2.finishColor === "Matte Black" ? "#2a2a2a"
+                  : phase2.finishColor === "Matte White" ? "#e8e8e8"
+                  : phase2.finishColor === "Bronze" ? "#6b4c2a"
+                  : phase2.finishColor === "Silver" ? "#a0a0a0"
+                  : "#2a2a2a",
+              }}
+              className="h-[500px]"
+            />
+          </div>
         )}
       </div>
-
       {/* Bottom save bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border px-4 py-3 flex gap-2">
         <Button

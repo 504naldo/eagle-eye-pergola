@@ -446,10 +446,23 @@
 
 ## Add Custom Dimensions Editor to Phased Enclosure
 
-- [ ] Add customDimensions field to phased_enclosure_params table (JSON array of {label, value, unit})
-- [ ] Update PhasedEnclosureParams interface to include customDimensions
-- [ ] Add "Edit Dimensions" button to Dimensions Summary section in PhasedEnclosureEditor
-- [ ] Build DimensionsEditor modal/dialog with add/edit/delete custom dimension rows
-- [ ] Wire custom dimensions to PDF export (Dimensions Summary sheet)
-- [ ] Test custom dimensions on Milestones project
-- [ ] Save checkpoint
+- [x] Add customDimensions field to phased_enclosure_params table (JSON array of {label, value, unit})
+- [x] Update PhasedEnclosureParams interface to include customDimensions
+- [x] Add "Edit Dimensions" button to Dimensions Summary section in PhasedEnclosureEditor
+- [x] Build DimensionsEditor modal/dialog with add/edit/delete custom dimension rows
+- [x] Wire custom dimensions to PDF export (Dimensions Summary sheet)
+- [x] Test custom dimensions on Milestones project
+- [x] Save checkpoint
+
+
+## 3D Model Viewer & Export
+
+- [x] Install @react-three/fiber, @react-three/drei, three packages
+- [x] Create client/src/components/ModelViewer3D.tsx — parametric Three.js scene (posts, beams, louvers, glass) with orbit controls, lighting, grid
+- [x] Create client/src/lib/exportGLB.ts — GLTFExporter helper for .glb download
+- [x] Add "3D Model" tab to ProjectEditor (Pergola)
+- [x] Add "3D Model" tab to PhasedEnclosureEditor
+- [x] Add GLB export button using Three.js GLTFExporter (download .glb file)
+- [x] Mobile-friendly orbit controls (touch pan/rotate/zoom)
+- [x] Write vitest tests for 3D geometry helpers (17 tests)
+- [x] Save checkpoint
