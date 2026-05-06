@@ -275,6 +275,9 @@ export default function ProjectEditor() {
             <ChevronLeft size={16} /> <span className="hidden xs:inline">Dashboard</span>
           </button>
           <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-end">
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate(`/project/${projectId}/concept`)}>
+              <Eye size={14} /> <span className="hidden sm:inline">Concept</span><span className="sm:hidden">Pkg</span>
+            </Button>
             <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate(`/project/${projectId}/preview`)}>
               <Eye size={14} /> <span className="hidden sm:inline">Preview</span><span className="sm:hidden">View</span>
             </Button>

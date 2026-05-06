@@ -500,3 +500,15 @@
 - [x] Update ModelViewer3D to render top and bottom rails using railWidthIn
 - [x] Write vitest tests for rail width QTO calculation (4 new tests, 97 total passing)
 - [x] Save checkpoint
+
+## Milestones Abbotsford Concept Package
+
+- [x] Update project parameters: widthFt=58, postCount=5, postSpacingFt=14, postSizeIn=6, glassWallHeightFt=4 (48"), railWidthIn=5.75, glassFront=true
+- [x] Add project notes/constraints to the scope section (building attachment, drain, conduit, engineering, etc.)
+- [x] Update 3D model: add booth geometry (6 U-shaped booths on 8" platform), frosted lower glass, Phase 2 upper sliding glass, mid-rail connector, base sill, side panels
+- [x] Add glass height toggle (48" vs 52") to the 3D viewer for client comparison
+- [x] Build ConceptPackage page: project summary, glass height comparison (48" vs 52"), drawing notes, pricing notes
+- [x] Register /concept/:projectId route in App.tsx
+- [x] Add "Concept Package" button to ProjectEditor header
+- [x] 97 tests passing, 0 TypeScript errors
+- [x] Save checkpoint

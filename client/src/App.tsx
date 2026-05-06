@@ -11,6 +11,7 @@ import EnclosureEditor from "./pages/EnclosureEditor";
 import FencingEditor from "./pages/FencingEditor";
 import PhasedEnclosureEditor from "./pages/PhasedEnclosureEditor";
 import DrawingPreview from "./pages/DrawingPreview";
+import ConceptPackage from "./pages/ConceptPackage";
 import Home from "./pages/Home";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/project/:id" component={ProjectRouter} />
       <Route path="/project/:id/preview" component={DrawingPreview} />
+      <Route path="/project/:id/concept" component={ConceptPackage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
