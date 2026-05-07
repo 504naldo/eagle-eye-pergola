@@ -1064,6 +1064,13 @@ export default function ProjectEditor() {
                     : form.finishColor === "Bronze" ? "#6b4c2a"
                     : form.finishColor === "Silver" ? "#a0a0a0"
                     : "#2a2a2a",
+                  egressMarkers: [
+                    { xFraction: 0.25, widthFt: 3, label: "Egress 1" },
+                    { xFraction: 0.75, widthFt: 3, label: "Egress 2" },
+                  ],
+                  servingStations: [
+                    { xFraction: 0.5, widthFt: 4, label: "Serving Station" },
+                  ],
                 }}
                 className="h-[520px]"
               />

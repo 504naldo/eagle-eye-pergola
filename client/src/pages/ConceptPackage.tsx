@@ -5,7 +5,7 @@ import EagleEyeLayout from "@/components/EagleEyeLayout";
 import ModelViewer3D from "@/components/ModelViewer3D";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Download, Printer, AlertTriangle, CheckCircle2, Info, HelpCircle } from "lucide-react";
+import { ChevronLeft, Download, Printer, AlertTriangle, CheckCircle2, Info, HelpCircle, Layers } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Constraint / note card ───────────────────────────────────────────────────
@@ -438,6 +438,19 @@ export default function ConceptPackage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* ── Lumon Details Link ── */}
+        <div className="flex justify-end mb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-blue-600 text-blue-400 hover:bg-blue-950 hover:text-blue-300 bg-transparent"
+            onClick={() => navigate(`/project/${projectId}/lumon`)}
+          >
+            <Layers size={14} />
+            View Lumon System Details
+          </Button>
         </div>
 
         {/* ── Lumon Technical Note ── */}

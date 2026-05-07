@@ -176,3 +176,210 @@ describe("Finish Color Mapping", () => {
     expect(mapFinishColor("")).toBe("#2a2a2a");
   });
 });
+
+// ─── Marker position math (mirrors ModelViewer3D conflict detection) ──────────
+
+interface EgressMarker {
+  xFraction: number;
+  widthFt?: number;
+  label?: string;
+}
+interface ServingStationMarker {
+  xFraction: number;
+  widthFt?: number;
+  label?: string;
+}
+
+/**
+ * Compute the center X position of a marker in feet (relative to pergola center).
+ * widthFt is the total pergola width.
+ */
+function markerCenterX(xFraction: number, widthFt: number): number {
+  return -widthFt / 2 + xFraction * widthFt;
+}
+
+/**
+ * Detect stacking zone conflicts for a set of markers.
+ * Stacking zones occupy 3ft at each end of the glass wall.
+ * Returns an array of conflicting marker labels.
+ */
+function detectStackingConflicts(
+  widthFt: number,
+  egressMarkers: EgressMarker[],
+  servingStations: ServingStationMarker[],
+  stackZoneW = 3
+): string[] {
+  const halfW = widthFt / 2;
+  const conflicts: string[] = [];
+  const checkMarker = (xFraction: number, mWidthFt: number, label: string) => {
+    const cx = -halfW + xFraction * widthFt;
+    const left = cx - mWidthFt / 2;
+    const right = cx + mWidthFt / 2;
+    const leftZoneRight = -halfW + stackZoneW;
+    const rightZoneLeft = halfW - stackZoneW;
+    if (left < leftZoneRight || right > rightZoneLeft) {
+      conflicts.push(label);
+    }
+  };
+  egressMarkers.forEach((m, i) =>
+    checkMarker(m.xFraction, m.widthFt ?? 3, m.label ?? `Egress ${i + 1}`)
+  );
+  servingStations.forEach((m, i) =>
+    checkMarker(m.xFraction, m.widthFt ?? 4, m.label ?? `Serving ${i + 1}`)
+  );
+  return conflicts;
+}
+
+describe("Marker Position Math", () => {
+  const widthFt = 58;
+
+  it("positions marker at left end when xFraction=0", () => {
+    const cx = markerCenterX(0, widthFt);
+    expect(cx).toBeCloseTo(-29, 3);
+  });
+
+  it("positions marker at right end when xFraction=1", () => {
+    const cx = markerCenterX(1, widthFt);
+    expect(cx).toBeCloseTo(29, 3);
+  });
+
+  it("positions marker at center when xFraction=0.5", () => {
+    const cx = markerCenterX(0.5, widthFt);
+    expect(cx).toBeCloseTo(0, 3);
+  });
+
+  it("positions egress 1 at 25% (≈14.5ft from left end)", () => {
+    const cx = markerCenterX(0.25, widthFt);
+    expect(cx).toBeCloseTo(-14.5, 1); // -29 + 0.25*58 = -29 + 14.5 = -14.5
+  });
+
+  it("positions egress 2 at 75% (≈14.5ft from right end)", () => {
+    const cx = markerCenterX(0.75, widthFt);
+    expect(cx).toBeCloseTo(14.5, 1); // -29 + 0.75*58 = -29 + 43.5 = 14.5
+  });
+
+  it("handles fractional widths correctly", () => {
+    const cx = markerCenterX(0.5, 20);
+    expect(cx).toBeCloseTo(0, 5);
+    const cx2 = markerCenterX(0.25, 20);
+    expect(cx2).toBeCloseTo(-5, 5);
+  });
+});
+
+describe("Stacking Zone Conflict Detection", () => {
+  const widthFt = 58; // Milestones project
+
+  it("returns no conflicts when markers are in the clear center zone", () => {
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0.25, widthFt: 3, label: "Egress 1" }],
+      [{ xFraction: 0.5, widthFt: 4, label: "Serving Station" }]
+    );
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("detects conflict when egress door overlaps left stacking zone", () => {
+    // xFraction=0.05 → cx = -29 + 0.05*58 = -29 + 2.9 = -26.1
+    // left edge = -26.1 - 1.5 = -27.6, leftZoneRight = -29 + 3 = -26
+    // -27.6 < -26 → conflict
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0.05, widthFt: 3, label: "Egress Near Left" }],
+      []
+    );
+    expect(conflicts).toContain("Egress Near Left");
+  });
+
+  it("detects conflict when egress door overlaps right stacking zone", () => {
+    // xFraction=0.95 → cx = -29 + 0.95*58 = -29 + 55.1 = 26.1
+    // right edge = 26.1 + 1.5 = 27.6, rightZoneLeft = 29 - 3 = 26
+    // 27.6 > 26 → conflict
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0.95, widthFt: 3, label: "Egress Near Right" }],
+      []
+    );
+    expect(conflicts).toContain("Egress Near Right");
+  });
+
+  it("detects conflict when marker is exactly at the stacking zone boundary", () => {
+    // xFraction=0 → cx = -29, left = -29 - 1.5 = -30.5, leftZoneRight = -26
+    // -30.5 < -26 → conflict
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0, widthFt: 3, label: "Egress At Left End" }],
+      []
+    );
+    expect(conflicts).toContain("Egress At Left End");
+  });
+
+  it("returns no conflicts for center serving station on 58ft span", () => {
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [],
+      [{ xFraction: 0.5, widthFt: 4, label: "Serving Station" }]
+    );
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("returns no conflicts when there are no markers", () => {
+    const conflicts = detectStackingConflicts(widthFt, [], []);
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("returns multiple conflicts when multiple markers overlap stacking zones", () => {
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [
+        { xFraction: 0.02, widthFt: 3, label: "Egress 1" },
+        { xFraction: 0.98, widthFt: 3, label: "Egress 2" },
+      ],
+      []
+    );
+    expect(conflicts).toHaveLength(2);
+    expect(conflicts).toContain("Egress 1");
+    expect(conflicts).toContain("Egress 2");
+  });
+
+  it("uses default label when label is not provided", () => {
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0.02, widthFt: 3 }],
+      []
+    );
+    expect(conflicts).toContain("Egress 1");
+  });
+
+  it("uses default widthFt of 3ft for egress markers", () => {
+    // xFraction=0.05 → cx=-26.1, left=-26.1-1.5=-27.6 < leftZoneRight=-26 → conflict
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [{ xFraction: 0.05, label: "Egress No Width" }],
+      []
+    );
+    expect(conflicts).toContain("Egress No Width");
+  });
+
+  it("uses default widthFt of 4ft for serving station markers", () => {
+    // xFraction=0.5 → cx=0, left=-2, right=2 — well inside the clear zone on 58ft span
+    const conflicts = detectStackingConflicts(
+      widthFt,
+      [],
+      [{ xFraction: 0.5, label: "Serving No Width" }]
+    );
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("detects conflict on a narrow 20ft span where stacking zones cover 30% each end", () => {
+    // On 20ft span, stacking zones are 3ft each end (15% each)
+    // xFraction=0.1 → cx = -10 + 0.1*20 = -10 + 2 = -8
+    // left = -8 - 1.5 = -9.5, leftZoneRight = -10 + 3 = -7
+    // -9.5 < -7 → conflict
+    const conflicts = detectStackingConflicts(
+      20,
+      [{ xFraction: 0.1, widthFt: 3, label: "Egress Narrow" }],
+      []
+    );
+    expect(conflicts).toContain("Egress Narrow");
+  });
+});

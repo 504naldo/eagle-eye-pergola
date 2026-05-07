@@ -575,3 +575,13 @@
 ### Phase 4 — Tests & Checkpoint
 - [x] 103 tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Concept Package — Lumon Details Link & 3D Egress Markers
+
+- [x] Add "View Lumon System Details" link/button to Concept Package page (in the Lumon callout section)
+- [x] Add egress door markers to 3D model (red/orange outlined openings at configurable positions along the glass wall)
+- [x] Add serving station markers to 3D model (green outlined zones at configurable positions)
+- [x] Show stacking zone conflict warning when egress/serving station overlaps with stacking zone
+- [x] Add toggle in 3D viewer toolbar to show/hide egress and serving station markers
+- [x] 17 new vitest tests (120 total passing), 0 TypeScript errors
+- [x] Save checkpoint

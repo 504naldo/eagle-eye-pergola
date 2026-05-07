@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Sun, Moon, Sliders } from "lucide-react";
+import { Download, Sun, Moon, Sliders, DoorOpen, UtensilsCrossed, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { exportSceneAsGLB } from "@/lib/exportGLB";
 
@@ -34,6 +34,9 @@ export interface PergolaModel3DParams {
   showBooths?: boolean;           // Show 6 U-shaped booths
   boothPlatformHeightIn?: number; // Booth platform height (default 8")
   finishColor: string;
+  egressMarkers?: EgressMarker[];
+  servingStations?: ServingStationMarker[];
+  showMarkers?: boolean;
 }
 
 export type GlassTint = "clear" | "bronze" | "grey" | "blue" | "green";
@@ -71,6 +74,93 @@ const GLASS_MATERIALS: GlassMaterialOption[] = [
 const FT = 0.3048;
 const ft  = (v: number) => v * FT;
 const inch = (v: number) => (v / 12) * FT;
+
+// ─── Marker types ────────────────────────────────────────────────────────────
+export interface EgressMarker {
+  /** Position along the glass wall, 0 = left end, 1 = right end */
+  xFraction: number;
+  /** Width of the egress opening in feet (default 3 ft) */
+  widthFt?: number;
+  label?: string;
+}
+export interface ServingStationMarker {
+  /** Position along the glass wall, 0 = left end, 1 = right end */
+  xFraction: number;
+  /** Width of the serving station zone in feet (default 4 ft) */
+  widthFt?: number;
+  label?: string;
+}
+
+// ─── Egress door marker ───────────────────────────────────────────────────────
+function EgressDoorMarker({ cx, glassZ, glassH, widthFt: markerW, label }: {
+  cx: number; glassZ: number; glassH: number; widthFt: number; label: string;
+}) {
+  const mW = ft(markerW);
+  const frameThick = inch(1.5);
+  return (
+    <group position={[cx, 0, glassZ + 0.03]}>
+      {/* Left frame */}
+      <mesh position={[-mW / 2 - frameThick / 2, glassH / 2, 0]}>
+        <boxGeometry args={[frameThick, glassH, inch(0.5)]} />
+        <meshStandardMaterial color="#ef4444" metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Right frame */}
+      <mesh position={[mW / 2 + frameThick / 2, glassH / 2, 0]}>
+        <boxGeometry args={[frameThick, glassH, inch(0.5)]} />
+        <meshStandardMaterial color="#ef4444" metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Top frame */}
+      <mesh position={[0, glassH + frameThick / 2, 0]}>
+        <boxGeometry args={[mW + frameThick * 2, frameThick, inch(0.5)]} />
+        <meshStandardMaterial color="#ef4444" metalness={0.6} roughness={0.2} />
+      </mesh>
+      {/* Opening fill (semi-transparent red) */}
+      <mesh position={[0, glassH / 2, -0.005]}>
+        <boxGeometry args={[mW, glassH, inch(0.2)]} />
+        <meshStandardMaterial color="#ef4444" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      {/* HTML label */}
+      <Html position={[0, glassH + ft(0.6), 0]} center>
+        <div className="bg-red-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap pointer-events-none">
+          🚪 {label}
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// ─── Serving station marker ───────────────────────────────────────────────────
+function ServingStationMarker({ cx, glassZ, glassH, widthFt: markerW, label }: {
+  cx: number; glassZ: number; glassH: number; widthFt: number; label: string;
+}) {
+  const mW = ft(markerW);
+  const frameThick = inch(1.5);
+  return (
+    <group position={[cx, 0, glassZ + 0.03]}>
+      {/* Zone fill (semi-transparent green) */}
+      <mesh position={[0, glassH / 2, -0.005]}>
+        <boxGeometry args={[mW, glassH, inch(0.2)]} />
+        <meshStandardMaterial color="#22c55e" transparent opacity={0.18} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Left frame */}
+      <mesh position={[-mW / 2 - frameThick / 2, glassH / 2, 0]}>
+        <boxGeometry args={[frameThick, glassH, inch(0.5)]} />
+        <meshStandardMaterial color="#16a34a" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* Right frame */}
+      <mesh position={[mW / 2 + frameThick / 2, glassH / 2, 0]}>
+        <boxGeometry args={[frameThick, glassH, inch(0.5)]} />
+        <meshStandardMaterial color="#16a34a" metalness={0.5} roughness={0.3} />
+      </mesh>
+      {/* HTML label */}
+      <Html position={[0, glassH + ft(0.6), 0]} center>
+        <div className="bg-green-600/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap pointer-events-none">
+          🍽 {label}
+        </div>
+      </Html>
+    </group>
+  );
+}
 
 // ─── Loading overlay ──────────────────────────────────────────────────────────
 function Loader() {
@@ -202,6 +292,7 @@ function PergolaScene({
     showUpperGlass,
     showBooths, boothPlatformHeightIn,
     finishColor,
+    egressMarkers, servingStations, showMarkers,
   } = params;
 
   const W = ft(widthFt);
@@ -421,6 +512,36 @@ function PergolaScene({
           />
           {/* Side panel frame post — right (full height to beam) */}
           <AlumBox position={[W / 2 + ft(1.5) + postS / 2, H / 2, 0]} size={[postS, H, postS]} color={finishColor} />
+
+          {/* ── Egress door markers ── */}
+          {showMarkers && egressMarkers?.map((m, i) => {
+            const cx = -W / 2 + m.xFraction * W;
+            return (
+              <EgressDoorMarker
+                key={`eg${i}`}
+                cx={cx}
+                glassZ={glassZ}
+                glassH={GH}
+                widthFt={m.widthFt ?? 3}
+                label={m.label ?? `Egress ${i + 1}`}
+              />
+            );
+          })}
+
+          {/* ── Serving station markers ── */}
+          {showMarkers && servingStations?.map((m, i) => {
+            const cx = -W / 2 + m.xFraction * W;
+            return (
+              <ServingStationMarker
+                key={`ss${i}`}
+                cx={cx}
+                glassZ={glassZ}
+                glassH={GH}
+                widthFt={m.widthFt ?? 4}
+                label={m.label ?? `Serving ${i + 1}`}
+              />
+            );
+          })}
         </>
       )}
 
@@ -516,10 +637,37 @@ export default function ModelViewer3D({ params, projectName, className }: { para
   const [showBooths, setShowBooths]   = useState(params.showBooths ?? true);
   const [glassHeightFt, setGlassHeightFt] = useState(params.glassWallHeightFt ?? 4.333);
   const [exporting, setExporting]     = useState(false);
+  const [showMarkers, setShowMarkers] = useState(true);
   const groupRef = useRef<THREE.Group | null>(null);
 
   const bg = darkBg ? "#1a1a2e" : "#f0f0f0";
   const activeTint = GLASS_TINTS.find(t => t.value === glassTint) ?? GLASS_TINTS[0];
+
+  // ── Stacking zone conflict detection ──────────────────────────────────────
+  // Stacking zones occupy 3ft at each end of the glass wall
+  const stackZoneW = 3; // feet
+  const halfW = params.widthFt / 2;
+  const markerConflicts = useMemo(() => {
+    if (!params.hasGlass || !showMarkers) return [];
+    const conflicts: string[] = [];
+    const checkMarker = (xFraction: number, widthFt: number, label: string) => {
+      const cx = -halfW + xFraction * params.widthFt; // center in ft (0-based)
+      const left  = cx - widthFt / 2;
+      const right = cx + widthFt / 2;
+      const leftZoneRight  = -halfW + stackZoneW;
+      const rightZoneLeft  =  halfW - stackZoneW;
+      if (left < leftZoneRight || right > rightZoneLeft) {
+        conflicts.push(label);
+      }
+    };
+    params.egressMarkers?.forEach((m, i) =>
+      checkMarker(m.xFraction, m.widthFt ?? 3, m.label ?? `Egress ${i + 1}`)
+    );
+    params.servingStations?.forEach((m, i) =>
+      checkMarker(m.xFraction, m.widthFt ?? 4, m.label ?? `Serving ${i + 1}`)
+    );
+    return conflicts;
+  }, [params.hasGlass, params.widthFt, params.egressMarkers, params.servingStations, showMarkers, halfW]);
 
   // Merge live controls into params
   const liveParams: PergolaModel3DParams = {
@@ -527,6 +675,7 @@ export default function ModelViewer3D({ params, projectName, className }: { para
     showUpperGlass,
     showBooths,
     glassWallHeightFt: glassHeightFt,
+    showMarkers,
   };
 
   const handleExportGLB = useCallback(async () => {
@@ -590,6 +739,26 @@ export default function ModelViewer3D({ params, projectName, className }: { para
         >
           Booths
         </button>
+
+        {/* Markers toggle */}
+        {params.hasGlass && (
+          <button
+            onClick={() => setShowMarkers(v => !v)}
+            className={`text-xs px-2.5 py-1.5 rounded-lg border backdrop-blur transition-all flex items-center gap-1 ${
+              showMarkers
+                ? "bg-rose-600/80 border-rose-400 text-white font-semibold"
+                : "bg-black/60 border-white/20 text-white/70 hover:text-white"
+            }`}
+          >
+            <DoorOpen size={12} />
+            Markers
+            {showMarkers && markerConflicts.length > 0 && (
+              <span className="ml-0.5 bg-yellow-400 text-black text-[9px] font-bold px-1 rounded-full">
+                !
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* ── Right toolbar ── */}
@@ -696,6 +865,15 @@ export default function ModelViewer3D({ params, projectName, className }: { para
         {showUpperGlass && (
           <Badge variant="outline" className="text-xs bg-blue-600/60 border-blue-400/40 text-white backdrop-blur">
             Phase 2 Upper Glass
+          </Badge>
+        )}
+        {showMarkers && markerConflicts.length > 0 && (
+          <Badge
+            variant="outline"
+            className="text-xs bg-yellow-500/80 border-yellow-400 text-black backdrop-blur flex items-center gap-1"
+          >
+            <AlertTriangle size={10} />
+            Stacking conflict: {markerConflicts.join(", ")}
           </Badge>
         )}
       </div>
