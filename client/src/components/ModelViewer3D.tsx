@@ -563,6 +563,20 @@ function PergolaScene({
         <meshStandardMaterial color="#d0ccc8" roughness={0.9} metalness={0.0} />
       </mesh>
 
+      {/* ── Building wall (behind the inside glass railing) ── */}
+      {/* Sits just behind glassZ = -D/2, representing the restaurant/building facade */}
+      <mesh position={[0, H / 2, glassZ - ft(0.5)]} receiveShadow>
+        <boxGeometry args={[W + ft(6), H + ft(1), ft(0.5)]} />
+        <meshStandardMaterial color="#b8b0a4" roughness={0.85} metalness={0.0} />
+      </mesh>
+      {/* Brick/panel texture rows — horizontal scoring lines */}
+      {Array.from({ length: Math.floor(H / ft(1)) }, (_, i) => (
+        <mesh key={`bw${i}`} position={[0, ft(i + 0.5), glassZ - ft(0.24)]}>
+          <boxGeometry args={[W + ft(6), ft(0.04), ft(0.02)]} />
+          <meshStandardMaterial color="#9a9088" roughness={0.9} metalness={0.0} />
+        </mesh>
+      ))}
+
     </group>
   );
 }
@@ -583,10 +597,15 @@ function SceneContent({
   const D = ft(params.depthFt);
   const H = ft(params.heightFt);
   const camDist = Math.max(W, D, H) * 1.8;
+  // Camera looks from the street side (+Z) toward the inside railing (-Z)
+  // Positioned slightly to the right and elevated for a natural 3/4 view
+  const camX =  camDist * 0.45;
+  const camY =  camDist * 0.35;
+  const camZ =  camDist * 0.85;  // positive Z = street side
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[camDist * 0.6, camDist * 0.4, camDist * 0.8]} fov={45} />
+      <PerspectiveCamera makeDefault position={[camX, camY, camZ]} fov={45} />
       <ambientLight intensity={0.6} />
       <directionalLight
         position={[10, 20, 10]}
