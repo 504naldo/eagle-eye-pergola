@@ -14,6 +14,8 @@ import {
   getRateOverrides, upsertRateOverrides,
   getReferencePhotosByProject, createReferencePhoto, deleteReferencePhoto,
   getLumonPricing, upsertLumonPricing,
+  getLabourRates, upsertLabourRates,
+  getQuoteSettings, upsertQuoteSettings,
 } from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -815,6 +817,55 @@ High resolution, photorealistic architectural visualization quality.`;
           customDimensions: input.customDimensions ?? null,
         });
         return { id };
+      }),
+  }),
+
+  // ─── Labour Rates ─────────────────────────────────────────────────────────
+  labourRates: router({
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Not found');
+        return getLabourRates(input.projectId);
+      }),
+    save: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        rates: z.record(z.string(), z.number()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        return upsertLabourRates(input.projectId, input.rates);
+      }),
+  }),
+
+  // ─── Quote Settings ────────────────────────────────────────────────────────
+  quoteSettings: router({
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Not found');
+        return getQuoteSettings(input.projectId);
+      }),
+    save: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        contingencyPct: z.string().optional(),
+        overheadPct: z.string().optional(),
+        taxPct: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error('Forbidden');
+        await upsertQuoteSettings(input.projectId, {
+          contingencyPct: input.contingencyPct,
+          overheadPct: input.overheadPct,
+          taxPct: input.taxPct,
+        });
+        return { success: true };
       }),
   }),
 

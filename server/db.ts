@@ -374,6 +374,51 @@ export async function deleteQTOLineOverride(id: number): Promise<void> {
 
 // ─── Phased Enclosure Params ──────────────────────────────────────────────────
 import { phasedEnclosureParams, PhasedEnclosureParam, InsertPhasedEnclosureParam } from "../drizzle/schema";
+import { labourRates, quoteSettings, QuoteSettings } from "../drizzle/schema";
+
+// ─── Labour Rates ─────────────────────────────────────────────────────────────
+export async function getLabourRates(projectId: number): Promise<Record<string, number>> {
+  const db = await getDb();
+  if (!db) return {};
+  const row = await db.select().from(labourRates).where(eq(labourRates.projectId, projectId)).limit(1);
+  return (row[0]?.rates as Record<string, number>) ?? {};
+}
+
+export async function upsertLabourRates(projectId: number, rates: Record<string, number>): Promise<Record<string, number>> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: labourRates.id }).from(labourRates).where(eq(labourRates.projectId, projectId)).limit(1);
+  if (existing.length > 0) {
+    await db.update(labourRates).set({ rates }).where(eq(labourRates.projectId, projectId));
+  } else {
+    await db.insert(labourRates).values({ projectId, rates });
+  }
+  return rates;
+}
+
+// ─── Quote Settings ───────────────────────────────────────────────────────────
+export async function getQuoteSettings(projectId: number): Promise<QuoteSettings | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const row = await db.select().from(quoteSettings).where(eq(quoteSettings.projectId, projectId)).limit(1);
+  return row[0] ?? null;
+}
+
+export async function upsertQuoteSettings(projectId: number, data: {
+  contingencyPct?: string;
+  overheadPct?: string;
+  taxPct?: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: quoteSettings.id }).from(quoteSettings).where(eq(quoteSettings.projectId, projectId)).limit(1);
+  const payload = { projectId, ...data };
+  if (existing.length > 0) {
+    await db.update(quoteSettings).set(payload).where(eq(quoteSettings.projectId, projectId));
+  } else {
+    await db.insert(quoteSettings).values(payload);
+  }
+}
 
 export async function getPhasedEnclosureParams(projectId: number): Promise<PhasedEnclosureParam | undefined> {
   const db = await getDb();

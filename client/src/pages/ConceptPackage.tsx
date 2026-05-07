@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Download, Printer, AlertTriangle, CheckCircle2, Info, HelpCircle, Layers } from "lucide-react";
 import { toast } from "sonner";
-import { calculateQTO, calculateGrandTotal } from "@shared/geometry";
+import { calculateQTO, calculateGrandTotal, calculateLabourTotal } from "@shared/geometry";
 import type { PergolaParams } from "@shared/geometry";
 
 // ─── Constraint / note card ───────────────────────────────────────────────────
@@ -125,10 +125,10 @@ export default function ConceptPackage() {
   const { data: notesData } = trpc.notes.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: savedRates } = trpc.rates.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: lumonData } = trpc.lumon.get.useQuery({ projectId }, { enabled: projectId > 0 });
+  const { data: savedLabourRates } = trpc.labourRates.get.useQuery({ projectId }, { enabled: projectId > 0 });
+  const { data: quoteSettingsData } = trpc.quoteSettings.get.useQuery({ projectId }, { enabled: projectId > 0 });
 
-  const rateOverrides: Record<string, number> = savedRates
-    ? Object.fromEntries(savedRates.map(r => [r.description, parseFloat(r.unitRate)]))
-    : {};
+  const rateOverrides: Record<string, number> = savedRates ?? {};
 
   const qtoParams: PergolaParams | null = projectParams ? {
     widthFt: Math.max(0.1, parseFloat(projectParams.widthFt ?? "58") || 58),
@@ -145,11 +145,20 @@ export default function ConceptPackage() {
     ledLighting: projectParams.ledLighting ?? true,
   } : null;
 
-  const eeTotal = qtoParams
-    ? calculateGrandTotal(calculateQTO(qtoParams, rateOverrides))
-    : null;
+  const qtoItems = qtoParams ? calculateQTO(qtoParams, rateOverrides) : null;
+  const eeTotal = qtoItems ? calculateGrandTotal(qtoItems) : null;
+  const labourTotal = qtoItems ? calculateLabourTotal(qtoItems, savedLabourRates ?? undefined) : null;
   const lumonSales = parseFloat(lumonData?.salesPrice ?? "") || 0;
-  const grandTotal = eeTotal !== null ? eeTotal + lumonSales : null;
+
+  const contingencyPct = parseFloat(quoteSettingsData?.contingencyPct ?? "10") || 10;
+  const overheadPct = parseFloat(quoteSettingsData?.overheadPct ?? "15") || 15;
+  const taxPct = parseFloat(quoteSettingsData?.taxPct ?? "5") || 5;
+  const subtotal = (eeTotal ?? 0) + (labourTotal ?? 0) + lumonSales;
+  const contingencyAmt = subtotal * (contingencyPct / 100);
+  const overheadAmt = (subtotal + contingencyAmt) * (overheadPct / 100);
+  const beforeTax = subtotal + contingencyAmt + overheadAmt;
+  const taxAmt = beforeTax * (taxPct / 100);
+  const totalToClient = eeTotal !== null ? beforeTax + taxAmt : null;
 
   const params3D = {
     widthFt: parseFloat(projectParams?.widthFt ?? "58") || 58,
@@ -405,33 +414,51 @@ export default function ConceptPackage() {
           </div>
 
           {eeTotal !== null ? (
-            <div className="bg-gray-900 rounded-xl p-5 mb-6 space-y-3">
-              <div className="flex justify-between items-center text-sm text-gray-300">
-                <span>Eagle Eye Estimate (materials &amp; fabrication)</span>
-                <span className="font-mono font-semibold">
-                  {eeTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
-                </span>
+            <div className="bg-gray-900 rounded-xl p-5 mb-6 space-y-2">
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>Materials</span>
+                <span className="font-mono">{eeTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>Labour</span>
+                <span className="font-mono">{(labourTotal ?? 0).toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
               </div>
               {lumonSales > 0 && (
-                <div className="flex justify-between items-center text-sm text-gray-300">
+                <div className="flex justify-between text-sm text-gray-400">
                   <span>
                     Lumon Supply
                     {lumonData?.supplierRef && <span className="text-gray-500 text-xs ml-1">({lumonData.supplierRef})</span>}
                   </span>
-                  <span className="font-mono font-semibold">
-                    {lumonSales.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
-                  </span>
+                  <span className="font-mono">{lumonSales.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
                 </div>
               )}
-              <div className="border-t border-white/10 pt-3 flex justify-between items-baseline">
+              <div className="border-t border-white/10 pt-2 flex justify-between text-sm text-gray-300 font-semibold">
+                <span>Subtotal</span>
+                <span className="font-mono">{subtotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>+ Contingency ({contingencyPct}%)</span>
+                <span className="font-mono">{contingencyAmt.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>+ Overhead ({overheadPct}%)</span>
+                <span className="font-mono">{overheadAmt.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-white/10 pt-2 flex justify-between text-sm text-gray-300">
+                <span>Before Tax</span>
+                <span className="font-mono">{beforeTax.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>+ Tax ({taxPct}%)</span>
+                <span className="font-mono">{taxAmt.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="border-t border-white/20 pt-3 flex justify-between items-baseline">
                 <div>
-                  <p className="text-[#C9A84C] text-xs uppercase tracking-widest">
-                    {lumonSales > 0 ? "Combined Preliminary Estimate" : "Preliminary Estimate"}
-                  </p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Excludes install, labour, permits, taxes — see list below</p>
+                  <p className="text-[#C9A84C] text-xs uppercase tracking-widest font-bold">Total to Client</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">CAD — Concept Only, Not For Construction</p>
                 </div>
                 <p className="text-white text-2xl font-bold font-mono">
-                  {grandTotal!.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                  {totalToClient!.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
                 </p>
               </div>
               {lumonSales === 0 && (
@@ -444,13 +471,13 @@ export default function ConceptPackage() {
             </div>
           )}
 
-          <p className="text-sm font-semibold text-gray-700 mb-2">Final customer pricing must also include:</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2">Additional items not included in this estimate:</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
             {[
-              "Install labour", "Equipment / lifts",
-              "Demolition / removal", "Engineering", "Permits",
-              "Electrical / exit sign relocation", "Drainage work", "Concrete / base wall",
-              "Flooring", "Contingency", "Taxes", "Lumon supply",
+              "Equipment / lifts", "Demolition / removal",
+              "Structural engineering", "Building permits",
+              "Electrical / exit sign relocation", "Drainage work",
+              "Concrete / base wall", "Flooring",
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1.5 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] flex-shrink-0" />

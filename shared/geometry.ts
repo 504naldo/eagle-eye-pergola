@@ -52,6 +52,37 @@ export function getDefaultRates(): Record<string, number> {
   return { ...DEFAULT_RATES };
 }
 
+// Default install labour rates (CAD) — preliminary, per same description keys
+const DEFAULT_LABOUR_RATES: Record<string, number> = {
+  "Front posts (100×100 aluminum SHS)": 380,
+  "Front fascia beam (150×75 aluminum RHS)": 95,
+  "Rear wall ledger beam (150×75 aluminum RHS)": 120,
+  "Post base plates (200×200×12 aluminum)": 160,
+  "Wall bracket anchors (heavy-duty)": 75,
+  "Fixed aluminum slats (150×25)": 35,
+  "Operable aluminum louvers (150×25)": 55,
+  "Slat clip / bracket sets": 8,
+  "Motorized actuator / drive system": 950,
+  "Lumon panels (vertical enclosure)": 75,
+  "Glass top rail (integrated to fascia beam)": 55,
+  "Glass bottom track / sill": 45,
+  "Trim / closure pieces": 650,
+  "Fasteners, sealant, and misc. hardware": 0,
+};
+
+export function getDefaultLabourRates(): Record<string, number> {
+  return { ...DEFAULT_LABOUR_RATES };
+}
+
+export function calculateLabourTotal(items: QTOItem[], labourRateOverrides?: Record<string, number>): number {
+  return Math.round(
+    items.reduce((sum, item) => {
+      const labRate = labourRateOverrides?.[item.description] ?? DEFAULT_LABOUR_RATES[item.description] ?? 0;
+      return sum + item.qty * labRate;
+    }, 0) * 100
+  ) / 100;
+}
+
 function withRate(
   item: Omit<QTOItem, "unitRate" | "lineTotal" | "lineKey">,
   hardcoded?: number,

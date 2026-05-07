@@ -190,6 +190,26 @@ export const phasedEnclosureParams = mysqlTable("phased_enclosure_params", {
 export type PhasedEnclosureParam = typeof phasedEnclosureParams.$inferSelect;
 export type InsertPhasedEnclosureParam = typeof phasedEnclosureParams.$inferInsert;
 
+// ─── Labour Rates (per-project install rate overrides, parallel to rateOverrides) ─
+export const labourRates = mysqlTable("labour_rates", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  rates: json("rates").notNull().$type<Record<string, number>>(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LabourRate = typeof labourRates.$inferSelect;
+
+// ─── Quote Settings (contingency, overhead, tax per project) ─────────────────
+export const quoteSettings = mysqlTable("quote_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  contingencyPct: decimal("contingencyPct", { precision: 5, scale: 2 }).default("10.00"),
+  overheadPct: decimal("overheadPct", { precision: 5, scale: 2 }).default("15.00"),
+  taxPct: decimal("taxPct", { precision: 5, scale: 2 }).default("5.00"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type QuoteSettings = typeof quoteSettings.$inferSelect;
+
 // ─── Lumon Supply Pricing (per-project supplier cost tracking) ───────────────
 export const lumonPricing = mysqlTable("lumon_pricing", {
   id: int("id").autoincrement().primaryKey(),

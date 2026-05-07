@@ -18,6 +18,7 @@ export interface EditableQTOTableProps {
   overrides: Record<string, { customQuantity?: number; customUnit?: string; customDescription?: string }>;
   onUpdateLineItem: (lineKey: string, customQuantity?: number, customUnit?: string, customDescription?: string) => Promise<void>;
   onDeleteLineItem: (lineKey: string) => Promise<void>;
+  labourRates?: Record<string, number>;  // keyed by lineKey
   isLoading?: boolean;
 }
 
@@ -26,6 +27,7 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
   overrides,
   onUpdateLineItem,
   onDeleteLineItem,
+  labourRates,
   isLoading = false,
 }) => {
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -85,7 +87,8 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
   };
 
   const totalCost = appliedItems.reduce((sum, item) => {
-    const itemTotal = item.unitRate ? item.quantity * item.unitRate : 0;
+    const labRate = labourRates?.[item.lineKey] ?? 0;
+    const itemTotal = item.quantity * ((item.unitRate ?? 0) + labRate);
     return sum + itemTotal;
   }, 0);
 
@@ -98,7 +101,8 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
               <th className="text-left py-2 px-3 font-semibold">Description</th>
               <th className="text-right py-2 px-3 font-semibold">Qty</th>
               <th className="text-center py-2 px-3 font-semibold">Unit</th>
-              <th className="text-right py-2 px-3 font-semibold">Rate</th>
+              <th className="text-right py-2 px-3 font-semibold">Mat Rate</th>
+              <th className="text-right py-2 px-3 font-semibold">Lab Rate</th>
               <th className="text-right py-2 px-3 font-semibold">Total</th>
               <th className="text-center py-2 px-3 font-semibold">Actions</th>
             </tr>
@@ -108,7 +112,8 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
               const isEditing = editingKey === item.lineKey;
               const isSaving = savingKey === item.lineKey;
               const isDeleting = deletingKey === item.lineKey;
-              const itemTotal = item.unitRate ? item.quantity * item.unitRate : 0;
+              const labRate = labourRates?.[item.lineKey] ?? 0;
+              const itemTotal = item.quantity * ((item.unitRate ?? 0) + labRate);
 
               return (
                 <tr key={item.lineKey} className="border-b hover:bg-muted/50">
@@ -153,6 +158,9 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
                   </td>
                   <td className="py-3 px-3 text-right">
                     ${item.unitRate ? item.unitRate.toFixed(2) : '0.00'}
+                  </td>
+                  <td className="py-3 px-3 text-right text-blue-600">
+                    ${labRate > 0 ? labRate.toFixed(2) : '—'}
                   </td>
                   <td className="py-3 px-3 text-right font-semibold">
                     ${itemTotal.toFixed(2)}
@@ -204,8 +212,8 @@ export const EditableQTOTable: React.FC<EditableQTOTableProps> = ({
           </tbody>
           <tfoot className="border-t bg-muted font-semibold">
             <tr>
-              <td colSpan={4} className="py-3 px-3 text-right">
-                Total Cost:
+              <td colSpan={5} className="py-3 px-3 text-right">
+                Category Total (mat + labour):
               </td>
               <td className="py-3 px-3 text-right">
                 ${totalCost.toFixed(2)}

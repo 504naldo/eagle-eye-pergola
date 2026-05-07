@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn, Layers } from "lucide-react";
-import { calculateQTO, calculateGrandTotal, calculateGlazingArea, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
+import { calculateQTO, calculateGrandTotal, calculateLabourTotal, calculateGlazingArea, PergolaParams, QTOItem, getDefaultRates, getDefaultLabourRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
 import ModelViewer3D from "@/components/ModelViewer3D";
 import ReferencePhotosTab from "@/components/ReferencePhotosTab";
@@ -157,6 +157,38 @@ export default function ProjectEditor() {
     }
   }, [savedRates]);
 
+  // Labour rates (per-line install rates)
+  const [labourRateOverrides, setLabourRateOverrides] = useState<Record<string, number>>({});
+  const { data: savedLabourRates } = trpc.labourRates.get.useQuery({ projectId }, { enabled: !!projectId });
+  useEffect(() => {
+    if (savedLabourRates && Object.keys(savedLabourRates).length > 0) {
+      setLabourRateOverrides(savedLabourRates);
+    }
+  }, [savedLabourRates]);
+  const saveLabourRates = trpc.labourRates.save.useMutation({
+    onSuccess: () => { utils.labourRates.get.invalidate({ projectId }); toast.success("Labour rates saved"); },
+    onError: () => toast.error("Failed to save labour rates"),
+  });
+
+  // Quote settings (contingency, overhead, tax)
+  const [quoteSettingsForm, setQuoteSettingsForm] = useState({
+    contingencyPct: "10.00", overheadPct: "15.00", taxPct: "5.00",
+  });
+  const { data: quoteSettingsData } = trpc.quoteSettings.get.useQuery({ projectId }, { enabled: !!projectId });
+  useEffect(() => {
+    if (quoteSettingsData) {
+      setQuoteSettingsForm({
+        contingencyPct: quoteSettingsData.contingencyPct ?? "10.00",
+        overheadPct: quoteSettingsData.overheadPct ?? "15.00",
+        taxPct: quoteSettingsData.taxPct ?? "5.00",
+      });
+    }
+  }, [quoteSettingsData]);
+  const saveQuoteSettings = trpc.quoteSettings.save.useMutation({
+    onSuccess: () => { utils.quoteSettings.get.invalidate({ projectId }); toast.success("Quote settings saved"); },
+    onError: () => toast.error("Failed to save quote settings"),
+  });
+
   // Renderings
   const { data: renderingsList, isLoading: renderingsLoading } = trpc.renderings.list.useQuery({ projectId });
   const [renderingStyle, setRenderingStyle] = useState<"photorealistic" | "dusk" | "interior" | "aerial">("photorealistic");
@@ -267,6 +299,17 @@ export default function ProjectEditor() {
   const qtoItems: QTOItem[] = calculateQTO(pergolaParams, rateOverrides);
   const qtoCategories = Array.from(new Set(qtoItems.map(i => i.category)));
   const grandTotal = calculateGrandTotal(qtoItems);
+
+  // Build labour rates map keyed by lineKey for EditableQTOTable
+  const defaultLabourRates = getDefaultLabourRates();
+  const labourRatesByLineKey: Record<string, number> = Object.fromEntries(
+    qtoItems.map(item => {
+      const key = item.lineKey ?? item.description;
+      const rate = labourRateOverrides[item.description] ?? defaultLabourRates[item.description] ?? 0;
+      return [key, rate];
+    })
+  );
+  const labourTotal = calculateLabourTotal(qtoItems, labourRateOverrides);
 
   const handleExportPDF = async () => {
     setExportLoading(true);
@@ -602,6 +645,7 @@ export default function ProjectEditor() {
                         total: (qtoOverridesMap[item.lineKey ?? item.description]?.customQuantity ?? item.qty) * (rateOverrides[item.description] ?? item.unitRate),
                       }))}
                       overrides={qtoOverridesMap}
+                      labourRates={labourRatesByLineKey}
                       onUpdateLineItem={async (lineKey, qty, unit, desc) => { updateQTOLine.mutate({ projectId, lineKey, customQuantity: qty, customUnit: unit, customDescription: desc }); }}
                       onDeleteLineItem={async (lineKey) => { deleteQTOLine.mutate({ projectId, lineKey }); }}
                     />
@@ -639,36 +683,99 @@ export default function ProjectEditor() {
                   </div>
                 </div>
               ))}
-              {/* Grand Total */}
+              {/* Cost Waterfall */}
               {(() => {
                 const lumonSales = parseFloat(lumonForm.salesPrice) || 0;
-                const combined = grandTotal + lumonSales;
+                const contingency = parseFloat(quoteSettingsForm.contingencyPct) || 0;
+                const overhead = parseFloat(quoteSettingsForm.overheadPct) || 0;
+                const tax = parseFloat(quoteSettingsForm.taxPct) || 0;
+                const eeSubtotal = grandTotal + labourTotal;
+                const subtotal = eeSubtotal + lumonSales;
+                const contingencyAmt = subtotal * (contingency / 100);
+                const overheadAmt = (subtotal + contingencyAmt) * (overhead / 100);
+                const beforeTax = subtotal + contingencyAmt + overheadAmt;
+                const taxAmt = beforeTax * (tax / 100);
+                const totalToClient = beforeTax + taxAmt;
+                const fmt = (n: number) => n.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 });
                 return (
-                  <div className="mt-4 flex justify-end">
-                    <div className="bg-gray-900 rounded-xl px-4 sm:px-6 py-4 w-full sm:w-auto sm:min-w-72 space-y-2">
-                      <div className="flex justify-between text-sm text-gray-300">
-                        <span>Eagle Eye Estimate</span>
-                        <span className="font-mono">{grandTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+                  <div className="mt-6 space-y-4">
+                    {/* Quote Settings */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Quote Markups</h3>
+                        <Button size="sm" variant="outline" className="text-xs h-7"
+                          onClick={() => saveQuoteSettings.mutate({ projectId, ...quoteSettingsForm })}
+                          disabled={saveQuoteSettings.isPending}>
+                          {saveQuoteSettings.isPending ? "Saving..." : "Save"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { label: "Contingency (%)", key: "contingencyPct" as const },
+                          { label: "Overhead (%)", key: "overheadPct" as const },
+                          { label: "Tax / HST (%)", key: "taxPct" as const },
+                        ].map(({ label, key }) => (
+                          <div key={key}>
+                            <label className="text-[10px] text-gray-500 uppercase tracking-widest">{label}</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              value={quoteSettingsForm[key]}
+                              onChange={e => setQuoteSettingsForm(s => ({ ...s, [key]: e.target.value }))}
+                              className="w-full mt-1 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#C9A84C] bg-white text-right"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Waterfall */}
+                    <div className="bg-gray-900 rounded-xl px-4 sm:px-6 py-5 space-y-2">
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>Materials</span>
+                        <span className="font-mono">{fmt(grandTotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>Labour</span>
+                        <span className="font-mono">{fmt(labourTotal)}</span>
                       </div>
                       {lumonSales > 0 && (
-                        <div className="flex justify-between text-sm text-gray-300">
-                          <span>+ Lumon Supply</span>
-                          <span className="font-mono">{lumonSales.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+                        <div className="flex justify-between text-sm text-gray-400">
+                          <span>Lumon Supply</span>
+                          <span className="font-mono">{fmt(lumonSales)}</span>
                         </div>
                       )}
-                      <div className="border-t border-white/10 pt-2 flex justify-between items-baseline">
+                      <div className="border-t border-white/10 pt-2 flex justify-between text-sm text-gray-300 font-semibold">
+                        <span>Subtotal</span>
+                        <span className="font-mono">{fmt(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>+ Contingency ({contingency}%)</span>
+                        <span className="font-mono">{fmt(contingencyAmt)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>+ Overhead ({overhead}%)</span>
+                        <span className="font-mono">{fmt(overheadAmt)}</span>
+                      </div>
+                      <div className="border-t border-white/10 pt-2 flex justify-between text-sm text-gray-300">
+                        <span>Before Tax</span>
+                        <span className="font-mono">{fmt(beforeTax)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>+ Tax ({tax}%)</span>
+                        <span className="font-mono">{fmt(taxAmt)}</span>
+                      </div>
+                      <div className="border-t border-white/20 pt-3 flex justify-between items-baseline">
                         <div>
-                          <div className="text-[#C9A84C] text-xs uppercase tracking-widest">
-                            {lumonSales > 0 ? "Combined Estimate" : "Preliminary Estimate"}
-                          </div>
+                          <div className="text-[#C9A84C] text-xs uppercase tracking-widest font-bold">Total to Client</div>
                           <div className="text-[10px] text-gray-500 mt-0.5">CAD — Concept Only, Not For Construction</div>
                         </div>
-                        <div className="text-white text-2xl font-bold font-mono">
-                          {combined.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
-                        </div>
+                        <div className="text-white text-2xl font-bold font-mono">{fmt(totalToClient)}</div>
                       </div>
                       {lumonSales === 0 && (
-                        <div className="text-[10px] text-gray-500 text-right">Add Lumon pricing in the Lumon Supply tab to see combined total</div>
+                        <div className="text-[10px] text-gray-500 text-right">Add Lumon pricing in the Lumon Supply tab to see full total</div>
                       )}
                     </div>
                   </div>
