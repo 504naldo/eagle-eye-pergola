@@ -1,10 +1,10 @@
 import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import type { Request, Response } from "express";
-import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject, getReferencePhotosByProject, getQTOLineOverrides } from "./db";
+import { getProjectById, getProjectParams, getChecklistItems, getScopeItems, getRateOverrides, getRenderingsByProject, getReferencePhotosByProject, getQTOLineOverrides, getLabourRates, getQuoteSettings, getLumonPricing } from "./db";
 import https from "https";
 import http from "http";
-import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
+import { calculateQTO, calculateGrandTotal, calculateLabourTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
 import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS, DEFAULT_FENCING_PARAMS } from "../shared/scopeTypes";
@@ -22,6 +22,245 @@ const BLUE = "#3B82F6";
 const PW = 1190.55;
 const PH = 841.89;
 const MARGIN = 36;
+
+// Right-side title block width — reserves space on every drawing sheet
+const TB_WIDTH = 165;
+
+// Convert decimal feet to architectural feet-inches string e.g. 15.67 → 15'-8"
+function ftToFtIn(ft: number): string {
+  const f = Math.floor(ft);
+  const totalIn = Math.round((ft - f) * 12);
+  const inches = totalIn % 12;
+  const extraFt = Math.floor(totalIn / 12);
+  return `${f + extraFt}'-${inches}"`;
+}
+
+// ─── Right-side title block ──────────────────────────────────────────────────
+
+interface TitleBlockOpts {
+  projectName: string;
+  location: string;
+  clientName: string;
+  drawingTitle: string;
+  sheetNum: string;   // e.g. "03"
+  totalSheets: string;
+  scale?: string;
+  date: string;
+  status?: string;    // "CONCEPT SET" | "PERMIT SET"
+}
+
+function drawTitleBlock(doc: PDFKit.PDFDocument, opts: TitleBlockOpts) {
+  const tbX = PW - MARGIN - TB_WIDTH;
+  const tbTop = 55;
+  const tbBot = PH - 28;
+  const tbH = tbBot - tbTop;
+  const W = TB_WIDTH;
+
+  // Outer border
+  doc.rect(tbX, tbTop, W, tbH).stroke("#374151").strokeColor("#374151").lineWidth(0.5).fillOpacity(1);
+
+  let fy = tbTop;
+
+  // Company header
+  doc.rect(tbX, fy, W, 26).fill(BLACK);
+  doc.fontSize(8).fillColor(GOLD).font("Helvetica-Bold").text("Eagle Eye", tbX + 5, fy + 3, { width: W - 10 });
+  doc.fontSize(7).fillColor("white").font("Helvetica").text("Management Services", tbX + 5, fy + 13, { width: W - 10 });
+  fy += 26;
+
+  const field = (label: string, value: string, h = 34) => {
+    doc.rect(tbX, fy, W, h).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+    doc.fontSize(6).fillColor(GRAY).font("Helvetica").text(label, tbX + 4, fy + 3, { width: W - 8 });
+    doc.fontSize(7.5).fillColor(BLACK).font("Helvetica-Bold").text(value, tbX + 4, fy + 13, { width: W - 8 });
+    fy += h;
+  };
+
+  field("PROJECT", opts.projectName.length > 28 ? opts.projectName.slice(0, 26) + "…" : opts.projectName, 38);
+  field("LOCATION / ADDRESS", opts.location || "—", 34);
+  field("CLIENT", opts.clientName || "—", 30);
+  field("DRAWING TITLE", opts.drawingTitle, 34);
+
+  // Two-col row: Scale / Date
+  const half = W / 2;
+  doc.rect(tbX, fy, half, 24).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+  doc.rect(tbX + half, fy, half, 24).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+  doc.fontSize(6).fillColor(GRAY).font("Helvetica").text("SCALE", tbX + 4, fy + 3);
+  doc.fontSize(7.5).fillColor(BLACK).font("Helvetica-Bold").text(opts.scale ?? "NTS", tbX + 4, fy + 13);
+  doc.fontSize(6).fillColor(GRAY).font("Helvetica").text("DATE", tbX + half + 4, fy + 3);
+  doc.fontSize(7.5).fillColor(BLACK).font("Helvetica-Bold").text(opts.date, tbX + half + 4, fy + 13);
+  fy += 24;
+
+  // Two-col row: Prepared by / Sheet
+  doc.rect(tbX, fy, half, 24).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+  doc.rect(tbX + half, fy, half, 24).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+  doc.fontSize(6).fillColor(GRAY).font("Helvetica").text("PREPARED BY", tbX + 4, fy + 3);
+  doc.fontSize(7.5).fillColor(BLACK).font("Helvetica-Bold").text("R. Daniels", tbX + 4, fy + 13);
+  doc.fontSize(6).fillColor(GRAY).font("Helvetica").text("SHEET", tbX + half + 4, fy + 3);
+  doc.fontSize(7.5).fillColor(BLACK).font("Helvetica-Bold").text(`${opts.sheetNum} / ${opts.totalSheets}`, tbX + half + 4, fy + 13);
+  fy += 24;
+
+  // Drawing status badge
+  const isPermit = opts.status === "PERMIT SET";
+  doc.rect(tbX, fy, W, 20).fill(isPermit ? "#DCFCE7" : "#FEF3C7")
+    .stroke(isPermit ? "#16A34A" : "#F59E0B").strokeColor(isPermit ? "#16A34A" : "#F59E0B").lineWidth(0.8);
+  doc.fontSize(7.5).fillColor(isPermit ? "#15803D" : "#92400E").font("Helvetica-Bold")
+    .text(opts.status ?? "CONCEPT SET", tbX + 4, fy + 6, { width: W - 8, align: "center" });
+  fy += 20;
+
+  // Revision table header
+  doc.rect(tbX, fy, W, 14).fill(BLACK);
+  doc.fontSize(6).fillColor("white").font("Helvetica-Bold");
+  doc.text("REV", tbX + 3, fy + 4, { width: 22 });
+  doc.text("DATE", tbX + 26, fy + 4, { width: 44 });
+  doc.text("DESCRIPTION", tbX + 70, fy + 4, { width: W - 70 - 16 });
+  doc.text("BY", tbX + W - 15, fy + 4, { width: 14 });
+  fy += 14;
+
+  // 3 blank revision rows
+  for (let r = 0; r < 3; r++) {
+    doc.rect(tbX, fy, W, 14).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.3);
+    doc.strokeColor("#E5E7EB").lineWidth(0.3);
+    doc.moveTo(tbX + 24, fy).lineTo(tbX + 24, fy + 14).stroke();
+    doc.moveTo(tbX + 68, fy).lineTo(tbX + 68, fy + 14).stroke();
+    doc.moveTo(tbX + W - 14, fy).lineTo(tbX + W - 14, fy + 14).stroke();
+    fy += 14;
+  }
+
+  // Engineer's seal — fills remaining space
+  const sealH = tbBot - fy;
+  doc.rect(tbX, fy, W, sealH).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(0.4);
+  doc.fontSize(6.5).fillColor(GRAY).font("Helvetica").text("STRUCTURAL ENGINEER'S SEAL", tbX + 2, fy + 5, { width: W - 4, align: "center" });
+  doc.fontSize(6).fillColor(GRAY).font("Helvetica").text("Required for permit submission", tbX + 2, fy + sealH - 14, { width: W - 4, align: "center" });
+  // Dashed circle placeholder
+  const sealR = Math.min((W - 20) / 2, sealH / 2 - 22);
+  const sealCX = tbX + W / 2;
+  const sealCY = fy + 16 + sealR;
+  doc.circle(sealCX, sealCY, sealR).dash(3, { space: 2 }).stroke("#9CA3AF").strokeColor("#9CA3AF").lineWidth(0.8).undash();
+}
+
+// ─── General Notes sheet ─────────────────────────────────────────────────────
+
+function drawGeneralNotes(
+  doc: PDFKit.PDFDocument,
+  projectName: string,
+  params: PergolaParams,
+  tbOpts: Omit<TitleBlockOpts, "drawingTitle" | "sheetNum">
+) {
+  doc.addPage();
+  drawPageHeader(doc, projectName, "Sheet G — General Notes");
+  drawPageFooter(doc);
+  drawTitleBlock(doc, { ...tbOpts, drawingTitle: "General Notes & Specifications", sheetNum: "G" });
+
+  const contentTop = 62;
+  const contentW = PW - MARGIN * 2 - TB_WIDTH - 8;
+  drawSectionTitle(doc, "General Notes & Specifications", "SHEET G", contentTop + 6);
+
+  const noteX = MARGIN;
+  const noteW = (contentW - 12) / 2;
+  const colR = MARGIN + noteW + 12;
+  let yL = contentTop + 36;
+  let yR = contentTop + 36;
+
+  const sectionHeader = (title: string, col: "L" | "R") => {
+    const x = col === "L" ? noteX : colR;
+    const y = col === "L" ? yL : yR;
+    doc.rect(x, y, noteW, 16).fill(BLACK);
+    doc.rect(x, y, 3, 16).fill(GOLD);
+    doc.fontSize(8).fillColor("white").font("Helvetica-Bold").text(title, x + 8, y + 4, { width: noteW - 12 });
+    if (col === "L") yL += 16; else yR += 16;
+  };
+
+  const noteItem = (text: string, col: "L" | "R", bold = false) => {
+    const x = col === "L" ? noteX : colR;
+    const y = col === "L" ? yL : yR;
+    const bg = bold ? "#FFFBEB" : "white";
+    doc.rect(x, y, noteW, 18).fill(bg).stroke("#F3F4F6").strokeColor("#F3F4F6").lineWidth(0.4);
+    doc.rect(x, y, 3, 18).fill(bold ? GOLD : LIGHT_GRAY);
+    doc.fontSize(8).fillColor(BLACK).font(bold ? "Helvetica-Bold" : "Helvetica")
+      .text(text, x + 8, y + 4, { width: noteW - 12, lineBreak: false });
+    if (col === "L") yL += 18; else yR += 18;
+  };
+
+  // ── LEFT COLUMN ──
+  sectionHeader("DESIGN INTENT — NOT ENGINEERED", "L");
+  noteItem("All drawings are concept only — not for construction without licensed structural review.", "L");
+  noteItem("Quantities and dimensions are preliminary and subject to field verification.", "L");
+  noteItem("Final dimensions to be confirmed from Lumon shop drawings prior to fabrication.", "L");
+  noteItem("Connection details are schematic — all connections require engineering sign-off.", "L");
+  yL += 6;
+
+  sectionHeader("DESIGN LOADS (PLACEHOLDER — CONFIRM WITH ENGINEER)", "L");
+  noteItem(`Ground Snow Load: _____ kPa (verify local NBC 2020 Annex C)`, "L");
+  noteItem(`Wind Pressure (1/50): _____ kPa (verify local climate data)`, "L");
+  noteItem(`Tributary Area: ${(params.widthFt * params.depthFt * 0.0929).toFixed(1)} m² (${params.widthFt.toFixed(1)}' × ${params.depthFt.toFixed(1)}')`, "L", true);
+  noteItem(`Design Code: NBC 2020 (or applicable edition — confirm with AHJ)`, "L");
+  yL += 6;
+
+  sectionHeader("ALUMINUM STRUCTURE SPECIFICATIONS", "L");
+  noteItem(`Front Posts: 100×100 AL. SHS — Alloy 6061-T6`, "L");
+  noteItem(`Fascia / Ledger Beams: 150×75 AL. RHS — Alloy 6061-T6`, "L");
+  noteItem(`Slat / Louver Members: 150×25 AL. extrusion — Alloy 6063-T5`, "L");
+  noteItem(`Post Base Plates: 200×200×12mm AL. — Alloy 6061-T6`, "L");
+  noteItem(`Powder Coat Finish: ${params.finishColor} — AAMA 2604 or AAMA 2605`, "L");
+  noteItem(`All aluminum welds: CWB-certified welder, Class W47.2`, "L");
+  noteItem(`Anchor bolts: Hilti HIT-HY 270 or equivalent chemical anchor`, "L");
+  yL += 6;
+
+  sectionHeader("LUMON ENCLOSURE NOTES", "L");
+  noteItem(`System: Lumon vertical glass/railing enclosure system`, "L");
+  noteItem(`Glass thickness: Confirm with Lumon shop drawings (12mm or 15mm typ.)`, "L");
+  noteItem(`Top rail width: Confirm with Lumon — ref. 146mm (5¾″) per meeting`, "L");
+  noteItem(`Railing height: ${ftToFtIn(Math.max(params.railingHeightIn ?? 52, 42) / 12)} above finished floor (min. 42″ commercial code)`, "L", true);
+  noteItem(`All glass anchoring and drainage by Lumon supplier`, "L");
+
+  // ── RIGHT COLUMN ──
+  sectionHeader("PERMIT & APPROVAL REQUIREMENTS", "R");
+  noteItem(`Building Permit: Required — submit to AHJ with stamped drawings`, "R");
+  noteItem(`Structural Engineering: Required — licensed P.Eng. review and stamp`, "R");
+  noteItem(`Geotechnical Report: May be required — confirm with AHJ`, "R");
+  noteItem(`Landlord / Building Owner Approval: Required prior to permit application`, "R");
+  noteItem(`Lumon Shop Drawing Review: Required before fabrication`, "R");
+  yR += 6;
+
+  sectionHeader("CONSTRUCTION NOTES", "R");
+  noteItem(`Connection type: Wall-mounted lean-to — no rear posts`, "R", true);
+  noteItem(`Rear ledger anchor type to be confirmed from building wall material/type`, "R");
+  noteItem(`Slab assumed to be concrete — confirm capacity for post base loads`, "R");
+  noteItem(`All slab penetrations to be core-drilled, not hammered`, "R");
+  noteItem(`Sealant at all wall penetrations: neutral-cure silicone, paintable`, "R");
+  noteItem(`Post base plates: grout bed levelling required if slab slope > 1%`, "R");
+  noteItem(`LED lighting wiring: coordinate with licensed electrician — not in this scope`, "R");
+  yR += 6;
+
+  sectionHeader("KEY PROJECT DIMENSIONS (FROM CURRENT PARAMETERS)", "R");
+  noteItem(`Overall Width: ${ftToFtIn(params.widthFt)} (${params.widthFt.toFixed(2)} ft)`, "R", true);
+  noteItem(`Overall Depth: ${ftToFtIn(params.depthFt)} (${params.depthFt.toFixed(2)} ft)`, "R", true);
+  noteItem(`Clear Height: ${ftToFtIn(params.heightFt)} (${params.heightFt.toFixed(2)} ft)`, "R", true);
+  noteItem(`Front Posts: ${params.postCount} EA @ ${ftToFtIn(params.postSpacingFt)} c/c (typ.)`, "R");
+  noteItem(`Slat Spacing: ${params.slatSpacingIn.toFixed(1)}″ (${params.slatType})`, "R");
+  if (params.glassFront || params.glassLeft || params.glassRight) {
+    const sides = [params.glassFront ? "Front" : null, params.glassLeft ? "Left" : null, params.glassRight ? "Right" : null].filter(Boolean).join(", ");
+    noteItem(`Lumon Enclosure Faces: ${sides}`, "R");
+  }
+  yR += 6;
+
+  sectionHeader("EXCLUSIONS FROM THIS PACKAGE", "R");
+  noteItem(`Structural engineering calculations and stamped drawings`, "R");
+  noteItem(`Building permit application, fees, and inspections`, "R");
+  noteItem(`Geotechnical investigation / slab capacity assessment`, "R");
+  noteItem(`Electrical rough-in, wiring, panel upgrades, and connections`, "R");
+  noteItem(`Drainage modification, concrete repair, or slab work`, "R");
+  noteItem(`Existing canopy/awning modification or removal`, "R");
+
+  // Disclaimer box below columns
+  const discY = Math.max(yL, yR) + 10;
+  if (discY + 30 < PH - 30) {
+    doc.rect(MARGIN, discY, contentW, 26)
+      .fill("#FEF3C7").stroke("#F59E0B").strokeColor("#F59E0B").lineWidth(0.8);
+    doc.rect(MARGIN, discY, 3, 26).fill("#F59E0B");
+    doc.fontSize(8).fillColor("#92400E").font("Helvetica-Bold")
+      .text("⚠  CONCEPT PACKAGE — NOT FOR CONSTRUCTION  |  All notes, specifications, and dimensions are preliminary and for estimating intent only. A licensed structural engineer must review and stamp all drawings prior to permit submission.", MARGIN + 8, discY + 7, { width: contentW - 16 });
+  }
+}
 
 type QTOItem = {
   lineKey?: string;
@@ -131,11 +370,11 @@ function drawPlanView(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawin
   const dimLineY = oy + dh + 18;
   doc.moveTo(px(0), dimLineY).lineTo(px(dims.widthFt), dimLineY).stroke();
   doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.widthFt.toFixed(1)}' (58'-0") TOTAL WIDTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
+    .text(`${ftToFtIn(dims.widthFt)} TOTAL WIDTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
   // Depth
   doc.moveTo(ox - 20, py(0)).lineTo(ox - 20, py(dims.depthFt)).stroke();
   doc.save().translate(ox - 30, py(dims.depthFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.depthFt.toFixed(1)}' DEPTH`, -20, 0).restore();
+    .text(`${ftToFtIn(dims.depthFt)} DEPTH`, -20, 0).restore();
 
   // Label
   doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("ALUMINUM SLAT ROOF SYSTEM", px(0), py(dims.depthFt / 2) - 5, { width: dw, align: "center" });
@@ -192,10 +431,10 @@ function drawFrontElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof get
   doc.strokeColor(GOLD).lineWidth(0.8);
   doc.moveTo(ox - 18, py(0)).lineTo(ox - 18, py(dims.heightFt)).stroke();
   doc.save().translate(ox - 28, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
+    .text(`${ftToFtIn(dims.heightFt)} CLEAR HT.`, -20, 0).restore();
   const dimLineY = oy + dh + 18;
   doc.moveTo(px(0), dimLineY).lineTo(px(dims.widthFt), dimLineY).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.widthFt.toFixed(1)}' (58'-0")`, px(0), dimLineY + 4, { width: dw, align: "center" });
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${ftToFtIn(dims.widthFt)} TOTAL WIDTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
 
   doc.fontSize(7.5).fillColor(GRAY).font("Helvetica").text("NO REAR POSTS — WALL-MOUNTED CONNECTION TO BUILDING", px(0), py(0) + 6, { width: dw, align: "center" });
 }
@@ -248,10 +487,10 @@ function drawSideElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getD
   doc.strokeColor(GOLD).lineWidth(0.8);
   const dimLineY = oy + dh + 18;
   doc.moveTo(px(0), dimLineY).lineTo(px(dims.depthFt), dimLineY).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' (15'-8") DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${ftToFtIn(dims.depthFt)} DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
   doc.moveTo(px(dims.depthFt) + 18, py(0)).lineTo(px(dims.depthFt) + 18, py(dims.heightFt)).stroke();
   doc.save().translate(px(dims.depthFt) + 28, py(dims.heightFt / 2)).rotate(90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
+    .text(`${ftToFtIn(dims.heightFt)} CLEAR HT.`, -20, 0).restore();
 }
 
 function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawingDimensions>, x: number, y: number, w: number, h: number) {
@@ -306,10 +545,10 @@ function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawing
   doc.strokeColor(GOLD).lineWidth(0.8);
   const dimLineY = oy + dh + 18;
   doc.moveTo(px(0), dimLineY).lineTo(px(dims.depthFt), dimLineY).stroke();
-  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${dims.depthFt.toFixed(1)}' DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
+  doc.fontSize(8).fillColor(BLACK).font("Helvetica-Bold").text(`${ftToFtIn(dims.depthFt)} DEPTH`, px(0), dimLineY + 4, { width: dw, align: "center" });
   doc.moveTo(ox - 30, py(0)).lineTo(ox - 30, py(dims.heightFt)).stroke();
   doc.save().translate(ox - 42, py(dims.heightFt / 2)).rotate(-90).fontSize(8).fillColor(BLACK).font("Helvetica-Bold")
-    .text(`${dims.heightFt.toFixed(1)}' HT.`, -15, 0).restore();
+    .text(`${ftToFtIn(dims.heightFt)} CLEAR HT.`, -20, 0).restore();
 }
 
 // ─── Table helpers ───────────────────────────────────────────────────────────
@@ -627,7 +866,22 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     const dims = getDrawingDimensions(pergolaParams);
     const savedRateOverrides = await getRateOverrides(projectId);
+    const savedLabourRates = await getLabourRates(projectId);
+    const lumonPricingRow = await getLumonPricing(projectId);
+    const quoteSetting = await getQuoteSettings(projectId);
     const pergolaLineOverrides = await getQTOLineOverrides(projectId);
+
+    // Title block shared context
+    const today = new Date().toLocaleDateString("en-CA");
+    const tbBase: Omit<TitleBlockOpts, "drawingTitle" | "sheetNum"> = {
+      projectName: project.projectName,
+      location: project.location ?? "",
+      clientName: project.clientName ?? "",
+      totalSheets: "G",
+      scale: "NTS",
+      date: today,
+      status: "CONCEPT SET",
+    };
     const pergolaLineOverrideMap: Record<string, { qty?: number; unit?: string; desc?: string }> = {};
     for (const o of pergolaLineOverrides) {
       pergolaLineOverrideMap[o.lineKey] = {
@@ -691,13 +945,18 @@ export async function handlePDFExport(req: Request, res: Response) {
     if (project.location) doc.fontSize(11).fillColor(GRAY).font("Helvetica").text(project.location, 0, 320, { align: "center", width: PW });
 
     // Info grid (2x4)
+    const glassSides = [
+      pergolaParams.glassFront ? "Front" : null,
+      pergolaParams.glassLeft ? "Left" : null,
+      pergolaParams.glassRight ? "Right" : null,
+    ].filter(Boolean).join(", ") || "None";
     const infoItems = [
-      ["WIDTH", `${pergolaParams.widthFt.toFixed(1)}' (58'-0")`],
-      ["DEPTH", `${pergolaParams.depthFt.toFixed(1)}' (15'-8")`],
-      ["HEIGHT", `${pergolaParams.heightFt.toFixed(1)}' Clear`],
-      ["SYSTEM TYPE", "Lean-To Canopy"],
-      ["SLAT TYPE", pergolaParams.slatType === "fixed" ? "Fixed Slats" : "Operable Louvers"],
-      ["ENCLOSURE", "Lumon Glass"],
+      ["WIDTH", ftToFtIn(pergolaParams.widthFt)],
+      ["DEPTH", ftToFtIn(pergolaParams.depthFt)],
+      ["CLEAR HEIGHT", ftToFtIn(pergolaParams.heightFt)],
+      ["FRONT POSTS", `${pergolaParams.postCount} EA @ ${ftToFtIn(pergolaParams.postSpacingFt)} c/c`],
+      ["SLAT SYSTEM", pergolaParams.slatType === "fixed" ? `Fixed Slats @ ${pergolaParams.slatSpacingIn}"` : `Operable Louvers @ ${pergolaParams.slatSpacingIn}"`],
+      ["LUMON FACES", glassSides],
       ["FINISH", pergolaParams.finishColor],
       ["STATUS", project.status.replace("_", " ").toUpperCase()],
     ];
@@ -737,39 +996,39 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // ── PAGE 2: PLAN VIEW ──────────────────────────────────────────────────
     doc.addPage();
-    drawPageHeader(doc, project.projectName, "Sheet 03 of 07");
+    drawPageHeader(doc, project.projectName, "Sheet 03 of G");
     drawPageFooter(doc);
     const contentTop = 62;
     const contentH = PH - 62 - 28;
+    const DRAW_W = PW - MARGIN * 2 - TB_WIDTH - 4;  // drawing area width with title block
     drawSectionTitle(doc, "Plan View — Roof Level", "SHEET 03", contentTop + 6);
+    drawTitleBlock(doc, { ...tbBase, drawingTitle: "Plan View — Roof Level", sheetNum: "03" });
     // Drawing box — size to drawing's natural aspect ratio (width:depth)
-    const planAvailW = PW - MARGIN * 2;
     const planPad = { l: 60, r: 30, t: 40, b: 50 };
-    const planInnerW = planAvailW - planPad.l - planPad.r;
+    const planInnerW = DRAW_W - planPad.l - planPad.r;
     const planScale = planInnerW / dims.widthFt;
     const planDrawH = dims.depthFt * planScale;
     const drawBoxH = Math.min(planDrawH + planPad.t + planPad.b + 18 + 8, contentH - 30);
-    // Vertically center the plan view box in the available area
     const planCenterOffset = Math.max(0, Math.floor((contentH - 36 - drawBoxH - 20) / 2));
     const drawBoxY = contentTop + 36 + planCenterOffset;
-    doc.rect(MARGIN, drawBoxY, PW - MARGIN * 2, 18).fill(BLACK);
+    doc.rect(MARGIN, drawBoxY, DRAW_W, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Plan View — Aluminum Slat Roof System", MARGIN + 8, drawBoxY + 5);
-    doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS | All dims in feet unless noted", MARGIN + 8, drawBoxY + 5, { align: "right", width: PW - MARGIN * 2 - 16 });
-    doc.rect(MARGIN, drawBoxY + 18, PW - MARGIN * 2, drawBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
-    drawPlanView(doc, dims, MARGIN, drawBoxY + 18, PW - MARGIN * 2, drawBoxH - 18);
+    doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS | All dims in feet-inches", MARGIN + 8, drawBoxY + 5, { align: "right", width: DRAW_W - 16 });
+    doc.rect(MARGIN, drawBoxY + 18, DRAW_W, drawBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
+    drawPlanView(doc, dims, MARGIN, drawBoxY + 18, DRAW_W, drawBoxH - 18);
     doc.fontSize(8).fillColor(GRAY).font("Helvetica")
-      .text("Connection type: Wall-mounted lean-to — No rear posts — Lumon vertical enclosure on 3 sides — Slat roof connects to building wall via concealed ledger",
-        MARGIN, drawBoxY + drawBoxH + 4, { width: PW - MARGIN * 2, lineBreak: false });
+      .text(`Wall-mounted lean-to — ${params?.postCount ?? 5} front posts @ ${ftToFtIn(pergolaParams.postSpacingFt)} c/c — Lumon on: ${glassSides} — ${pergolaParams.slatType === "fixed" ? "Fixed slats" : "Operable louvers"} @ ${pergolaParams.slatSpacingIn}"`,
+        MARGIN, drawBoxY + drawBoxH + 4, { width: DRAW_W, lineBreak: false });
 
     // ── PAGE 3: FRONT + SIDE ELEVATION ────────────────────────────────────────────
     doc.addPage();
-    drawPageHeader(doc, project.projectName, "Sheets 04–05 of 07");
+    drawPageHeader(doc, project.projectName, "Sheets 04–05 of G");
     drawPageFooter(doc);
-    const halfW = (PW - MARGIN * 2 - 12) / 2;
+    drawTitleBlock(doc, { ...tbBase, drawingTitle: "Front & Side Elevations", sheetNum: "04-05" });
+    const halfW = (DRAW_W - 12) / 2;
     const elevY = contentTop + 6;
     const elevH = contentH - 10;
 
-    // Calculate natural box heights for front and side elevations
     const elevPad = { l: 55, r: 30, t: 30, b: 50 };
     const feInnerW = halfW - elevPad.l - elevPad.r;
     const feScale = Math.min(feInnerW / dims.widthFt, (elevH - 28 - elevPad.t - elevPad.b) / dims.heightFt);
@@ -782,7 +1041,6 @@ export async function handlePDFExport(req: Request, res: Response) {
     const seDrawH = dims.heightFt * seScale;
     const seBoxH = Math.min(seDrawH + sePad.t + sePad.b + 18 + 8, elevH - 28);
     const combinedBoxH = Math.max(feBoxH, seBoxH);
-    // Vertically center the elevation boxes in the available area
     const elevCenterOffset = Math.max(0, Math.floor((elevH - 28 - combinedBoxH) / 2));
 
     // Front elevation
@@ -796,7 +1054,6 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // Side elevation
     const seX = MARGIN + halfW + 12;
-    // Draw side elevation section title at seX (right column)
     doc.rect(seX, elevY, 4, 22).fill(GOLD);
     doc.fontSize(14).fillColor(BLACK).font("Helvetica-Bold").text("Side Elevation", seX + 12, elevY + 2);
     doc.fontSize(9).fillColor(GRAY).font("Helvetica").text("SHEET 05", seX + 12, elevY + 18);
@@ -808,12 +1065,12 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // ── PAGE 4: SECTION A-A ────────────────────────────────────────────
     doc.addPage();
-    drawPageHeader(doc, project.projectName, "Sheet 06 of 07");
+    drawPageHeader(doc, project.projectName, "Sheet 06 of G");
     drawPageFooter(doc);
     drawSectionTitle(doc, "Section A–A", "SHEET 06", contentTop + 6);
-    // Size section box to drawing's natural aspect ratio (depth:height)
+    drawTitleBlock(doc, { ...tbBase, drawingTitle: "Section A–A Through Structure", sheetNum: "06" });
     const secPad = { l: 60, r: 60, t: 30, b: 50 };
-    const secInnerW = (PW - MARGIN * 2) - secPad.l - secPad.r;
+    const secInnerW = DRAW_W - secPad.l - secPad.r;
     const secScale = Math.min(secInnerW / dims.depthFt, (contentH - 80 - secPad.t - secPad.b) / dims.heightFt);
     const secDrawH = dims.heightFt * secScale;
     const secBoxH = Math.min(secDrawH + secPad.t + secPad.b + 18 + 8, contentH - 80);
@@ -822,11 +1079,11 @@ export async function handlePDFExport(req: Request, res: Response) {
     const secAvailH = contentH - 36 - legendH - 20;
     const secCenterOffset = Math.max(0, Math.floor((secAvailH - secBoxH) / 2));
     const secBoxY = contentTop + 36 + secCenterOffset;
-    doc.rect(MARGIN, secBoxY, PW - MARGIN * 2, 18).fill(BLACK);
+    doc.rect(MARGIN, secBoxY, DRAW_W, 18).fill(BLACK);
     doc.fontSize(9).fillColor("white").font("Helvetica-Bold").text("Section A–A — Through Pergola Structure", MARGIN + 8, secBoxY + 5);
-    doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS", MARGIN + 8, secBoxY + 5, { align: "right", width: PW - MARGIN * 2 - 16 });
-    doc.rect(MARGIN, secBoxY + 18, PW - MARGIN * 2, secBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
-    drawSection(doc, dims, MARGIN, secBoxY + 18, PW - MARGIN * 2, secBoxH - 18);
+    doc.fontSize(8).fillColor(GOLD).font("Helvetica").text("Scale: NTS", MARGIN + 8, secBoxY + 5, { align: "right", width: DRAW_W - 16 });
+    doc.rect(MARGIN, secBoxY + 18, DRAW_W, secBoxH - 18).fill("white").stroke("#E5E7EB").strokeColor("#E5E7EB").lineWidth(1);
+    drawSection(doc, dims, MARGIN, secBoxY + 18, DRAW_W, secBoxH - 18);
 
     // Legend boxes
     const legendItems = [
@@ -837,7 +1094,7 @@ export async function handlePDFExport(req: Request, res: Response) {
       { text: "⑤ Lumon vertical enclosure", bg: "#EFF6FF", border: "#93C5FD" },
       { text: "⑥ Glass top rail → fascia beam (integrated)", bg: "#EFF6FF", border: "#93C5FD" },
     ];
-    const legW = (PW - MARGIN * 2 - 20) / 3;
+    const legW = (DRAW_W - 20) / 3;
     legendItems.forEach((item, i) => {
       const col = i % 3;
       const row = Math.floor(i / 3);
@@ -849,7 +1106,7 @@ export async function handlePDFExport(req: Request, res: Response) {
 
     // ── PAGE 5: QTO ────────────────────────────────────────────────────────
     doc.addPage();
-    drawPageHeader(doc, project.projectName, "Sheet A — QTO");
+    drawPageHeader(doc, project.projectName, "Sheet A — Quantity Takeoff");
     drawPageFooter(doc);
     drawSectionTitle(doc, "Preliminary Quantity Takeoff", "SHEET A", contentTop + 6);
     drawDisclaimer(doc, "All quantities and costs are preliminary estimates only (CAD). Subject to field verification, supplier quotes, and licensed structural review prior to fabrication.",
@@ -894,14 +1151,55 @@ export async function handlePDFExport(req: Request, res: Response) {
       qtoY += 4;
     });
 
-    // Grand total box
-    const gtBoxW = 280;
-    const gtBoxX = PW - MARGIN - gtBoxW;
-    const gtBoxY = qtoY + 8;
-    doc.rect(gtBoxX, gtBoxY, gtBoxW, 56).fill(BLACK);
-    doc.fontSize(7.5).fillColor(GOLD).font("Helvetica").text("PRELIMINARY BUDGET ESTIMATE (CAD)", gtBoxX + 12, gtBoxY + 10);
-    doc.fontSize(22).fillColor("white").font("Helvetica-Bold").text(`$${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`, gtBoxX + 12, gtBoxY + 24);
-    doc.fontSize(7).fillColor(GRAY).font("Helvetica").text("Concept Only — Not For Construction — Rates Subject to Supplier Confirmation", gtBoxX + 12, gtBoxY + 46);
+    // ── Cost Waterfall ─────────────────────────────────────────────────────
+    const labourCost = calculateLabourTotal(rawQtoItems as any, savedLabourRates);
+    const lumonSalesPrice = parseFloat(lumonPricingRow?.salesPrice ?? "") || 0;
+    const contingencyPct = parseFloat(quoteSetting?.contingencyPct ?? "10") || 10;
+    const overheadPct = parseFloat(quoteSetting?.overheadPct ?? "15") || 15;
+    const taxPct = parseFloat(quoteSetting?.taxPct ?? "5") || 5;
+    const subtotal = grandTotal + labourCost + lumonSalesPrice;
+    const contingencyAmt = subtotal * (contingencyPct / 100);
+    const overheadAmt = (subtotal + contingencyAmt) * (overheadPct / 100);
+    const beforeTax = subtotal + contingencyAmt + overheadAmt;
+    const taxAmt = beforeTax * (taxPct / 100);
+    const totalToClient = beforeTax + taxAmt;
+    const fmtCAD = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+    const wfW = 320;
+    const wfX = PW - MARGIN - wfW;
+    let wfY = qtoY + 10;
+    doc.rect(wfX, wfY, wfW, 200).fill(BLACK);
+
+    const wfRow = (label: string, value: string, isBold = false, isTotal = false, topBorder = false) => {
+      if (topBorder) {
+        doc.strokeColor(GOLD).lineWidth(0.5).moveTo(wfX + 10, wfY).lineTo(wfX + wfW - 10, wfY).stroke();
+      }
+      const rowH = isTotal ? 30 : 20;
+      doc.fontSize(isTotal ? 10 : 8).fillColor(isBold || isTotal ? "white" : "#9CA3AF")
+        .font(isBold || isTotal ? "Helvetica-Bold" : "Helvetica")
+        .text(label, wfX + 12, wfY + (isTotal ? 8 : 5), { width: wfW / 2 - 12 });
+      doc.text(value, wfX + wfW / 2, wfY + (isTotal ? 8 : 5), { width: wfW / 2 - 12, align: "right" });
+      wfY += rowH;
+    };
+
+    wfY += 8;
+    doc.fontSize(7).fillColor(GOLD).font("Helvetica-Bold").text("COST BREAKDOWN (CAD)", wfX + 12, wfY);
+    wfY += 14;
+    wfRow("Materials", fmtCAD(grandTotal));
+    wfRow("Labour", fmtCAD(labourCost));
+    if (lumonSalesPrice > 0) wfRow("Lumon Supply", fmtCAD(lumonSalesPrice));
+    wfRow("Subtotal", fmtCAD(subtotal), true, false, true);
+    wfRow(`+ Contingency (${contingencyPct}%)`, fmtCAD(contingencyAmt));
+    wfRow(`+ Overhead (${overheadPct}%)`, fmtCAD(overheadAmt));
+    wfRow("Before Tax", fmtCAD(beforeTax), true, false, true);
+    wfRow(`+ Tax (${taxPct}%)`, fmtCAD(taxAmt));
+    wfY += 4;
+    doc.rect(wfX, wfY, wfW, 34).fill("#1A1A1A");
+    doc.fontSize(7.5).fillColor(GOLD).font("Helvetica-Bold").text("TOTAL TO CLIENT", wfX + 12, wfY + 6);
+    doc.fontSize(18).fillColor("white").font("Helvetica-Bold").text(fmtCAD(totalToClient), wfX + 12, wfY + 6, { width: wfW - 24, align: "right" });
+    wfY += 34;
+    doc.fontSize(6.5).fillColor(GRAY).font("Helvetica")
+      .text("Concept Only — Not For Construction — Rates subject to supplier confirmation", wfX + 12, wfY + 4, { width: wfW - 24 });
 
     // ── PAGE 6: FIELD VERIFICATION CHECKLIST ──────────────────────────────
     doc.addPage();
@@ -1005,6 +1303,7 @@ export async function handlePDFExport(req: Request, res: Response) {
     // ── PAGE 8: CONNECTION DETAILS ─────────────────────────────────────────
     doc.addPage();
     drawPageHeader(doc, project.projectName, "Sheet D — Connection Details");
+    drawTitleBlock(doc, { ...tbBase, drawingTitle: "Connection Detail Intent", sheetNum: "D" });
     drawPageFooter(doc);
     drawSectionTitle(doc, "Connection & Detail Intent", "SHEET D", contentTop + 6);
     drawDisclaimer(doc, "Concept details only — not engineered, not for construction. For estimating intent only. All connections subject to licensed structural review.",
@@ -1031,6 +1330,9 @@ export async function handlePDFExport(req: Request, res: Response) {
         doc.fontSize(9).fillColor("#374151").font("Helvetica-Bold").text(d.title, dx + 8, dy + 7, { width: detColW - 12 });
         doc.fontSize(8.5).fillColor(GRAY).font("Helvetica").text(d.desc, dx + 8, dy + 30, { width: detColW - 16 });
     });
+
+    // ── GENERAL NOTES PAGE ─────────────────────────────────────────────────
+    drawGeneralNotes(doc, project.projectName, pergolaParams, tbBase);
 
     // ── RENDERINGS PAGE (if any exist) ──
     await drawRenderingsPage(doc, project.projectName, pergolaRenderings);
