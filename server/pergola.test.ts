@@ -132,7 +132,7 @@ describe("glassWallHeightFt parameter", () => {
     // Area = 20 * 8 * 0.0929 = 14.864 m² → rounded to 14.9
     expect(lumon).toBeDefined();
     expect(lumon!.qty).toBeCloseTo(14.9, 0);
-    expect(lumon!.basis).toContain("H: 8.0'");
+    expect(lumon!.basis).toContain("Railing H:");  // basis now shows railing height
   });
 
   it("falls back to heightFt when glassWallHeightFt is not set", () => {
@@ -148,7 +148,7 @@ describe("glassWallHeightFt parameter", () => {
     // Area = 20 * 10 * 0.0929 = 18.58 m² → rounded to 18.6
     expect(lumon).toBeDefined();
     expect(lumon!.qty).toBeCloseTo(18.6, 0);
-    expect(lumon!.basis).toContain("H: 10.0'");
+    expect(lumon!.basis).toContain("Railing H:");  // basis now shows railing height
   });
 
   it("smaller glass height produces less area than full height", () => {
@@ -206,5 +206,72 @@ describe("railWidthIn parameter", () => {
     const widePanel   = wide.find(i => i.description === "Lumon panels (vertical enclosure)")!.qty;
     // Panel area is based on glassWallHeightFt, not rail width
     expect(narrowPanel).toBe(widePanel);
+  });
+});
+
+// ── Railing Height Parameter Tests ────────────────────────────────────────────
+
+import { calculateGlazingArea } from "../shared/geometry";
+
+describe("railingHeightIn parameter", () => {
+  const baseParams: PergolaParams = {
+    widthFt: 20,
+    depthFt: 10,
+    heightFt: 10,
+    postCount: 3,
+    postSpacingFt: 10,
+    slatType: "fixed",
+    slatSpacingIn: 4,
+    glassFront: true,
+    glassLeft: false,
+    glassRight: false,
+    finishColor: "Matte Black",
+    ledLighting: false,
+  };
+
+  it("uses railingHeightIn (in inches) for glass area when set", () => {
+    const params = { ...baseParams, railingHeightIn: 48 }; // 48" = 4 ft
+    const items = calculateQTO(params);
+    const glassItem = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    expect(glassItem).toBeDefined();
+    // 20 ft × 4 ft × 0.0929 = 7.432 m² → rounded to 7.4
+    expect(glassItem!.qty).toBeCloseTo(7.4, 1);
+  });
+
+  it("enforces 42\" commercial code minimum when below 42\"", () => {
+    const params = { ...baseParams, railingHeightIn: 36 }; // below minimum
+    const items = calculateQTO(params);
+    const glassItem = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    // Should use 42" = 3.5 ft minimum, not 36"
+    // 20 ft × 3.5 ft × 0.0929 = 6.503 → 6.5
+    expect(glassItem!.qty).toBeCloseTo(6.5, 1);
+  });
+
+  it("shows railing height in inches in QTO basis text", () => {
+    const params = { ...baseParams, railingHeightIn: 52 };
+    const items = calculateQTO(params);
+    const glassItem = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    expect(glassItem!.basis).toContain('52"');
+  });
+
+  it("railingHeightIn takes priority over glassWallHeightFt when both set", () => {
+    const params = { ...baseParams, railingHeightIn: 48, glassWallHeightFt: 8 };
+    const items = calculateQTO(params);
+    const glassItem = items.find(i => i.description === "Lumon panels (vertical enclosure)");
+    // Should use 48" = 4 ft, not 8 ft
+    expect(glassItem!.qty).toBeCloseTo(7.4, 1);
+  });
+
+  it("calculateGlazingArea uses railingHeightIn correctly", () => {
+    const params = { ...baseParams, railingHeightIn: 48 };
+    const glazing = calculateGlazingArea(params);
+    expect(glazing.glassHeightFt).toBeCloseTo(4.0, 2); // 48" / 12 = 4 ft
+    expect(glazing.frontFt2).toBeCloseTo(80.0, 1); // 20 × 4
+  });
+
+  it("calculateGlazingArea enforces 42\" minimum in glazing breakdown", () => {
+    const params = { ...baseParams, railingHeightIn: 30 }; // below min
+    const glazing = calculateGlazingArea(params);
+    expect(glazing.glassHeightFt).toBeCloseTo(3.5, 2); // 42" / 12 = 3.5 ft
   });
 });

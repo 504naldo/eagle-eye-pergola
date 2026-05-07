@@ -12,8 +12,9 @@ export interface PergolaParams {
   glassFront: boolean;
   glassLeft: boolean;
   glassRight: boolean;
-  glassWallHeightFt?: number;  // Height of glass wall panels (ft), defaults to heightFt
+  glassWallHeightFt?: number;  // Legacy: glass wall height in ft
   railWidthIn?: number;         // Width of top and bottom glass rails (inches), defaults to 2
+  railingHeightIn?: number;     // Railing / lower glass height in inches (min 42" commercial code, default 48")
   finishColor: string;
   ledLighting: boolean;
 }
@@ -70,7 +71,10 @@ export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, nu
   const frontBeamLengthM = widthM;
   const rearBeamLengthM = widthM;
 
-  const glassH = p.glassWallHeightFt ?? p.heightFt;  // Use dedicated glass height if set
+  // Railing height: prefer railingHeightIn (inches → ft), fall back to glassWallHeightFt, then heightFt
+  const glassH = p.railingHeightIn != null
+    ? Math.max(p.railingHeightIn, 42) / 12   // enforce 42" commercial code minimum
+    : (p.glassWallHeightFt ?? p.heightFt);
   const railW = p.railWidthIn ?? 2;  // Rail width in inches (default 2")
   const frontGlassArea = p.glassFront ? p.widthFt * glassH * 0.0929 : 0;
   const sideGlassArea =
@@ -109,7 +113,7 @@ export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, nu
 
     // ── Lumon Enclosure ─────────────────────────────────────────────────────────────────────────────
     ...(totalGlassM2 > 0 ? [
-      withRate({ category: "Lumon Enclosure", description: "Lumon panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}, H: ${glassH.toFixed(1)}'` }, undefined, ro),
+      withRate({ category: "Lumon Enclosure", description: "Lumon panels (vertical enclosure)", unit: "M²", qty: Math.round(totalGlassM2 * 10) / 10, basis: `Front: ${p.glassFront ? "yes" : "no"}, Left: ${p.glassLeft ? "yes" : "no"}, Right: ${p.glassRight ? "yes" : "no"}, Railing H: ${(glassH * 12).toFixed(0)}"` }, undefined, ro),
       withRate({ category: "Lumon Enclosure", description: "Glass top rail (integrated to fascia beam)", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: `Top rail at glass-to-beam connection — ${railW}" wide` }, undefined, ro),
       withRate({ category: "Lumon Enclosure", description: "Glass bottom track / sill", unit: "LM", qty: Math.round(glassPerimeterM * 10) / 10, basis: `Bottom track at slab level — ${railW}" wide` }, undefined, ro),
     ] : []),
@@ -143,7 +147,9 @@ export interface GlazingAreaBreakdown {
 }
 
 export function calculateGlazingArea(p: PergolaParams): GlazingAreaBreakdown {
-  const glassH = p.glassWallHeightFt ?? p.heightFt;
+  const glassH = p.railingHeightIn != null
+    ? Math.max(p.railingHeightIn, 42) / 12
+    : (p.glassWallHeightFt ?? p.heightFt);
   const frontFt2 = p.glassFront ? Math.round(p.widthFt * glassH * 100) / 100 : 0;
   const leftFt2  = p.glassLeft  ? Math.round(p.depthFt * glassH * 100) / 100 : 0;
   const rightFt2 = p.glassRight ? Math.round(p.depthFt * glassH * 100) / 100 : 0;

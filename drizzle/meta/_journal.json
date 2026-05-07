@@ -85,6 +85,13 @@
       "when": 1778083850460,
       "tag": "0011_third_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1778114152412,
+      "tag": "0012_perfect_jack_flag",
+      "breakpoints": true
     }
   ]
 }

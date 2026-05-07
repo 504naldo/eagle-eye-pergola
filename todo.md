@@ -514,3 +514,15 @@
 - [x] Removed upperGlassHeightFt from interface (now derived, not a separate input)
 - [x] 97 tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Add Railing Height Parameter
+
+- [x] Add `railingHeightIn` column to project_params schema (decimal, default 48.0 in, min 42 in)
+- [x] Push DB migration
+- [x] Add railingHeightIn to PergolaParams interface in shared/geometry.ts
+- [x] Update calculateQTO() to use railingHeightIn for glass area (42" code minimum enforced)
+- [x] Add Railing Height input to ProjectEditor Parameters form with 42" min guard warning
+- [x] Update tRPC params.save to accept and persist railingHeightIn
+- [x] Update ModelViewer3D to use railingHeightIn (inches → ft) for lower glass height
+- [x] Write 6 vitest tests for railing height QTO (103 total passing)
+- [x] Save checkpoint

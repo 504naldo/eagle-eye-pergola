@@ -52,6 +52,7 @@ export default function ProjectEditor() {
     glassFront: true, glassLeft: true, glassRight: true,
     glassWallHeightFt: "8.00",
     railWidthIn: "2.00",
+    railingHeightIn: "48",
     finishColor: "Matte Black", ledLighting: true,
   });
 
@@ -75,6 +76,7 @@ export default function ProjectEditor() {
         glassRight: projectParams.glassRight ?? true,
         glassWallHeightFt: projectParams.glassWallHeightFt ?? "8.00",
         railWidthIn: projectParams.railWidthIn ?? "2.00",
+        railingHeightIn: projectParams.railingHeightIn ?? "48",
         finishColor: projectParams.finishColor ?? "Matte Black",
         ledLighting: projectParams.ledLighting ?? true,
       });
@@ -115,6 +117,7 @@ export default function ProjectEditor() {
     glassRight: form.glassRight,
     glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
     railWidthIn: parseFloat(form.railWidthIn) || 2,
+    railingHeightIn: parseFloat(form.railingHeightIn) || 48,
     finishColor: form.finishColor,
     ledLighting: form.ledLighting,
   };
@@ -418,18 +421,21 @@ export default function ProjectEditor() {
                   ))}
                    <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Glass Wall Height (ft)</Label>
-                      <p className="text-xs text-gray-400 mb-1">Height from slab to top rail</p>
+                      <Label className="text-xs">Railing Height (in)</Label>
+                      <p className="text-xs text-gray-400 mb-1">Slab to top of lower glass rail — 42" commercial min</p>
                       <Input
                         type="number"
-                        step="0.1"
-                        min="1"
-                        max="20"
-                        value={form.glassWallHeightFt}
-                        onChange={e => setForm(f => ({ ...f, glassWallHeightFt: e.target.value }))}
-                        className="mt-1 text-sm"
-                        placeholder="8.00"
+                        step="0.5"
+                        min="42"
+                        max="96"
+                        value={form.railingHeightIn}
+                        onChange={e => setForm(f => ({ ...f, railingHeightIn: e.target.value }))}
+                        className={`mt-1 text-sm ${parseFloat(form.railingHeightIn || "48") < 42 ? "border-red-400" : ""}`}
+                        placeholder="48"
                       />
+                      {parseFloat(form.railingHeightIn || "48") < 42 && (
+                        <p className="text-xs text-red-500 mt-1">⚠ Below 42" commercial code minimum</p>
+                      )}
                     </div>
                     <div>
                       <Label className="text-xs">Rail Width (in)</Label>
@@ -1048,7 +1054,7 @@ export default function ProjectEditor() {
                   louverSpacingIn: parseFloat(form.slatSpacingIn) || 4,
                   louverSizeIn: 6,
                   hasGlass: form.glassFront || form.glassLeft || form.glassRight,
-                  glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
+                  glassWallHeightFt: (parseFloat(form.railingHeightIn) || 48) / 12,
                   railWidthIn: parseFloat(form.railWidthIn) || 2,
                   finishColor: form.finishColor === "Matte Black" ? "#2a2a2a"
                     : form.finishColor === "Matte White" ? "#e8e8e8"

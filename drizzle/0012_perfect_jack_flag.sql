@@ -1,0 +1,1 @@
+ALTER TABLE `project_params` ADD `railingHeightIn` decimal(8,2) DEFAULT '48.00';
