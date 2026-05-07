@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import rateLimit from "express-rate-limit";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -10,6 +11,14 @@ import { serveStatic, setupVite } from "./vite";
 import { handlePDFExport } from "../pdfExport";
 import { handlePhasedEnclosurePDFExport } from "../phasedEnclosurePdfExport";
 import { multerMiddleware, handleFileUpload } from "../fileUpload";
+
+const pdfExportLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many PDF exports. Please wait before trying again." },
+});
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,9 +48,9 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // PDF Export route
-  app.get("/api/export/pdf/:id", handlePDFExport);
+  app.get("/api/export/pdf/:id", pdfExportLimiter, handlePDFExport);
   // Phased Enclosure Supplemental PDF Export
-  app.get("/api/export/phased-enclosure-pdf/:id", handlePhasedEnclosurePDFExport);
+  app.get("/api/export/phased-enclosure-pdf/:id", pdfExportLimiter, handlePhasedEnclosurePDFExport);
   // File upload route (server-side S3 via storagePut)
   app.post("/api/upload/:projectId", multerMiddleware, handleFileUpload);
 

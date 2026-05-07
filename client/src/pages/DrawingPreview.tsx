@@ -19,13 +19,13 @@ export default function DrawingPreview() {
   const { data: projectParams } = trpc.params.get.useQuery({ projectId });
 
   const pergolaParams: PergolaParams = {
-    widthFt: parseFloat(projectParams?.widthFt ?? "58") || 58,
-    depthFt: parseFloat(projectParams?.depthFt ?? "15.67") || 15.67,
-    heightFt: parseFloat(projectParams?.heightFt ?? "10") || 10,
-    postCount: projectParams?.postCount ?? 5,
-    postSpacingFt: parseFloat(projectParams?.postSpacingFt ?? "14.5") || 14.5,
+    widthFt: Math.max(0.1, parseFloat(projectParams?.widthFt ?? "58") || 58),
+    depthFt: Math.max(0.1, parseFloat(projectParams?.depthFt ?? "15.67") || 15.67),
+    heightFt: Math.max(0.1, parseFloat(projectParams?.heightFt ?? "10") || 10),
+    postCount: Math.max(1, projectParams?.postCount ?? 5),
+    postSpacingFt: Math.max(0.1, parseFloat(projectParams?.postSpacingFt ?? "14.5") || 14.5),
     slatType: (projectParams?.slatType as "fixed" | "operable") ?? "fixed",
-    slatSpacingIn: parseFloat(projectParams?.slatSpacingIn ?? "4") || 4,
+    slatSpacingIn: Math.max(0.1, parseFloat(projectParams?.slatSpacingIn ?? "4") || 4),
     glassFront: projectParams?.glassFront ?? true,
     glassLeft: projectParams?.glassLeft ?? true,
     glassRight: projectParams?.glassRight ?? true,

@@ -16,6 +16,7 @@ import {
 } from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
+import { checkRateLimit } from "./_core/rateLimiter";
 
 const ProjectStatusEnum = z.enum(["draft", "in_review", "approved", "archived"]);
 const SlatTypeEnum = z.enum(["fixed", "operable"]);
@@ -233,6 +234,7 @@ export const appRouter = router({
         ledLighting: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        checkRateLimit(`notes:generateAI:${ctx.user.id}`, 10, 60_000);
         const project = await getProjectById(input.projectId);
         if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
 
@@ -350,6 +352,7 @@ The summary should cover: (1) project overview and intent, (2) structural system
         customPrompt: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        checkRateLimit(`renderings:generate:${ctx.user.id}`, 5, 60_000);
         const project = await getProjectById(input.projectId);
         if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
 
