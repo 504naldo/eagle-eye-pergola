@@ -190,6 +190,21 @@ export const phasedEnclosureParams = mysqlTable("phased_enclosure_params", {
 export type PhasedEnclosureParam = typeof phasedEnclosureParams.$inferSelect;
 export type InsertPhasedEnclosureParam = typeof phasedEnclosureParams.$inferInsert;
 
+// ─── Lumon Supply Pricing (per-project supplier cost tracking) ───────────────
+export const lumonPricing = mysqlTable("lumon_pricing", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().unique(),
+  dealerPrice: decimal("dealerPrice", { precision: 12, scale: 2 }),
+  listPrice: decimal("listPrice", { precision: 12, scale: 2 }),
+  salesPrice: decimal("salesPrice", { precision: 12, scale: 2 }),
+  supplierRef: varchar("supplierRef", { length: 255 }),
+  notes: text("notes"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LumonPricing = typeof lumonPricing.$inferSelect;
+export type InsertLumonPricing = typeof lumonPricing.$inferInsert;
+
 // QTO Line Item Overrides (user edits to quantities and units)
 export const qtoLineOverrides = mysqlTable("qto_line_overrides", {
   id: int("id").autoincrement().primaryKey(),

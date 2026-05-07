@@ -13,6 +13,7 @@ import {
   getFilesByProject, createProjectFile, deleteProjectFile,
   getRateOverrides, upsertRateOverrides,
   getReferencePhotosByProject, createReferencePhoto, deleteReferencePhoto,
+  getLumonPricing, upsertLumonPricing,
 } from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -814,6 +815,39 @@ High resolution, photorealistic architectural visualization quality.`;
           customDimensions: input.customDimensions ?? null,
         });
         return { id };
+      }),
+  }),
+
+  lumon: router({
+    get: protectedProcedure
+      .input(z.object({ projectId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        return getLumonPricing(input.projectId);
+      }),
+
+    save: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        dealerPrice: z.string().optional(),
+        listPrice: z.string().optional(),
+        salesPrice: z.string().optional(),
+        supplierRef: z.string().max(255).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await upsertLumonPricing({
+          projectId: input.projectId,
+          dealerPrice: input.dealerPrice ?? null,
+          listPrice: input.listPrice ?? null,
+          salesPrice: input.salesPrice ?? null,
+          supplierRef: input.supplierRef ?? null,
+          notes: input.notes ?? null,
+        });
+        return { success: true };
       }),
   }),
 });

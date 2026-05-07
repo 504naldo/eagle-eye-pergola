@@ -43,6 +43,28 @@ export default function ProjectEditor() {
   const { data: projectParams, isLoading: paramsLoading } = trpc.params.get.useQuery({ projectId });
   const { data: checklist } = trpc.checklist.get.useQuery({ projectId });
   const { data: scopeItems } = trpc.scope.get.useQuery({ projectId });
+  const { data: lumonData } = trpc.lumon.get.useQuery({ projectId });
+
+  const [lumonForm, setLumonForm] = useState({
+    dealerPrice: "", listPrice: "", salesPrice: "", supplierRef: "", notes: "",
+  });
+
+  useEffect(() => {
+    if (lumonData) {
+      setLumonForm({
+        dealerPrice: lumonData.dealerPrice ?? "",
+        listPrice: lumonData.listPrice ?? "",
+        salesPrice: lumonData.salesPrice ?? "",
+        supplierRef: lumonData.supplierRef ?? "",
+        notes: lumonData.notes ?? "",
+      });
+    }
+  }, [lumonData]);
+
+  const saveLumon = trpc.lumon.save.useMutation({
+    onSuccess: () => { utils.lumon.get.invalidate({ projectId }); toast.success("Lumon pricing saved"); },
+    onError: () => toast.error("Failed to save Lumon pricing"),
+  });
 
   const [form, setForm] = useState({
     widthFt: "58.00", depthFt: "15.67", heightFt: "10.00",
@@ -330,6 +352,7 @@ export default function ProjectEditor() {
                 { value: "renderings", label: "AI Renderings", shortLabel: "Renders" },
                 { value: "reference", label: "Reference Photos", shortLabel: "Ref Photos" },
                 { value: "rates", label: "Unit Rates", shortLabel: "Rates" },
+                { value: "lumon", label: "Lumon Supply", shortLabel: "Lumon" },
                 { value: "files", label: "Files", shortLabel: "Files" },
                 { value: "model3d", label: "3D Model", shortLabel: "3D" },
               ].map(tab => (
@@ -617,15 +640,40 @@ export default function ProjectEditor() {
                 </div>
               ))}
               {/* Grand Total */}
-              <div className="mt-4 flex justify-end">
-                <div className="bg-gray-50 rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
-                  <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
-                  <div className="text-white text-2xl font-bold">
-                    ${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {(() => {
+                const lumonSales = parseFloat(lumonForm.salesPrice) || 0;
+                const combined = grandTotal + lumonSales;
+                return (
+                  <div className="mt-4 flex justify-end">
+                    <div className="bg-gray-900 rounded-xl px-4 sm:px-6 py-4 w-full sm:w-auto sm:min-w-72 space-y-2">
+                      <div className="flex justify-between text-sm text-gray-300">
+                        <span>Eagle Eye Estimate</span>
+                        <span className="font-mono">{grandTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+                      </div>
+                      {lumonSales > 0 && (
+                        <div className="flex justify-between text-sm text-gray-300">
+                          <span>+ Lumon Supply</span>
+                          <span className="font-mono">{lumonSales.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-white/10 pt-2 flex justify-between items-baseline">
+                        <div>
+                          <div className="text-[#C9A84C] text-xs uppercase tracking-widest">
+                            {lumonSales > 0 ? "Combined Estimate" : "Preliminary Estimate"}
+                          </div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">CAD — Concept Only, Not For Construction</div>
+                        </div>
+                        <div className="text-white text-2xl font-bold font-mono">
+                          {combined.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                        </div>
+                      </div>
+                      {lumonSales === 0 && (
+                        <div className="text-[10px] text-gray-500 text-right">Add Lumon pricing in the Lumon Supply tab to see combined total</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-gray-400 text-xs mt-1">CAD — Concept Only, Not For Construction</div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </TabsContent>
 
@@ -1086,6 +1134,114 @@ export default function ProjectEditor() {
                 onRatesSaved={saved => setRateOverrides(saved)}
               />
             )}
+          </TabsContent>
+
+          {/* ── Lumon Supply Tab ── */}
+          <TabsContent value="lumon">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-6 space-y-6">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#C9A84C] rounded-full" />
+                <h2 className="font-semibold text-gray-900">Lumon Supply Pricing</h2>
+              </div>
+              <p className="text-xs text-gray-500">
+                Enter the Lumon dealer quote for this project. The sales price will be included in the combined estimate shown in the QTO tab and Concept Package.
+              </p>
+
+              {/* Price inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {([
+                  { key: "dealerPrice", label: "Dealer Price (cost to Eagle Eye)", hint: "What Lumon charges you" },
+                  { key: "listPrice",   label: "List Price",                        hint: "Lumon published list price" },
+                  { key: "salesPrice",  label: "Sales Price (to client)",           hint: "What you charge the client — included in combined total" },
+                ] as const).map(({ key, label, hint }) => {
+                  const val = parseFloat(lumonForm[key]) || 0;
+                  const dealer = parseFloat(lumonForm.dealerPrice) || 0;
+                  const margin = key === "salesPrice" && dealer > 0 && val > 0
+                    ? ((val - dealer) / val * 100).toFixed(1)
+                    : null;
+                  return (
+                    <div key={key}>
+                      <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">{label}</Label>
+                      <p className="text-[10px] text-gray-400 mb-1">{hint}</p>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={100}
+                          placeholder="0.00"
+                          value={lumonForm[key]}
+                          onChange={e => setLumonForm(f => ({ ...f, [key]: e.target.value }))}
+                          className="pl-7 text-sm font-mono"
+                        />
+                      </div>
+                      {margin !== null && (
+                        <p className="text-[10px] text-[#C9A84C] mt-1">Margin: {margin}%</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Markup summary */}
+              {parseFloat(lumonForm.dealerPrice) > 0 && parseFloat(lumonForm.salesPrice) > 0 && (
+                <div className="bg-gray-50 rounded-lg p-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Dealer Cost</div>
+                      <div className="font-bold text-gray-900 font-mono">
+                        {parseFloat(lumonForm.dealerPrice).toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Gross Profit</div>
+                      <div className="font-bold text-green-700 font-mono">
+                        {(parseFloat(lumonForm.salesPrice) - parseFloat(lumonForm.dealerPrice)).toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Markup</div>
+                      <div className="font-bold text-gray-900">
+                        {((parseFloat(lumonForm.salesPrice) / parseFloat(lumonForm.dealerPrice) - 1) * 100).toFixed(1)}×
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Supplier ref + notes */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Supplier Reference</Label>
+                  <p className="text-[10px] text-gray-400 mb-1">e.g. "Sam Koch, Lumon Canada — quote ref #…"</p>
+                  <Input
+                    placeholder="Supplier name, contact, or quote reference"
+                    value={lumonForm.supplierRef}
+                    onChange={e => setLumonForm(f => ({ ...f, supplierRef: e.target.value }))}
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Notes</Label>
+                  <Textarea
+                    placeholder="Quote scope, inclusions, exclusions, expiry date…"
+                    value={lumonForm.notes}
+                    onChange={e => setLumonForm(f => ({ ...f, notes: e.target.value }))}
+                    className="text-sm mt-1"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="font-semibold"
+                style={{ backgroundColor: "#C9A84C", color: "#111" }}
+                onClick={() => saveLumon.mutate({ projectId, ...lumonForm })}
+                disabled={saveLumon.isPending}
+              >
+                {saveLumon.isPending ? "Saving…" : "Save Lumon Pricing"}
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
 

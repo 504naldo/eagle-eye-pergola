@@ -124,6 +124,7 @@ export default function ConceptPackage() {
   const { data: scopeItems } = trpc.scope.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: notesData } = trpc.notes.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: savedRates } = trpc.rates.get.useQuery({ projectId }, { enabled: projectId > 0 });
+  const { data: lumonData } = trpc.lumon.get.useQuery({ projectId }, { enabled: projectId > 0 });
 
   const rateOverrides: Record<string, number> = savedRates
     ? Object.fromEntries(savedRates.map(r => [r.description, parseFloat(r.unitRate)]))
@@ -144,9 +145,11 @@ export default function ConceptPackage() {
     ledLighting: projectParams.ledLighting ?? true,
   } : null;
 
-  const grandTotal = qtoParams
+  const eeTotal = qtoParams
     ? calculateGrandTotal(calculateQTO(qtoParams, rateOverrides))
     : null;
+  const lumonSales = parseFloat(lumonData?.salesPrice ?? "") || 0;
+  const grandTotal = eeTotal !== null ? eeTotal + lumonSales : null;
 
   const params3D = {
     widthFt: parseFloat(projectParams?.widthFt ?? "58") || 58,
@@ -401,21 +404,39 @@ export default function ConceptPackage() {
             </div>
           </div>
 
-          {grandTotal !== null ? (
-            <div className="bg-gray-900 rounded-xl p-5 mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Preliminary QTO Estimate</p>
-                <p className="text-2xl font-bold text-white">
-                  {grandTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
-                </p>
-                <p className="text-xs text-[#C9A84C] mt-1">Materials only — excludes items listed below</p>
+          {eeTotal !== null ? (
+            <div className="bg-gray-900 rounded-xl p-5 mb-6 space-y-3">
+              <div className="flex justify-between items-center text-sm text-gray-300">
+                <span>Eagle Eye Estimate (materials &amp; fabrication)</span>
+                <span className="font-mono font-semibold">
+                  {eeTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                </span>
               </div>
-              <button
-                onClick={() => navigate(`/project/${projectId}`)}
-                className="text-xs text-gray-400 hover:text-white underline underline-offset-2 transition-colors"
-              >
-                Edit rates in Project Editor →
-              </button>
+              {lumonSales > 0 && (
+                <div className="flex justify-between items-center text-sm text-gray-300">
+                  <span>
+                    Lumon Supply
+                    {lumonData?.supplierRef && <span className="text-gray-500 text-xs ml-1">({lumonData.supplierRef})</span>}
+                  </span>
+                  <span className="font-mono font-semibold">
+                    {lumonSales.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              )}
+              <div className="border-t border-white/10 pt-3 flex justify-between items-baseline">
+                <div>
+                  <p className="text-[#C9A84C] text-xs uppercase tracking-widest">
+                    {lumonSales > 0 ? "Combined Preliminary Estimate" : "Preliminary Estimate"}
+                  </p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Excludes install, labour, permits, taxes — see list below</p>
+                </div>
+                <p className="text-white text-2xl font-bold font-mono">
+                  {grandTotal!.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                </p>
+              </div>
+              {lumonSales === 0 && (
+                <p className="text-[10px] text-gray-500 text-right">No Lumon pricing entered — add it in the Lumon Supply tab</p>
+              )}
             </div>
           ) : (
             <div className="bg-gray-50 rounded-xl p-5 mb-6 text-center text-sm text-gray-500">

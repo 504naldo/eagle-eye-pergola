@@ -10,6 +10,7 @@ import {
   projectFiles, InsertProjectFile, ProjectFile,
   rateOverrides,
   referencePhotos, InsertReferencePhoto, ReferencePhoto,
+  lumonPricing, InsertLumonPricing, LumonPricing,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -276,6 +277,25 @@ export async function upsertRateOverrides(projectId: number, rates: Record<strin
   }
   return rates;
 }
+// ─── Lumon Pricing ────────────────────────────────────────────────────────────
+export async function getLumonPricing(projectId: number): Promise<LumonPricing | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(lumonPricing).where(eq(lumonPricing.projectId, projectId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function upsertLumonPricing(data: InsertLumonPricing): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select({ id: lumonPricing.id }).from(lumonPricing).where(eq(lumonPricing.projectId, data.projectId)).limit(1);
+  if (existing.length > 0) {
+    await db.update(lumonPricing).set(data).where(eq(lumonPricing.projectId, data.projectId));
+  } else {
+    await db.insert(lumonPricing).values(data);
+  }
+}
+
 // ─── Project Files ────────────────────────────────────────────────────────────
 export async function getFilesByProject(projectId: number): Promise<ProjectFile[]> {
   const db = await getDb();
