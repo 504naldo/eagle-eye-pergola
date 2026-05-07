@@ -30,8 +30,7 @@ export interface PergolaModel3DParams {
   hasGlass: boolean;
   glassWallHeightFt?: number;
   railWidthIn?: number;
-  showUpperGlass?: boolean;       // Phase 2 upper sliding glass
-  upperGlassHeightFt?: number;    // Height of upper sliding glass section
+  showUpperGlass?: boolean;       // Phase 2 upper sliding glass (height is derived: H - lowerGlassH - midRail)
   showBooths?: boolean;           // Show 6 U-shaped booths
   boothPlatformHeightIn?: number; // Booth platform height (default 8")
   finishColor: string;
@@ -200,14 +199,14 @@ function PergolaScene({
     widthFt, depthFt, heightFt, postCount,
     postSizeIn, beamSizeIn, louverSpacingIn, louverSizeIn,
     hasGlass, glassWallHeightFt, railWidthIn,
-    showUpperGlass, upperGlassHeightFt,
+    showUpperGlass,
     showBooths, boothPlatformHeightIn,
     finishColor,
   } = params;
 
   const W = ft(widthFt);
   const D = ft(depthFt);
-  const H = ft(heightFt);
+  const H = ft(heightFt);           // pergola beam bottom / post top
   const postS  = inch(postSizeIn);
   const beamH  = inch(beamSizeIn);
   const beamW  = inch(Math.max(beamSizeIn, 4));
@@ -220,18 +219,25 @@ function PergolaScene({
   const tintOption     = GLASS_TINTS.find(t => t.value === glassTint)     ?? GLASS_TINTS[0];
   const materialOption = GLASS_MATERIALS.find(m => m.value === glassMaterial) ?? GLASS_MATERIALS[0];
 
-  // Frosted tint for lower glass (privacy)
+  // Frosted tint for lower railing glass (privacy)
   const frostedTint: GlassTintOption = { value: "grey", label: "Frosted", color: "#c0c0c0", opacity: 0.70 };
   const frostedMat: GlassMaterialOption = { value: "frosted", label: "Frosted", roughness: 0.65, metalness: 0.0, opacity: 1.2 };
 
-  // Dimensions
-  const GH = ft(glassWallHeightFt ?? 4);          // lower glass height (default 4 ft = 48")
-  const RW = inch(railWidthIn ?? 5.75);            // rail width (5¾")
-  const railThick = inch(3);                       // rail depth
-  const sillH = inch(6);                           // base sill height
-  const sillThick = inch(5);                       // base sill depth
-  const upperGH = ft(upperGlassHeightFt ?? 4);     // upper glass height
-  const midRailH = inch(4);                        // mid-rail (connector between lower and upper)
+  // ── Structural dimensions ──────────────────────────────────────────────────
+  // Lower railing glass (Lumon Phase 1)
+  const GH       = ft(glassWallHeightFt ?? 4);  // lower glass height (48" default = railing height)
+  const RW       = inch(railWidthIn ?? 5.75);   // top/bottom rail extrusion width
+  const railThick = inch(3);                    // rail depth (front-to-back)
+  const sillH    = inch(6);                     // base sill / bottom track height
+  const sillThick = inch(5);                    // base sill depth
+  const midRailH = inch(4);                     // mid-rail connector (joins lower & upper systems)
+
+  // Phase 2 upper sliding glass: spans from top of lower glass up to pergola beam (H)
+  // Height is DERIVED — it fills the full gap between the lower glass top rail and the beam bottom
+  const upperGlassBottom = GH + midRailH;       // where upper glass starts (above mid-rail)
+  const upperGH = Math.max(H - upperGlassBottom - RW, 0.01); // fills up to beam bottom minus top rail
+  const upperGlassTop = upperGlassBottom + upperGH; // = H - RW (just below the beam)
+
   const platformH = inch(boothPlatformHeightIn ?? 8);
 
   // Post X positions (front row only — Lumon style, no back posts visible)
@@ -283,21 +289,22 @@ function PergolaScene({
       {/* ── Lumon glass system ── */}
       {hasGlass && (
         <>
-          {/* Base sill / bottom track */}
+          {/* ── Base sill / bottom track (sits on slab) ── */}
           <AlumBox
             position={[0, sillH / 2, glassZ + sillThick / 2]}
             size={[W, sillH, sillThick]}
             color={finishColor}
           />
 
-          {/* Bottom rail */}
+          {/* ── Bottom rail (above sill) ── */}
           <AlumBox
             position={[0, sillH + RW / 2, glassZ + railThick / 2]}
             size={[W, RW, railThick]}
             color={finishColor}
           />
 
-          {/* Lower glass infill — frosted for privacy */}
+          {/* ── Lower railing glass infill (Phase 1 — frosted privacy glass) ── */}
+          {/* Fills from bottom rail top up to top rail bottom */}
           <GlassPanel
             position={[0, sillH + RW + (GH - sillH - RW * 2) / 2, glassZ]}
             size={[W, Math.max(GH - sillH - RW * 2, 0.01), 0.012]}
@@ -305,66 +312,81 @@ function PergolaScene({
             materialOption={materialOption.value === "frosted" ? frostedMat : materialOption}
           />
 
-          {/* Top rail of lower glass / mid-rail connector */}
+          {/* ── Top rail of lower railing glass ── */}
           <AlumBox
             position={[0, GH - RW / 2, glassZ + railThick / 2]}
             size={[W, RW, railThick]}
             color={finishColor}
           />
 
-          {/* Mid-rail connector (darker, thicker — joins lower and upper systems) */}
+          {/* ── Mid-rail connector (darker, heavier extrusion — joins Phase 1 lower to Phase 2 upper) ── */}
+          {/* This is the connection point where Phase 2 upper glass clips in */}
           <AlumBox
-            position={[0, GH + midRailH / 2, glassZ + railThick * 0.6]}
-            size={[W, midRailH, railThick * 1.4]}
+            position={[0, GH + midRailH / 2, glassZ + railThick * 0.7]}
+            size={[W, midRailH, railThick * 1.5]}
             color="#1a1a1a"
           />
 
           {/* ── Phase 2: Upper sliding glass ── */}
+          {/* Spans from mid-rail up to the pergola beam / post connection at roof level (H) */}
           {showUpperGlass && (
             <>
-              {/* Upper glass infill — clear/tinted */}
+              {/* Upper glass infill — clear/tinted, slides horizontally */}
               <GlassPanel
-                position={[0, GH + midRailH + upperGH / 2, glassZ]}
+                position={[0, upperGlassBottom + upperGH / 2, glassZ]}
                 size={[W, upperGH, 0.012]}
                 tintOption={tintOption}
                 materialOption={materialOption}
               />
-              {/* Upper top rail */}
+              {/* Upper top rail — connects directly to the pergola beam bottom at H */}
               <AlumBox
-                position={[0, GH + midRailH + upperGH + RW / 2, glassZ + railThick / 2]}
+                position={[0, upperGlassTop + RW / 2, glassZ + railThick / 2]}
                 size={[W, RW, railThick]}
                 color={finishColor}
               />
-              {/* Vertical mullion dividers in upper glass (sliding panel lines) */}
+              {/* Vertical mullion dividers — sliding panel lines between posts */}
               {postXs.map((x, i) => (
                 <AlumBox
                   key={`um${i}`}
-                  position={[x, GH + midRailH + upperGH / 2, glassZ + 0.015]}
+                  position={[x, upperGlassBottom + upperGH / 2, glassZ + 0.015]}
                   size={[inch(1.5), upperGH, inch(1.5)]}
                   color={finishColor}
                 />
               ))}
+              {/* Sliding panel overlap lines (visual cue for sliding glass) */}
+              {postXs.slice(0, -1).map((x, i) => {
+                const nextX = postXs[i + 1];
+                const midX = (x + nextX) / 2;
+                return (
+                  <AlumBox
+                    key={`sl${i}`}
+                    position={[midX, upperGlassBottom + upperGH / 2, glassZ + 0.018]}
+                    size={[inch(1.0), upperGH * 0.9, inch(0.5)]}
+                    color={finishColor}
+                  />
+                );
+              })}
             </>
           )}
 
-          {/* Side panels — left end */}
+          {/* ── Side panels — left end (lower glass height only) ── */}
           <GlassPanel
             position={[-W / 2 - ft(1.5) / 2, GH / 2, 0]}
             size={[ft(1.5), GH, 0.012]}
             tintOption={tintOption}
             materialOption={materialOption}
           />
-          {/* Side panel frame — left */}
+          {/* Side panel frame post — left (full height to beam) */}
           <AlumBox position={[-W / 2 - ft(1.5) - postS / 2, H / 2, 0]} size={[postS, H, postS]} color={finishColor} />
 
-          {/* Side panels — right end */}
+          {/* ── Side panels — right end (lower glass height only) ── */}
           <GlassPanel
             position={[W / 2 + ft(1.5) / 2, GH / 2, 0]}
             size={[ft(1.5), GH, 0.012]}
             tintOption={tintOption}
             materialOption={materialOption}
           />
-          {/* Side panel frame — right */}
+          {/* Side panel frame post — right (full height to beam) */}
           <AlumBox position={[W / 2 + ft(1.5) + postS / 2, H / 2, 0]} size={[postS, H, postS]} color={finishColor} />
         </>
       )}

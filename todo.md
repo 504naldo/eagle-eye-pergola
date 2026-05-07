@@ -353,17 +353,7 @@
 - [x] 51 vitest tests passing, 0 TypeScript errors
 - [x] Save checkpoint
 
-## Fix Blank Pages in PDF Export
-
-- [ ] Inspect PDF generation flow to identify where blank pages are created
-- [ ] Check pdfExport.ts for empty sheet components and unnecessary page breaks
-- [ ] Check fencingPdfBuilder.ts for conditional rendering of empty sheets
-- [ ] Remove page-break-after:always from final sheets
-- [ ] Filter out null/undefined/empty sheets before rendering
-- [ ] Fix conditional sheet rendering (skip sheets with no content)
-- [ ] Verify each sheet has title block, content, and footer
-- [ ] Generate test PDFs and visually verify no blank pages
-- [ ] Run tests and save checkpoint
+## Fix Blank Pages in PDF Export (DUPLICATE — see resolved section below)t
 
 ## Fix Blank Pages in PDF Export
 
@@ -378,13 +368,13 @@
 ## Phased Patio Enclosure Module
 
 ### Phase A: DB Schema & Types
-- [ ] Add 'phasedEnclosure' to scopeType enum in drizzle/schema.ts
-- [ ] Add phased_enclosure_params table (projectId, approvedDrawingRef, approvedDrawingLocked, scopeMode, phase1Json, phase2Json, dimensionsJson, pricingJson, fieldNotesJson)
-- [ ] Push DB migration
-- [ ] Add PhasedEnclosureParams interface to shared/scopeTypes.ts
+- [x] Add 'phasedEnclosure' to scopeType enum in drizzle/schema.ts
+- [x] Add phased_enclosure_params table (projectId, approvedDrawingRef, approvedDrawingLocked, scopeMode, phase1Json, phase2Json, dimensionsJson, pricingJson, fieldNotesJson)
+- [x] Push DB migration
+- [x] Add PhasedEnclosureParams interface to shared/scopeTypes.ts
 
 ### Phase B: Geometry & Calculations
-- [ ] Create shared/phasedEnclosureGeometry.ts with:
+- [x] Create shared/phasedEnclosureGeometry.ts with:
   - PhasedEnclosureParams interface
   - Phase1Params (Lumon lower glass: width, height, sections, railing integration)
   - Phase2Params (louvered pergola: beam size, post size, total height, front sections, side sections, louver sections, doors)
@@ -394,7 +384,7 @@
   - DimensionsSummary type
 
 ### Phase C: UI — PhasedEnclosureEditor
-- [ ] Create client/src/pages/PhasedEnclosureEditor.tsx with 8 sections:
+- [x] Create client/src/pages/PhasedEnclosureEditor.tsx with 8 sections:
   1. Approved Drawing Reference (locked badge, reference-only label, upload slot)
   2. Project Phasing (scope mode selector: Phase 1 Only / Phase 2 Future / Full Buildout / Compare)
   3. Phase 1 Current Scope (Lumon lower glass params)
@@ -403,29 +393,29 @@
   6. Pricing Inputs (unit rates, line totals, grand total per phase)
   7. Field Verification Notes (checklist + free-text notes)
   8. Generate PDF Package (scope mode selector + export button)
-- [ ] Mobile-first, contractor-oriented, clean premium styling
-- [ ] Supplemental package label throughout
-- [ ] tRPC procedures: phasedEnclosure.get, phasedEnclosure.save
+- [x] Mobile-first, contractor-oriented, clean premium styling
+- [x] Supplemental package label throughout
+- [x] tRPC procedures: phasedEnclosure.get, phasedEnclosure.save
 
 ### Phase D: PDF Export
-- [ ] Create server/phasedEnclosurePdfBuilder.ts with 6 sheets:
+- [x] Create server/phasedEnclosurePdfBuilder.ts with 6 sheets:
   1. Cover / Approved Drawing Reference Sheet (locked, supplemental label)
   2. Phase 1 — Lumon Lower Glass Scope Sheet
   3. Phase 2 — Future Pergola Criteria Sheet
   4. Dimensions Summary Sheet
   5. Assumptions / Exclusions Sheet
   6. Field Verification Checklist
-- [ ] Scope mode filtering: only include relevant sheets per mode
-- [ ] Eagle Eye branding (black/gold, white body)
-- [ ] Wire into pdfExport.ts dispatch for 'phasedEnclosure' scope
+- [x] Scope mode filtering: only include relevant sheets per mode
+- [x] Eagle Eye branding (black/gold, white body)
+- [x] Wire into pdfExport.ts dispatch for 'phasedEnclosure' scope
 
 ### Phase E: Routing & Seed Data
-- [ ] Add phasedEnclosure route to App.tsx ProjectRouter
-- [ ] Add Phased Enclosure card to New Project modal in Dashboard.tsx
-- [ ] Seed Milestones phased enclosure project with all default params from user spec
-- [ ] Upload approved drawing PDF to S3 and store reference URL
-- [ ] Write vitest tests for Phase 1 and Phase 2 QTO calculations
-- [ ] Save checkpoint
+- [x] Add phasedEnclosure route to App.tsx ProjectRouter
+- [x] Add Phased Enclosure card to New Project modal in Dashboard.tsx
+- [x] Seed Milestones phased enclosure project with all default params from user spec
+- [x] Upload approved drawing PDF to S3 and store reference URL
+- [x] Write vitest tests for Phase 1 and Phase 2 QTO calculations
+- [x] Save checkpoint
 
 
 ## Phased Patio Enclosure Module — COMPLETE
@@ -510,5 +500,17 @@
 - [x] Build ConceptPackage page: project summary, glass height comparison (48" vs 52"), drawing notes, pricing notes
 - [x] Register /concept/:projectId route in App.tsx
 - [x] Add "Concept Package" button to ProjectEditor header
+- [x] 97 tests passing, 0 TypeScript errors
+- [x] Save checkpoint
+
+## Fix 3D Model Geometry — Railing Height, Phase 2 Glass, Pergola Placement
+
+- [x] Lower Lumon glass = railing (42″ min commercial code), positioned from floor sill up to railing top rail
+- [x] Phase 2 sliding glass spans from top of lower railing glass up to the pergola beam/post connection at roof level (height is now DERIVED: H - lowerGlassH - midRailH - topRailH)
+- [x] Pergola beams and louvers sit on top of the posts at roof level (above Phase 2 glass)
+- [x] Posts run full height from floor to beam (H)
+- [x] Phase 2 glass panels render with sliding panel visual cue (mullion dividers + overlap lines between posts)
+- [x] Mid-rail connector sits exactly at the top of the lower glass / bottom of Phase 2 glass
+- [x] Removed upperGlassHeightFt from interface (now derived, not a separate input)
 - [x] 97 tests passing, 0 TypeScript errors
 - [x] Save checkpoint

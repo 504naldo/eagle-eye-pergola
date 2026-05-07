@@ -137,7 +137,6 @@ export default function ConceptPackage() {
     showBooths: true,
     boothPlatformHeightIn: 8,
     showUpperGlass: true,
-    upperGlassHeightFt: 4,
     finishColor: "#2a2a2a",
   };
 
