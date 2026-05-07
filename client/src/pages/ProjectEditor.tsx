@@ -52,7 +52,7 @@ export default function ProjectEditor() {
     glassFront: true, glassLeft: true, glassRight: true,
     glassWallHeightFt: "8.00",
     railWidthIn: "2.00",
-    railingHeightIn: "48",
+    railingHeightIn: "52",
     finishColor: "Matte Black", ledLighting: true,
   });
 
@@ -76,7 +76,7 @@ export default function ProjectEditor() {
         glassRight: projectParams.glassRight ?? true,
         glassWallHeightFt: projectParams.glassWallHeightFt ?? "8.00",
         railWidthIn: projectParams.railWidthIn ?? "2.00",
-        railingHeightIn: projectParams.railingHeightIn ?? "48",
+        railingHeightIn: projectParams.railingHeightIn ?? "52",
         finishColor: projectParams.finishColor ?? "Matte Black",
         ledLighting: projectParams.ledLighting ?? true,
       });
@@ -117,7 +117,7 @@ export default function ProjectEditor() {
     glassRight: form.glassRight,
     glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
     railWidthIn: parseFloat(form.railWidthIn) || 2,
-    railingHeightIn: parseFloat(form.railingHeightIn) || 48,
+    railingHeightIn: parseFloat(form.railingHeightIn) || 52,
     finishColor: form.finishColor,
     ledLighting: form.ledLighting,
   };
@@ -430,10 +430,10 @@ export default function ProjectEditor() {
                         max="96"
                         value={form.railingHeightIn}
                         onChange={e => setForm(f => ({ ...f, railingHeightIn: e.target.value }))}
-                        className={`mt-1 text-sm ${parseFloat(form.railingHeightIn || "48") < 42 ? "border-red-400" : ""}`}
+                        className={`mt-1 text-sm ${parseFloat(form.railingHeightIn || "52") < 42 ? "border-red-400" : ""}`}
                         placeholder="48"
                       />
-                      {parseFloat(form.railingHeightIn || "48") < 42 && (
+                      {parseFloat(form.railingHeightIn || "52") < 42 && (
                         <p className="text-xs text-red-500 mt-1">⚠ Below 42" commercial code minimum</p>
                       )}
                     </div>
@@ -1054,7 +1054,7 @@ export default function ProjectEditor() {
                   louverSpacingIn: parseFloat(form.slatSpacingIn) || 4,
                   louverSizeIn: 6,
                   hasGlass: form.glassFront || form.glassLeft || form.glassRight,
-                  glassWallHeightFt: (parseFloat(form.railingHeightIn) || 48) / 12,
+                  glassWallHeightFt: (parseFloat(form.railingHeightIn) || 52) / 12,
                   railWidthIn: parseFloat(form.railWidthIn) || 2,
                   finishColor: form.finishColor === "Matte Black" ? "#2a2a2a"
                     : form.finishColor === "Matte White" ? "#e8e8e8"

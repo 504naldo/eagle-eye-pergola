@@ -92,6 +92,13 @@
       "when": 1778114152412,
       "tag": "0012_perfect_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1778116423152,
+      "tag": "0013_wise_black_knight",
+      "breakpoints": true
     }
   ]
 }

@@ -526,3 +526,13 @@
 - [x] Update ModelViewer3D to use railingHeightIn (inches → ft) for lower glass height
 - [x] Write 6 vitest tests for railing height QTO (103 total passing)
 - [x] Save checkpoint
+
+## Update Railing Height Default to 52"
+
+- [x] Update schema default for railingHeightIn from 48 to 52
+- [x] Update tRPC fallback default from 48 to 52
+- [x] Update ProjectEditor form state initial value from 48 to 52
+- [x] Update ModelViewer3D default glassWallHeightFt from 4 ft (48") to 4.333 ft (52")
+- [x] 52" button now highlighted by default in the 3D viewer toggle
+- [x] 103 tests passing, 0 TypeScript errors
+- [x] Save checkpoint

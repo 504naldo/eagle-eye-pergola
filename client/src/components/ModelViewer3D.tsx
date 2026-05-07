@@ -225,7 +225,7 @@ function PergolaScene({
 
   // ── Structural dimensions ──────────────────────────────────────────────────
   // Lower railing glass (Lumon Phase 1)
-  const GH       = ft(glassWallHeightFt ?? 4);  // lower glass height (48" default = railing height)
+  const GH       = ft(glassWallHeightFt ?? 4.333);  // lower glass height (52" default = railing height)
   const RW       = inch(railWidthIn ?? 5.75);   // top/bottom rail extrusion width
   const railThick = inch(3);                    // rail depth (front-to-back)
   const sillH    = inch(6);                     // base sill / bottom track height
@@ -481,7 +481,7 @@ export default function ModelViewer3D({ params, projectName, className }: { para
   const [showGlassControls, setShowGlassControls] = useState(false);
   const [showUpperGlass, setShowUpperGlass] = useState(params.showUpperGlass ?? false);
   const [showBooths, setShowBooths]   = useState(params.showBooths ?? true);
-  const [glassHeightFt, setGlassHeightFt] = useState(params.glassWallHeightFt ?? 4);
+  const [glassHeightFt, setGlassHeightFt] = useState(params.glassWallHeightFt ?? 4.333);
   const [exporting, setExporting]     = useState(false);
   const groupRef = useRef<THREE.Group | null>(null);
 
@@ -519,13 +519,13 @@ export default function ModelViewer3D({ params, projectName, className }: { para
           <div className="flex gap-0.5 bg-black/60 backdrop-blur border border-white/20 rounded-lg p-0.5">
             <button
               onClick={() => setGlassHeightFt(4)}
-              className={`text-xs px-2 py-1 rounded-md transition-all ${glassHeightFt === 4 ? "bg-white text-black font-semibold" : "text-white/70 hover:text-white"}`}
+              className={`text-xs px-2 py-1 rounded-md transition-all ${glassHeightFt <= 4.01 ? "bg-white text-black font-semibold" : "text-white/70 hover:text-white"}`}
             >
               48″
             </button>
             <button
               onClick={() => setGlassHeightFt(4.333)}
-              className={`text-xs px-2 py-1 rounded-md transition-all ${glassHeightFt > 4 ? "bg-white text-black font-semibold" : "text-white/70 hover:text-white"}`}
+              className={`text-xs px-2 py-1 rounded-md transition-all ${glassHeightFt > 4.01 ? "bg-white text-black font-semibold" : "text-white/70 hover:text-white"}`}
             >
               52″
             </button>
