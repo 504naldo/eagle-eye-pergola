@@ -65,6 +65,10 @@ export function calculateFencingQTO(
   p: FencingParams,
   rateOverrides: Record<string, number> = {}
 ): FencingQTOItem[] {
+  if (!(p.runLengthFt > 0)) throw new Error("runLengthFt must be greater than 0");
+  if (!(p.heightFt > 0)) throw new Error("heightFt must be greater than 0");
+  if (!(p.postSpacingFt > 0)) throw new Error("postSpacingFt must be greater than 0");
+
   const defaults = getFencingDefaultRates();
   const rate = (desc: string) => rateOverrides[desc] ?? defaults[desc] ?? 0;
 

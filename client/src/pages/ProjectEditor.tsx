@@ -105,19 +105,19 @@ export default function ProjectEditor() {
   });
 
   const pergolaParams: PergolaParams = {
-    widthFt: parseFloat(form.widthFt) || 58,
-    depthFt: parseFloat(form.depthFt) || 15.67,
-    heightFt: parseFloat(form.heightFt) || 10,
-    postCount: form.postCount,
-    postSpacingFt: parseFloat(form.postSpacingFt) || 14.5,
+    widthFt: Math.max(0.1, parseFloat(form.widthFt) || 58),
+    depthFt: Math.max(0.1, parseFloat(form.depthFt) || 15.67),
+    heightFt: Math.max(0.1, parseFloat(form.heightFt) || 10),
+    postCount: Math.max(1, form.postCount),
+    postSpacingFt: Math.max(0.1, parseFloat(form.postSpacingFt) || 14.5),
     slatType: form.slatType,
-    slatSpacingIn: parseFloat(form.slatSpacingIn) || 4,
+    slatSpacingIn: Math.max(0.1, parseFloat(form.slatSpacingIn) || 4),
     glassFront: form.glassFront,
     glassLeft: form.glassLeft,
     glassRight: form.glassRight,
-    glassWallHeightFt: parseFloat(form.glassWallHeightFt) || 8,
-    railWidthIn: parseFloat(form.railWidthIn) || 2,
-    railingHeightIn: parseFloat(form.railingHeightIn) || 52,
+    glassWallHeightFt: Math.max(0, parseFloat(form.glassWallHeightFt) || 8),
+    railWidthIn: Math.max(0.1, parseFloat(form.railWidthIn) || 2),
+    railingHeightIn: Math.max(0.1, parseFloat(form.railingHeightIn) || 52),
     finishColor: form.finishColor,
     ledLighting: form.ledLighting,
   };

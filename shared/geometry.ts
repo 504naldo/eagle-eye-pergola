@@ -62,7 +62,17 @@ function withRate(
   return { ...item, lineKey, unitRate, lineTotal: Math.round(item.qty * unitRate * 100) / 100 };
 }
 
+function validatePergolaParams(p: PergolaParams): void {
+  if (!(p.widthFt > 0)) throw new Error("widthFt must be greater than 0");
+  if (!(p.depthFt > 0)) throw new Error("depthFt must be greater than 0");
+  if (!(p.heightFt > 0)) throw new Error("heightFt must be greater than 0");
+  if (!(p.postCount >= 1)) throw new Error("postCount must be at least 1");
+  if (!(p.postSpacingFt > 0)) throw new Error("postSpacingFt must be greater than 0");
+  if (!(p.slatSpacingIn > 0)) throw new Error("slatSpacingIn must be greater than 0");
+}
+
 export function calculateQTO(p: PergolaParams, rateOverrides?: Record<string, number>): QTOItem[] {
+  validatePergolaParams(p);
   const widthM = p.widthFt * 0.3048;
   const depthM = p.depthFt * 0.3048;
   const heightM = p.heightFt * 0.3048;
@@ -147,6 +157,7 @@ export interface GlazingAreaBreakdown {
 }
 
 export function calculateGlazingArea(p: PergolaParams): GlazingAreaBreakdown {
+  validatePergolaParams(p);
   const glassH = p.railingHeightIn != null
     ? Math.max(p.railingHeightIn, 42) / 12
     : (p.glassWallHeightFt ?? p.heightFt);
@@ -184,6 +195,7 @@ export interface DrawingDimensions {
 }
 
 export function getDrawingDimensions(p: PergolaParams): DrawingDimensions {
+  validatePergolaParams(p);
   return {
     widthFt: p.widthFt,
     depthFt: p.depthFt,
