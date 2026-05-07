@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Download, Printer, AlertTriangle, CheckCircle2, Info, HelpCircle, Layers } from "lucide-react";
 import { toast } from "sonner";
+import { calculateQTO, calculateGrandTotal } from "@shared/geometry";
+import type { PergolaParams } from "@shared/geometry";
 
 // ─── Constraint / note card ───────────────────────────────────────────────────
 function NoteCard({ icon, color, title, children }: {
@@ -121,6 +123,30 @@ export default function ConceptPackage() {
   const { data: projectParams } = trpc.params.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: scopeItems } = trpc.scope.get.useQuery({ projectId }, { enabled: projectId > 0 });
   const { data: notesData } = trpc.notes.get.useQuery({ projectId }, { enabled: projectId > 0 });
+  const { data: savedRates } = trpc.rates.get.useQuery({ projectId }, { enabled: projectId > 0 });
+
+  const rateOverrides: Record<string, number> = savedRates
+    ? Object.fromEntries(savedRates.map(r => [r.description, parseFloat(r.unitRate)]))
+    : {};
+
+  const qtoParams: PergolaParams | null = projectParams ? {
+    widthFt: Math.max(0.1, parseFloat(projectParams.widthFt ?? "58") || 58),
+    depthFt: Math.max(0.1, parseFloat(projectParams.depthFt ?? "15.67") || 15.67),
+    heightFt: Math.max(0.1, parseFloat(projectParams.heightFt ?? "10") || 10),
+    postCount: Math.max(1, projectParams.postCount ?? 5),
+    postSpacingFt: Math.max(0.1, parseFloat(projectParams.postSpacingFt ?? "14.5") || 14.5),
+    slatType: (projectParams.slatType as "fixed" | "operable") ?? "fixed",
+    slatSpacingIn: Math.max(0.1, parseFloat(projectParams.slatSpacingIn ?? "4") || 4),
+    glassFront: projectParams.glassFront ?? true,
+    glassLeft: projectParams.glassLeft ?? true,
+    glassRight: projectParams.glassRight ?? true,
+    finishColor: projectParams.finishColor ?? "Matte Black",
+    ledLighting: projectParams.ledLighting ?? true,
+  } : null;
+
+  const grandTotal = qtoParams
+    ? calculateGrandTotal(calculateQTO(qtoParams, rateOverrides))
+    : null;
 
   const params3D = {
     widthFt: parseFloat(projectParams?.widthFt ?? "58") || 58,
@@ -364,40 +390,46 @@ export default function ConceptPackage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
           <SectionHeader
             label="Pricing Notes"
-            sub="Internal working references only — not final customer pricing"
+            sub="Preliminary estimate only — not final customer pricing"
           />
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
             <div className="flex items-start gap-2">
               <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-amber-800">
-                <strong>Internal use only.</strong> The figures below are preliminary working references from the initial meeting. They are not final customer pricing. Final pricing must include all line items listed below.
+                <strong>Preliminary estimate only.</strong> This figure is based on the current QTO and default unit rates. It does not include all line items below and is not final customer pricing.
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Glass/Enclosure Reference</p>
-              <p className="text-lg font-bold text-gray-900">$80,684</p>
-              <p className="text-xs text-gray-400">+ $2,650.83 (working reference)</p>
+
+          {grandTotal !== null ? (
+            <div className="bg-gray-900 rounded-xl p-5 mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Preliminary QTO Estimate</p>
+                <p className="text-2xl font-bold text-white">
+                  {grandTotal.toLocaleString("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-xs text-[#C9A84C] mt-1">Materials only — excludes items listed below</p>
+              </div>
+              <button
+                onClick={() => navigate(`/project/${projectId}`)}
+                className="text-xs text-gray-400 hover:text-white underline underline-offset-2 transition-colors"
+              >
+                Edit rates in Project Editor →
+              </button>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Alt. Working Reference</p>
-              <p className="text-lg font-bold text-gray-900">$74,436</p>
-              <p className="text-xs text-gray-400">+ $2,650 (working reference)</p>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-5 mb-6 text-center text-sm text-gray-500">
+              Loading estimate…
             </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Railing Dealer Price</p>
-              <p className="text-lg font-bold text-gray-900">$16,163</p>
-              <p className="text-xs text-gray-400">Markup discussed: 1.8× — install not included</p>
-            </div>
-          </div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Final customer pricing must include:</p>
+          )}
+
+          <p className="text-sm font-semibold text-gray-700 mb-2">Final customer pricing must also include:</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
             {[
-              "Materials", "Install labour", "Equipment / lifts",
+              "Install labour", "Equipment / lifts",
               "Demolition / removal", "Engineering", "Permits",
               "Electrical / exit sign relocation", "Drainage work", "Concrete / base wall",
-              "Flooring", "Contingency", "Taxes",
+              "Flooring", "Contingency", "Taxes", "Lumon supply",
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1.5 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] flex-shrink-0" />

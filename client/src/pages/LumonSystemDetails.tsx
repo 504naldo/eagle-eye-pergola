@@ -133,11 +133,11 @@ export default function LumonSystemDetails({ projectId }: { projectId?: string |
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(projectId ? `/project/${projectId}` : "/dashboard")}
+          onClick={() => navigate(projectId ? `/project/${projectId}/concept` : "/dashboard")}
           className="gap-1.5"
         >
           <ArrowLeft size={14} />
-          Back to Editor
+          Back to Concept Package
         </Button>
         <div className="flex-1" />
         <Badge variant="outline" className="text-xs text-amber-600 border-amber-400 bg-amber-50 dark:bg-amber-950">
