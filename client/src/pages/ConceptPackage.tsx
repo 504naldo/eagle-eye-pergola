@@ -407,6 +407,56 @@ export default function ConceptPackage() {
           </div>
         </div>
 
+        {/* ── Lumon Callout 1: Rail/Top Cap Profile ── */}
+        <div className="bg-blue-950/80 border border-blue-700 rounded-2xl p-5 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <HelpCircle size={12} className="text-blue-300" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-blue-300 uppercase tracking-wide mb-1">Callout — Rail / Top Cap Profile Width</p>
+              <p className="text-sm text-blue-100 leading-relaxed">
+                Lumon rail/top cap profile to be confirmed by final Lumon shop drawings.{" "}
+                <strong>Meeting reference was 5¾″ / approx. 146 mm</strong>; Lumon detail drawings show profile widths up to{" "}
+                <strong>160 mm</strong> depending on selected system configuration.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Lumon Callout 2: 5-Rail Sliding System ── */}
+        <div className="bg-blue-950/80 border border-blue-700 rounded-2xl p-5 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <HelpCircle size={12} className="text-blue-300" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-blue-300 uppercase tracking-wide mb-1">Callout — 5-Rail Lumon Sliding Glazing System</p>
+              <p className="text-sm text-blue-100 leading-relaxed">
+                5-rail Lumon sliding glazing system shown for coordination. Final number of tracks, glass thickness, stacking direction,
+                anchoring, drainage, and profile dimensions to be confirmed by Lumon.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Lumon Technical Note ── */}
+        <div className="bg-amber-950/60 border border-amber-700 rounded-2xl p-5 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-amber-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <AlertTriangle size={12} className="text-amber-300" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-amber-300 uppercase tracking-wide mb-1">Technical Note — Design Coordination Only</p>
+              <p className="text-sm text-amber-100 leading-relaxed">
+                Lumon profile sections are included for design coordination only and are{" "}
+                <strong>not construction or shop drawings</strong>. Final details require Lumon shop drawings, engineering review,
+                landlord approval, field measurements, and permit confirmation.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Drawing Notes / Assumptions ── */}
         <div className="bg-gray-900 text-white rounded-2xl p-6 mb-8">
           <SectionHeader label="Drawing Notes & Assumptions" sub="This package is concept only" />

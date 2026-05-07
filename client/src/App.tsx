@@ -12,6 +12,7 @@ import FencingEditor from "./pages/FencingEditor";
 import PhasedEnclosureEditor from "./pages/PhasedEnclosureEditor";
 import DrawingPreview from "./pages/DrawingPreview";
 import ConceptPackage from "./pages/ConceptPackage";
+import LumonSystemDetails from "./pages/LumonSystemDetails";
 import Home from "./pages/Home";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
@@ -53,6 +54,12 @@ function Router() {
       <Route path="/project/:id" component={ProjectRouter} />
       <Route path="/project/:id/preview" component={DrawingPreview} />
       <Route path="/project/:id/concept" component={ConceptPackage} />
+      <Route path="/project/:id/lumon">
+        {() => {
+          const { id } = useParams<{ id: string }>();
+          return <LumonSystemDetails projectId={id} />;
+        }}
+      </Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

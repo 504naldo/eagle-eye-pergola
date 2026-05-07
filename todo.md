@@ -544,3 +544,34 @@
 - [x] Updated placeholder text in Railing Height input from 48 to 52
 - [x] 103 tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Lumon Technical Section Drawings Integration
+
+### Phase 1 — 3D Model Geometry Updates (mm → ft conversions)
+- [x] Convert Lumon profile dimensions to Three.js units (1 unit = 1 ft) and apply to all 4 profiles
+- [x] Replace thin-line rails with real aluminum extrusion profiles with visible depth
+- [x] Render system stack correctly: slab → lower railing glass → top cap → upper track bottom → upper glass → upper guide track → pergola beam
+- [x] Show 5-rail sliding system with panel mullion spacing
+- [x] Add stacking zone indicators at both ends (amber semi-transparent panels)
+- [x] Remove duplicate old sill box
+
+### Phase 2 — Lumon System Details Page
+- [x] Create LumonSystemDetails.tsx page (/project/:id/lumon) with:
+  - SVG cross-section profile diagrams for all 4 Lumon profiles (to scale, with hatch fill)
+  - Glass thickness options (6mm / 8mm / 10mm)
+  - System stack SVG diagram (slab → base rail → lower glass → top cap → upper track → upper glass → guide → beam)
+  - Layer-by-layer description (8 layers)
+  - Callout 1: Rail/top cap profile width (5¾″ vs 160mm)
+  - Callout 2: 5-rail sliding system coordination note
+  - 12-item checklist of items to confirm with Lumon
+- [x] Register /project/:id/lumon route in App.tsx
+- [x] Add "Lumon Details" button (blue-accented) to ProjectEditor header
+
+### Phase 3 — Concept Package Updates
+- [x] Add Callout 1 (rail/top cap profile) to Concept Package
+- [x] Add Callout 2 (5-rail sliding system) to Concept Package
+- [x] Add Technical Note disclaimer to Concept Package
+
+### Phase 4 — Tests & Checkpoint
+- [x] 103 tests passing, 0 TypeScript errors
+- [x] Save checkpoint

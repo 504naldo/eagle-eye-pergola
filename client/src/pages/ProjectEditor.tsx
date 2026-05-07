@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn } from "lucide-react";
+import { Eye, Download, ChevronLeft, Plus, Trash2, Check, Sparkles, X, ZoomIn, Layers } from "lucide-react";
 import { calculateQTO, calculateGrandTotal, calculateGlazingArea, PergolaParams, QTOItem, getDefaultRates } from "@shared/geometry";
 import FilesTab from "@/components/FilesTab";
 import ModelViewer3D from "@/components/ModelViewer3D";
@@ -280,6 +280,9 @@ export default function ProjectEditor() {
           <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-end">
             <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate(`/project/${projectId}/concept`)}>
               <Eye size={14} /> <span className="hidden sm:inline">Concept</span><span className="sm:hidden">Pkg</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3 border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-400 dark:hover:bg-blue-950" onClick={() => navigate(`/project/${projectId}/lumon`)}>
+              <Layers size={14} /> <span className="hidden sm:inline">Lumon Details</span><span className="sm:hidden">Lumon</span>
             </Button>
             <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3" onClick={() => navigate(`/project/${projectId}/preview`)}>
               <Eye size={14} /> <span className="hidden sm:inline">Preview</span><span className="sm:hidden">View</span>
