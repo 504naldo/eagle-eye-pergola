@@ -536,3 +536,11 @@
 - [x] 52" button now highlighted by default in the 3D viewer toggle
 - [x] 103 tests passing, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Fix Railing Height 52" Proportions
+
+- [x] Update existing Milestones project DB record: set railingHeightIn = 52 (all 3 records)
+- [x] Verify 3D model geometry: lower glass = 52" = 4.33ft, correctly proportioned at 43.3% of 10ft height
+- [x] Updated placeholder text in Railing Height input from 48 to 52
+- [x] 103 tests passing, 0 TypeScript errors
+- [x] Save checkpoint

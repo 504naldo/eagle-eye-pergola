@@ -431,7 +431,7 @@ export default function ProjectEditor() {
                         value={form.railingHeightIn}
                         onChange={e => setForm(f => ({ ...f, railingHeightIn: e.target.value }))}
                         className={`mt-1 text-sm ${parseFloat(form.railingHeightIn || "52") < 42 ? "border-red-400" : ""}`}
-                        placeholder="48"
+                        placeholder="52"
                       />
                       {parseFloat(form.railingHeightIn || "52") < 42 && (
                         <p className="text-xs text-red-500 mt-1">⚠ Below 42" commercial code minimum</p>
