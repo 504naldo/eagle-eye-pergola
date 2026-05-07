@@ -98,7 +98,7 @@ function EgressDoorMarker({ cx, glassZ, glassH, widthFt: markerW, label }: {
   const mW = ft(markerW);
   const frameThick = inch(1.5);
   return (
-    <group position={[cx, 0, glassZ + 0.03]}>
+    <group position={[cx, 0, glassZ - 0.03]}>
       {/* Left frame */}
       <mesh position={[-mW / 2 - frameThick / 2, glassH / 2, 0]}>
         <boxGeometry args={[frameThick, glassH, inch(0.5)]} />
@@ -136,7 +136,7 @@ function ServingStationMarker({ cx, glassZ, glassH, widthFt: markerW, label }: {
   const mW = ft(markerW);
   const frameThick = inch(1.5);
   return (
-    <group position={[cx, 0, glassZ + 0.03]}>
+    <group position={[cx, 0, glassZ - 0.03]}>
       {/* Zone fill (semi-transparent green) */}
       <mesh position={[0, glassH / 2, -0.005]}>
         <boxGeometry args={[mW, glassH, inch(0.2)]} />
@@ -372,16 +372,16 @@ function PergolaScene({
     return Array.from({ length: count }, (_, i) => -W / 2 + spacing * (i + 0.5));
   }, [W]);
 
-  const glassZ = D / 2;  // front glass face Z position
+  const glassZ = -D / 2;  // inside face Z position (railing is on the interior side)
 
   return (
     <group ref={groupRef}>
 
       {/* ── Pergola roof structure ── */}
-      {/* Front beam */}
+      {/* Street-facing (open) front beam at +D/2 */}
+      <AlumBox position={[0, H + beamH / 2, D / 2]} size={[W, beamH, beamW]} color={finishColor} />
+      {/* Inside beam at glassZ (-D/2) — where the railing/glass sits */}
       <AlumBox position={[0, H + beamH / 2, glassZ]} size={[W, beamH, beamW]} color={finishColor} />
-      {/* Back beam */}
-      <AlumBox position={[0, H + beamH / 2, -D / 2]} size={[W, beamH, beamW]} color={finishColor} />
       {/* Side purlins */}
       {postXs.map((x, i) => (
         <AlumBox key={`sp${i}`} position={[x, H + beamH / 2, 0]} size={[beamW, beamH, D]} color={finishColor} />
@@ -391,13 +391,13 @@ function PergolaScene({
         <AlumBox key={`ls${i}`} position={[0, roofY, z]} size={[W, louverThick, louverW]} color={finishColor} />
       ))}
 
-      {/* ── Front posts (full height, front face only) ── */}
+      {/* ── Street-facing (open) front posts at +D/2 ── */}
       {postXs.map((x, i) => (
-        <AlumBox key={`pf${i}`} position={[x, H / 2, glassZ]} size={[postS, H, postS]} color={finishColor} />
+        <AlumBox key={`pf${i}`} position={[x, H / 2, D / 2]} size={[postS, H, postS]} color={finishColor} />
       ))}
-      {/* Back posts */}
+      {/* Inside posts at glassZ (-D/2) — behind the railing */}
       {postXs.map((x, i) => (
-        <AlumBox key={`pb${i}`} position={[x, H / 2, -D / 2]} size={[postS, H, postS]} color={finishColor} />
+        <AlumBox key={`pb${i}`} position={[x, H / 2, glassZ]} size={[postS, H, postS]} color={finishColor} />
       ))}
 
       {/* ── Lumon glass system ── */}
@@ -405,7 +405,7 @@ function PergolaScene({
         <>
           {/* ── Lower base rail (83mm × 32mm — sits on slab, Lumon lower sill profile) ── */}
           <AlumBox
-            position={[0, sillH / 2, glassZ + sillThick / 2]}
+            position={[0, sillH / 2, glassZ - sillThick / 2]}
             size={[W, sillH, sillThick]}
             color={finishColor}
           />
@@ -422,7 +422,7 @@ function PergolaScene({
           {/* ── Top cap / large rail (160mm × 45mm — Lumon top cap profile) ── */}
           {/* Sits on top of lower glass infill, connects to upper bottom track */}
           <AlumBox
-            position={[0, GH - topCapHgt / 2, glassZ + topCapDepth / 2]}
+            position={[0, GH - topCapHgt / 2, glassZ - topCapDepth / 2]}
             size={[W, topCapHgt, topCapDepth]}
             color={finishColor}
           />
@@ -430,7 +430,7 @@ function PergolaScene({
           {/* ── Upper bottom track (101mm × 71mm — connects Phase 1 top cap to Phase 2 upper glass) ── */}
           {/* This is the mid-rail connector: sits on top of the top cap */}
           <AlumBox
-            position={[0, GH + midRailH / 2, glassZ + upperBotTrackW / 2]}
+            position={[0, GH + midRailH / 2, glassZ - upperBotTrackW / 2]}
             size={[W, midRailH, upperBotTrackW]}
             color="#2a2a2a"
           />
@@ -448,7 +448,7 @@ function PergolaScene({
               />
               {/* Upper top guide track (99mm × 60mm) — connects directly to the pergola beam bottom at H */}
               <AlumBox
-                position={[0, upperGlassTop + upperTopTrackH / 2, glassZ + upperTopTrackW / 2]}
+                position={[0, upperGlassTop + upperTopTrackH / 2, glassZ - upperTopTrackW / 2]}
                 size={[W, upperTopTrackH, upperTopTrackW]}
                 color={finishColor}
               />
@@ -456,7 +456,7 @@ function PergolaScene({
               {postXs.map((x, i) => (
                 <AlumBox
                   key={`um${i}`}
-                  position={[x, upperGlassBottom + upperGH / 2, glassZ + 0.015]}
+                  position={[x, upperGlassBottom + upperGH / 2, glassZ - 0.015]}
                   size={[inch(1.5), upperGH, inch(1.5)]}
                   color={finishColor}
                 />
@@ -468,7 +468,7 @@ function PergolaScene({
                 return (
                   <AlumBox
                     key={`sl${i}`}
-                    position={[midX, upperGlassBottom + upperGH / 2, glassZ + 0.018]}
+                    position={[midX, upperGlassBottom + upperGH / 2, glassZ - 0.018]}
                     size={[inch(1.0), upperGH * 0.9, inch(0.5)]}
                     color={finishColor}
                   />
@@ -478,14 +478,14 @@ function PergolaScene({
               {/* ── Stacking zones (hatched amber panels at both ends) ── */}
               {/* Left stacking zone: panels slide to the left end */}
               <mesh
-                position={[-W / 2 + ft(3) / 2, upperGlassBottom + upperGH / 2, glassZ + 0.022]}
+                position={[-W / 2 + ft(3) / 2, upperGlassBottom + upperGH / 2, glassZ - 0.022]}
               >
                 <boxGeometry args={[ft(3), upperGH, inch(0.3)]} />
                 <meshStandardMaterial color="#f59e0b" transparent opacity={0.25} />
               </mesh>
               {/* Right stacking zone: panels slide to the right end */}
               <mesh
-                position={[W / 2 - ft(3) / 2, upperGlassBottom + upperGH / 2, glassZ + 0.022]}
+                position={[W / 2 - ft(3) / 2, upperGlassBottom + upperGH / 2, glassZ - 0.022]}
               >
                 <boxGeometry args={[ft(3), upperGH, inch(0.3)]} />
                 <meshStandardMaterial color="#f59e0b" transparent opacity={0.25} />
@@ -546,11 +546,12 @@ function PergolaScene({
       )}
 
       {/* ── Booths ── */}
+      {/* Booths are on the inside (between the glass wall and the building) */}
       {showBooths && boothPositions.map((bx, i) => (
         <UBooth
           key={`booth${i}`}
           cx={bx}
-          cz={glassZ - ft(4.5)}
+          cz={glassZ + ft(4.5)}
           platformY={platformH}
           color="#5a5a5a"
         />
