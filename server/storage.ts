@@ -38,6 +38,10 @@ async function buildDownloadUrl(
     method: "GET",
     headers: buildAuthHeaders(apiKey),
   });
+  if (!response.ok) {
+    const message = await response.text().catch(() => response.statusText);
+    throw new Error(`Storage download URL failed (${response.status} ${response.statusText}): ${message}`);
+  }
   return (await response.json()).url;
 }
 

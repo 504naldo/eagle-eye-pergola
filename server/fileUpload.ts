@@ -1,5 +1,6 @@
 import multer from "multer";
 import type { Request, Response } from "express";
+import { randomBytes } from "crypto";
 import { storagePut } from "./storage";
 import { sdk } from "./_core/sdk";
 
@@ -24,7 +25,7 @@ export async function handleFileUpload(req: Request, res: Response) {
     const projectId = req.params.projectId;
     if (!projectId) return res.status(400).json({ error: "Missing projectId" });
 
-    const randomSuffix = Math.random().toString(36).slice(2, 8);
+    const randomSuffix = randomBytes(8).toString("hex");
     const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileKey = `project-files/${projectId}/${Date.now()}-${randomSuffix}-${safeFileName}`;
 

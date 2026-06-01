@@ -109,7 +109,7 @@ function drawPlanView(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawin
   // Lumon panels
   if (dims.glassFront) {
     doc.rect(px(0), py(dims.depthFt), dw, 5).fill("#BFDBFE").stroke(BLUE).strokeColor(BLUE).lineWidth(1);
-    doc.fontSize(7).fillColor(BLUE).font("Helvetica").text("LUMIN GLASS — FRONT", px(0), py(dims.depthFt) + 7, { width: dw, align: "center" });
+    doc.fontSize(7).fillColor(BLUE).font("Helvetica").text("LUMON GLASS — FRONT", px(0), py(dims.depthFt) + 7, { width: dw, align: "center" });
   }
   if (dims.glassLeft) doc.rect(px(0) - 5, py(0), 5, dh).fill("#BFDBFE").stroke(BLUE).strokeColor(BLUE).lineWidth(1);
   if (dims.glassRight) doc.rect(px(dims.widthFt), py(0), 5, dh).fill("#BFDBFE").stroke(BLUE).strokeColor(BLUE).lineWidth(1);
@@ -167,7 +167,7 @@ function drawFrontElevation(doc: PDFKit.PDFDocument, dims: ReturnType<typeof get
     doc.rect(px(0), py(dims.heightFt), dw, dh).fill("#BFDBFE").opacity(0.35);
     doc.opacity(1);
     doc.strokeColor(BLUE).lineWidth(1).rect(px(0), py(dims.heightFt), dw, dh).stroke();
-    doc.fontSize(9).fillColor(BLUE).font("Helvetica").text("LUMIN GLASS VERTICAL ENCLOSURE", px(0), py(dims.heightFt * 0.4), { width: dw, align: "center" });
+    doc.fontSize(9).fillColor(BLUE).font("Helvetica").text("LUMON GLASS VERTICAL ENCLOSURE", px(0), py(dims.heightFt * 0.4), { width: dw, align: "center" });
   }
 
   // Posts
@@ -298,7 +298,7 @@ function drawSection(doc: PDFKit.PDFDocument, dims: ReturnType<typeof getDrawing
   doc.fontSize(7.5).fillColor("#374151").font("Helvetica").text("③ FRONT POST", px(dims.depthFt) - 5, py(0) - 12, { align: "right", width: 80 });
   doc.fontSize(8).fillColor(GRAY).font("Helvetica").text("④ SLAT ROOF SYSTEM", px(dims.depthFt / 2) - 50, py(dims.heightFt / 2) - 5);
   if (dims.glassFront) {
-    doc.fontSize(7.5).fillColor(BLUE).font("Helvetica").text("⑤ LUMIN GLASS", px(dims.depthFt) + 8, py(dims.heightFt / 2) - 5);
+    doc.fontSize(7.5).fillColor(BLUE).font("Helvetica").text("⑤ LUMON GLASS", px(dims.depthFt) + 8, py(dims.heightFt / 2) - 5);
     doc.fontSize(7.5).fillColor(BLUE).font("Helvetica").text("⑥ GLASS TOP RAIL", px(dims.depthFt) + 8, py(dims.heightFt / 2) + 8);
   }
 

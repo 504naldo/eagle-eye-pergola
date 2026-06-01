@@ -1,4 +1,3 @@
-import { Decimal } from "decimal.js";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -53,7 +52,7 @@ export const appRouter = router({
         clientName: z.string().optional(),
         location: z.string().optional(),
         notes: z.string().optional(),
-        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing"]).default("pergola"),
+        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing", "phasedEnclosure"]).default("pergola"),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await createProject({ ...input, userId: ctx.user.id, status: "draft" });
@@ -183,15 +182,19 @@ export const appRouter = router({
       }),
 
     toggle: protectedProcedure
-      .input(z.object({ id: z.number(), checked: z.boolean() }))
-      .mutation(async ({ input }) => {
+      .input(z.object({ id: z.number(), checked: z.boolean(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
         await updateChecklistItem(input.id, { checked: input.checked });
         return { success: true };
       }),
 
     updateNote: protectedProcedure
-      .input(z.object({ id: z.number(), fieldNote: z.string() }))
-      .mutation(async ({ input }) => {
+      .input(z.object({ id: z.number(), fieldNote: z.string(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
         await updateChecklistItem(input.id, { fieldNote: input.fieldNote });
         return { success: true };
       }),
@@ -289,8 +292,10 @@ The summary should cover: (1) project overview and intent, (2) structural system
       }),
 
     update: protectedProcedure
-      .input(z.object({ id: z.number(), text: z.string() }))
-      .mutation(async ({ input }) => {
+      .input(z.object({ id: z.number(), text: z.string(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
         await updateScopeItem(input.id, { text: input.text });
         return { success: true };
       }),
@@ -305,8 +310,10 @@ The summary should cover: (1) project overview and intent, (2) structural system
       }),
 
     delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .input(z.object({ id: z.number(), projectId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
         await deleteScopeItem(input.id);
         return { success: true };
       }),
@@ -566,7 +573,7 @@ High resolution, photorealistic architectural visualization quality.`;
               input.glassRight ? "right side" : null,
             ].filter(Boolean);
             const glassDesc3 = glassZones3.length > 0
-              ? `Lumon Lumon panels on the ${glassZones3.join(", ")}`
+              ? `Lumon panels on the ${glassZones3.join(", ")}`
               : "no Lumon panels";
             const ledDesc2 = input.ledLighting ? "integrated LED strip lighting" : "no LED lighting";
             finalPrompt = `This is the actual site where the pergola will be installed. Using this reference photo as the exact background and environment, render a photorealistic visualization showing the proposed pergola structure installed in this space.
@@ -610,8 +617,10 @@ High resolution, photorealistic architectural visualization quality.`;
       }),
 
     delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number(), projectId: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const project = await getProjectById(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Forbidden");
         const deleted = await deleteRendering(input.id);
         return { success: !!deleted };
       }),

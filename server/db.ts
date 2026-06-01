@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -10,6 +10,8 @@ import {
   projectFiles, InsertProjectFile, ProjectFile,
   rateOverrides,
   referencePhotos, InsertReferencePhoto, ReferencePhoto,
+  qtoLineOverrides, InsertQTOLineOverride, QTOLineOverride,
+  phasedEnclosureParams, PhasedEnclosureParam, InsertPhasedEnclosureParam,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -92,6 +94,12 @@ export async function deleteProject(id: number): Promise<void> {
   await db.delete(checklistItems).where(eq(checklistItems.projectId, id));
   await db.delete(scopeItems).where(eq(scopeItems.projectId, id));
   await db.delete(projectParams).where(eq(projectParams.projectId, id));
+  await db.delete(renderings).where(eq(renderings.projectId, id));
+  await db.delete(projectFiles).where(eq(projectFiles.projectId, id));
+  await db.delete(rateOverrides).where(eq(rateOverrides.projectId, id));
+  await db.delete(referencePhotos).where(eq(referencePhotos.projectId, id));
+  await db.delete(qtoLineOverrides).where(eq(qtoLineOverrides.projectId, id));
+  await db.delete(phasedEnclosureParams).where(eq(phasedEnclosureParams.projectId, id));
   await db.delete(projects).where(eq(projects.id, id));
 }
 
@@ -323,7 +331,6 @@ export async function deleteReferencePhoto(id: number): Promise<ReferencePhoto |
 }
 
 // ─── QTO Line Overrides ────────────────────────────────────────────────────────
-import { qtoLineOverrides, InsertQTOLineOverride, QTOLineOverride } from "../drizzle/schema";
 
 export async function getQTOLineOverrides(projectId: number): Promise<QTOLineOverride[]> {
   const db = await getDb();
@@ -335,7 +342,7 @@ export async function upsertQTOLineOverride(data: InsertQTOLineOverride & { proj
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const existing = await db.select({ id: qtoLineOverrides.id }).from(qtoLineOverrides)
-    .where(eq(qtoLineOverrides.projectId, data.projectId) && eq(qtoLineOverrides.lineKey, data.lineKey)).limit(1);
+    .where(and(eq(qtoLineOverrides.projectId, data.projectId), eq(qtoLineOverrides.lineKey, data.lineKey))).limit(1);
   
   if (existing.length > 0) {
     await db.update(qtoLineOverrides).set(data).where(eq(qtoLineOverrides.id, existing[0].id));
@@ -353,7 +360,6 @@ export async function deleteQTOLineOverride(id: number): Promise<void> {
 }
 
 // ─── Phased Enclosure Params ──────────────────────────────────────────────────
-import { phasedEnclosureParams, PhasedEnclosureParam, InsertPhasedEnclosureParam } from "../drizzle/schema";
 
 export async function getPhasedEnclosureParams(projectId: number): Promise<PhasedEnclosureParam | undefined> {
   const db = await getDb();

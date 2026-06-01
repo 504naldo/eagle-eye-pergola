@@ -11,6 +11,19 @@ import { serveStatic, setupVite } from "./vite";
 import { handlePDFExport } from "../pdfExport";
 import { handlePhasedEnclosurePDFExport } from "../phasedEnclosurePdfExport";
 import { multerMiddleware, handleFileUpload } from "../fileUpload";
+import { sdk } from "./sdk";
+import type { Request, Response, NextFunction } from "express";
+
+async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await sdk.authenticateRequest(req);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    (req as any).user = user;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+}
 
 const pdfExportLimiter = rateLimit({
   windowMs: 60_000,
@@ -47,10 +60,10 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-  // PDF Export route
-  app.get("/api/export/pdf/:id", pdfExportLimiter, handlePDFExport);
+  // PDF Export route (auth + rate limit)
+  app.get("/api/export/pdf/:id", requireAuth, pdfExportLimiter, handlePDFExport);
   // Phased Enclosure Supplemental PDF Export
-  app.get("/api/export/phased-enclosure-pdf/:id", pdfExportLimiter, handlePhasedEnclosurePDFExport);
+  app.get("/api/export/phased-enclosure-pdf/:id", requireAuth, pdfExportLimiter, handlePhasedEnclosurePDFExport);
   // File upload route (server-side S3 via storagePut)
   app.post("/api/upload/:projectId", multerMiddleware, handleFileUpload);
 

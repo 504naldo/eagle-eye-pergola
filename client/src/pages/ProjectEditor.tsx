@@ -618,7 +618,7 @@ export default function ProjectEditor() {
               ))}
               {/* Grand Total */}
               <div className="mt-4 flex justify-end">
-                <div className="bg-gray-50 rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
+                <div className="bg-gray-900 rounded-lg px-4 sm:px-6 py-3 sm:py-4 w-full sm:min-w-64 sm:w-auto">
                   <div className="text-[#C9A84C] text-xs uppercase tracking-widest mb-1">Preliminary Budget Estimate</div>
                   <div className="text-white text-2xl font-bold">
                     ${grandTotal.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -650,7 +650,7 @@ export default function ProjectEditor() {
                       {checklist.filter(c => c.category === cat).map(item => (
                         <div key={item.id} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${item.checked ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}>
                           <button
-                            onClick={() => toggleChecklist.mutate({ id: item.id, checked: !item.checked })}
+                            onClick={() => toggleChecklist.mutate({ id: item.id, checked: !item.checked, projectId })}
                             className={`mt-0.5 w-6 h-6 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors touch-manipulation ${item.checked ? "bg-green-500 border-green-500" : "border-gray-300 bg-white"}`}
                           >
                             {item.checked && <Check size={12} className="text-white" />}
@@ -691,7 +691,7 @@ export default function ProjectEditor() {
                               onChange={e => setEditingScope(s => s ? { ...s, text: e.target.value } : null)}
                               className="text-sm flex-1"
                             />
-                            <Button size="sm" style={{ backgroundColor: "#C9A84C", color: "#111111" }} onClick={() => updateScope.mutate({ id: item.id, text: editingScope.text })}>Save</Button>
+                            <Button size="sm" style={{ backgroundColor: "#C9A84C", color: "#111111" }} onClick={() => updateScope.mutate({ id: item.id, text: editingScope.text, projectId })}>Save</Button>
                             <Button size="sm" variant="outline" onClick={() => setEditingScope(null)}>Cancel</Button>
                           </div>
                         ) : (
@@ -699,7 +699,7 @@ export default function ProjectEditor() {
                             <p className="text-sm text-gray-800 flex-1">{item.text}</p>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => setEditingScope({ id: item.id, text: item.text })} className="text-gray-400 hover:text-gray-600 text-xs px-1">Edit</button>
-                              <button onClick={() => deleteScope.mutate({ id: item.id })} className="text-red-400 hover:text-red-600"><Trash2 size={12} /></button>
+                              <button onClick={() => deleteScope.mutate({ id: item.id, projectId })} className="text-red-400 hover:text-red-600"><Trash2 size={12} /></button>
                             </div>
                           </div>
                         )}
@@ -998,7 +998,7 @@ export default function ProjectEditor() {
                               <Download size={13} />
                             </a>
                             <button
-                              onClick={() => deleteRendering.mutate({ id: r.id })}
+                              onClick={() => deleteRendering.mutate({ id: r.id, projectId })}
                               className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-300 transition-all touch-manipulation"
                               title="Delete"
                             >
