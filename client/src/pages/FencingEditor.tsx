@@ -609,7 +609,7 @@ export default function FencingEditor({ projectId }: Props) {
                         <Download className="w-3 h-3" /> Download
                       </a>
                       <Button size="sm" variant="outline" className="border-red-400 text-red-400 text-xs"
-                        onClick={() => deleteRenderingMutation.mutate({ id: r.id })}>
+                        onClick={() => deleteRenderingMutation.mutate({ id: r.id, projectId })}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>

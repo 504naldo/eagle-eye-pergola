@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import { compare as bcryptCompare, hash as bcryptHash } from "bcryptjs";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -12,6 +14,7 @@ import {
   getFilesByProject, createProjectFile, deleteProjectFile,
   getRateOverrides, upsertRateOverrides,
   getReferencePhotosByProject, createReferencePhoto, deleteReferencePhoto,
+  getUserByEmail, createUserByEmail,
 } from './db';
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
@@ -25,6 +28,54 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+
+    register: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(8, "Password must be at least 8 characters"),
+          name: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getUserByEmail(input.email.toLowerCase());
+        if (existing) throw new Error("An account with that email already exists");
+
+        const passwordHash = await bcryptHash(input.password, 12);
+        const userId = await createUserByEmail(
+          input.email.toLowerCase(),
+          passwordHash,
+          input.name
+        );
+
+        const token = await sdk.createSessionToken(userId, { expiresInMs: ONE_YEAR_MS });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+        return { success: true } as const;
+      }),
+
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const user = await getUserByEmail(input.email.toLowerCase());
+        if (!user || !user.passwordHash) throw new Error("Invalid email or password");
+
+        const valid = await bcryptCompare(input.password, user.passwordHash);
+        if (!valid) throw new Error("Invalid email or password");
+
+        const token = await sdk.createSessionToken(user.id, { expiresInMs: ONE_YEAR_MS });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+        return { success: true } as const;
+      }),
+
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

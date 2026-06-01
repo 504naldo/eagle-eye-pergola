@@ -454,7 +454,7 @@ export default function EnclosureEditor({ projectId }: Props) {
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
-                          onClick={() => deleteRenderingMutation.mutate({ id: r.id })}
+                          onClick={() => deleteRenderingMutation.mutate({ id: r.id, projectId })}
                         >
                           <Trash2 size={13} />
                         </Button>
