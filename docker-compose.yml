@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      # DATABASE_URL is assembled here so the DB host always resolves to the
+      # internal 'db' service name rather than whatever is set in .env
+      DATABASE_URL: mysql://eagleeye:${DB_PASSWORD}@db:3306/eagleeye
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - eagleeye
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: eagleeye
+      MYSQL_USER: eagleeye
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - eagleeye
+
+volumes:
+  db_data:
+
+networks:
+  eagleeye:
+    driver: bridge
