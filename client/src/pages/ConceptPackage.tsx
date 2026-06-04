@@ -441,7 +441,7 @@ export default function ConceptPackage() {
         </div>
 
         {/* ── Lumon Details Link ── */}
-        <div className="flex justify-end mb-3">
+        <div className="flex flex-wrap justify-end gap-2 mb-3">
           <Button
             variant="outline"
             size="sm"
@@ -450,6 +450,15 @@ export default function ConceptPackage() {
           >
             <Layers size={14} />
             View Lumon System Details
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-cyan-600 text-cyan-400 hover:bg-cyan-950 hover:text-cyan-300 bg-transparent"
+            onClick={() => navigate(`/project/${projectId}`)}
+          >
+            <Layers size={14} />
+            View Lumon Shop Drawings
           </Button>
         </div>
 
