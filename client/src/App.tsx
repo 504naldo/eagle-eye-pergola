@@ -13,6 +13,7 @@ import PhasedEnclosureEditor from "./pages/PhasedEnclosureEditor";
 import DrawingPreview from "./pages/DrawingPreview";
 import ConceptPackage from "./pages/ConceptPackage";
 import LumonSystemDetails from "./pages/LumonSystemDetails";
+import CadHandoff from "./pages/CadHandoff";
 import Home from "./pages/Home";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
@@ -60,6 +61,7 @@ function Router() {
           return <LumonSystemDetails projectId={id} />;
         }}
       </Route>
+      <Route path="/cad-handoff" component={CadHandoff} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

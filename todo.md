@@ -585,3 +585,12 @@
 - [x] Add toggle in 3D viewer toolbar to show/hide egress and serving station markers
 - [x] 17 new vitest tests (120 total passing), 0 TypeScript errors
 - [x] Save checkpoint
+
+## CAD Handoff Package Web Page (Milestones Abbotsford)
+
+- [x] Create /cad-handoff page with all 12 sections (C-00 through OI-01)
+- [x] Wire storage proxy for /manus-storage/* image paths
+- [x] Add navigation link in EagleEyeLayout sidebar
+- [x] Route /cad-handoff in App.tsx
+- [x] TypeScript check passes, 120 tests pass
+- [x] Save checkpoint and publish
