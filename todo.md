@@ -594,3 +594,37 @@
 - [x] Route /cad-handoff in App.tsx
 - [x] TypeScript check passes, 120 tests pass
 - [x] Save checkpoint and publish
+
+## Lumon Scope Module (Layers 1–5)
+
+### Layer 1 — Data Model
+- [x] Add LumonParams interface to shared/scopeTypes.ts (with DEFAULT_LUMON_PARAMS)
+- [x] Add 'lumon' to scopeType enum in drizzle/schema.ts
+- [x] DB migration pushed (pnpm db:push)
+
+### Layer 2 — SVG Drawing Functions
+- [x] drawLumonPlan() — plan on post with posts, bays, stacking zones, door openings, dimensions
+- [x] drawLumonFrontElevation() — upper sliding panels, lower fixed panels, FH/BH datums, post tags
+- [x] drawLumonSideElevation(side) — end elevations, narrower bays, door opening, retractable glazing
+- [x] drawLumonTypicalSection() — two glass zones, handrail, post, base anchor
+- [x] drawLumonConnectionDetail(type) — upper connection, railing connection, lower anchor
+
+### Layer 3 — LumonEditor Page
+- [x] Create client/src/pages/LumonEditor.tsx with tabs: Dimensions, Glazing, Drawings, QTO, Unit Rates, Files, Notes
+- [x] Dimensions tab: form for all LumonParams fields
+- [x] Glazing tab: glass zone config, stacking direction, door locations
+- [x] Drawings tab: all 5 SVG views in scrollable grid, live update from params
+- [x] QTO tab: bill of materials (glass area, post count, hardware)
+
+### Layer 4 — PDF Export
+- [x] buildLumonPDF() in server/lumonPdfBuilder.ts (8-page package)
+- [x] Dispatched from pdfExport.ts when scopeType === 'lumon'
+- [x] PDF download button in LumonEditor header
+
+### Layer 5 — Routing & Navigation
+- [x] Add 'lumon' to SCOPE_META in Dashboard.tsx
+- [x] Add ProjectRouter case for lumon scope in App.tsx
+- [x] Add Lumon Glass System nav link in EagleEyeLayout sidebar
+- [x] 19 vitest tests for lumonQTO and all 5 SVG drawing functions (139 total passing)
+- [x] TypeScript check passes, all 139 tests pass
+- [x] Save checkpoint

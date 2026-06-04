@@ -53,7 +53,7 @@ export const appRouter = router({
         clientName: z.string().optional(),
         location: z.string().optional(),
         notes: z.string().optional(),
-        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing"]).default("pergola"),
+        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing", "lumon"]).default("pergola"),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await createProject({ ...input, userId: ctx.user.id, status: "draft" });
@@ -327,7 +327,7 @@ The summary should cover: (1) project overview and intent, (2) structural system
         projectId: z.number(),
         style: z.enum(["photorealistic", "dusk", "interior", "aerial"]),
         // Scope type — determines which prompt template is used
-        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing"]).optional(),
+        scopeType: z.enum(["pergola", "canopy", "enclosure", "fencing", "lumon"]).optional(),
         // Pergola / canopy / enclosure params
         widthFt: z.string().optional(),
         depthFt: z.string().optional(),

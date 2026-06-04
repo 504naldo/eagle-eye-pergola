@@ -7,9 +7,11 @@ import http from "http";
 import { calculateQTO, calculateGrandTotal, getDrawingDimensions, PergolaParams } from "../shared/geometry";
 import { calculateCanopyQTO, calculateCanopyGrandTotal } from "../shared/canopyGeometry";
 import { calculateEnclosureQTO, calculateEnclosureGrandTotal } from "../shared/enclosureGeometry";
-import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS, DEFAULT_FENCING_PARAMS } from "../shared/scopeTypes";
+import { DEFAULT_CANOPY_PARAMS, DEFAULT_ENCLOSURE_PARAMS, DEFAULT_FENCING_PARAMS, DEFAULT_LUMON_PARAMS } from "../shared/scopeTypes";
 import { calculateFencingQTO } from "../shared/fencingGeometry";
 import { buildFencingPDF } from "./fencingPdfBuilder";
+import { calculateLumonQTO } from "../shared/lumonQTO";
+import { buildLumonPDF } from "./lumonPdfBuilder";
 
 const GOLD = "#C9A84C";
 const BLACK = "#111111";
@@ -603,6 +605,34 @@ export async function handlePDFExport(req: Request, res: Response) {
     const scope = project.scopeType ?? "pergola";
     if (scope === "canopy" || scope === "enclosure" || scope === "fencing") {
       return handleScopedPDFExport(req, res, project, scope);
+    }
+    if (scope === "lumon") {
+      try {
+        const rateOverrides = await getRateOverrides(projectId);
+        const lumonParams = { ...DEFAULT_LUMON_PARAMS, ...(project.inputsJson as object ?? {}) };
+        const lumonQtoItems = calculateLumonQTO(lumonParams, rateOverrides);
+        const renderings = await getRenderingsByProject(projectId);
+        const aiRenderingUrl = renderings[0]?.imageUrl ?? undefined;
+        const refPhotos = await getReferencePhotosByProject(projectId);
+        const referencePhotoUrl = refPhotos[0]?.fileKey ? undefined : undefined; // reference photos stored by fileKey, skip for now
+        const lumonPdfBuf = await buildLumonPDF({
+          p: lumonParams,
+          projectName: project.projectName,
+          clientName: project.clientName ?? undefined,
+          location: project.location ?? undefined,
+          qtoItems: lumonQtoItems,
+          aiRenderingUrl,
+          referencePhotoUrl,
+        });
+        const filename3 = `${project.projectName.replace(/[^a-z0-9]/gi, "_")}_lumon_package.pdf`;
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename3}"`);
+        res.setHeader("Content-Length", lumonPdfBuf.length);
+        return res.send(lumonPdfBuf);
+      } catch (err) {
+        console.error("Lumon PDF export error:", err);
+        return res.status(500).json({ error: "Failed to generate Lumon PDF" });
+      }
     }
 
     const params = await getProjectParams(projectId);

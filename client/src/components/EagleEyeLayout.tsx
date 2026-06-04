@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, LogOut, Menu, X, FolderOpen } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, FolderOpen, Layers } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663398513099/NsQTkUPS5UugDCK5DHs6bC/eagle-eye-logo_d71264bc.jpg";
@@ -28,6 +28,7 @@ export default function EagleEyeLayout({ children, title }: EagleEyeLayoutProps)
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/cad-handoff", label: "CAD Handoff — Milestones", icon: FolderOpen },
+    { href: "/lumon-guide", label: "Lumon Glass System", icon: Layers },
   ];
 
   const isActive = (href: string) => location === href || location.startsWith(href + "/");

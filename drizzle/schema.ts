@@ -34,7 +34,7 @@ export const projects = mysqlTable("projects", {
   clientName: varchar("clientName", { length: 255 }),
   location: varchar("location", { length: 500 }),
   // Multi-scope: pergola | canopy | enclosure | fencing | phasedEnclosure
-  scopeType: mysqlEnum("scopeType", ["pergola", "canopy", "enclosure", "fencing", "phasedEnclosure"]).default("pergola").notNull(),
+  scopeType: mysqlEnum("scopeType", ["pergola", "canopy", "enclosure", "fencing", "phasedEnclosure", "lumon"]).default("pergola").notNull(),
   // Generic JSON inputs for canopy/enclosure modules (pergola still uses project_params)
   inputsJson: json("inputsJson"),
   status: mysqlEnum("status", ["draft", "in_review", "approved", "archived"]).default("draft").notNull(),
