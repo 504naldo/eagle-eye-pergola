@@ -10,6 +10,7 @@ import CanopyEditor from "./pages/CanopyEditor";
 import EnclosureEditor from "./pages/EnclosureEditor";
 import FencingEditor from "./pages/FencingEditor";
 import LumonEditor from "./pages/LumonEditor";
+import TsawwassenEditor from "./pages/TsawwassenEditor";
 import PhasedEnclosureEditor from "./pages/PhasedEnclosureEditor";
 import DrawingPreview from "./pages/DrawingPreview";
 import ConceptPackage from "./pages/ConceptPackage";
@@ -44,6 +45,7 @@ function ProjectRouter() {
   if (scope === "enclosure") return <EnclosureEditor projectId={projectId} />;
   if (scope === "fencing") return <FencingEditor projectId={projectId} />;
   if (scope === "lumon") return <LumonEditor projectId={projectId} />;
+  if (scope === "tsawwassen") return <TsawwassenEditor projectId={projectId} />;
   if (scope === "phasedEnclosure") return <PhasedEnclosureEditor />;
   // Default: pergola — ProjectEditor uses useParams internally
   return <ProjectEditor />;

@@ -67,9 +67,17 @@ const SCOPE_META: Record<string, { label: string; color: string; bg: string; bor
     description: "Lumon LGS/LGF sliding or fixed glass system — parametric shop drawings, QTO, and 8-page PDF package",
     placeholder: "e.g. Milestones Abbotsford — Lumon LGS",
   },
+  tsawwassen: {
+    label: "Lumon — Tsawwassen Method",
+    color: "#1E3A5F",
+    bg: "#EFF6FF",
+    borderColor: "#3B82F6",
+    description: "Governing-methodology compliant Lumon shop drawing package: EE-series sheets, QC checklist, responsibility matrix",
+    placeholder: "e.g. Milestones Tsawwassen — Lumon Concept",
+  },
 };
 
-type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing" | "phasedEnclosure" | "lumon";
+type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing" | "phasedEnclosure" | "lumon" | "tsawwassen";
 
 export default function Dashboard() {
   const { isAuthenticated, loading } = useAuth();
@@ -168,7 +176,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                       <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: meta.borderColor + "66", color: meta.color }}>
-                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : scope === "phasedEnclosure" ? "Phased Enclosure" : scope === "lumon" ? "Lumon Glass" : "Enclosure"}
+                        {scope === "pergola" ? "Pergola" : scope === "canopy" ? "Canopy" : scope === "fencing" ? "Fencing" : scope === "phasedEnclosure" ? "Phased Enclosure" : scope === "lumon" ? "Lumon Glass" : scope === "tsawwassen" ? "Tsawwassen" : "Enclosure"}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium status-${project.status}`}>
                         {STATUS_LABELS[project.status]}
@@ -264,7 +272,7 @@ export default function Dashboard() {
                     <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: selectedScope === type ? meta.color + "30" : "#F3F4F6" }}>
                       <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: selectedScope === type ? meta.color : "#9CA3AF" }} />
                     </div>
-                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : type === "fencing" ? "Fencing" : type === "phasedEnclosure" ? "Phased" : type === "lumon" ? "Lumon" : "Enclosure"}</span>
+                    <span className="text-center leading-tight">{type === "pergola" ? "Pergola" : type === "canopy" ? "Canopy" : type === "fencing" ? "Fencing" : type === "phasedEnclosure" ? "Phased" : type === "lumon" ? "Lumon" : type === "tsawwassen" ? "Tsawwassen" : "Enclosure"}</span>
                   </button>
                 ))}
               </div>

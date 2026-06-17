@@ -5,7 +5,7 @@
 
 // ─── Scope Types ─────────────────────────────────────────────────────────────
 
-export type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing" | "lumon";
+export type ScopeType = "pergola" | "canopy" | "enclosure" | "fencing" | "lumon" | "tsawwassen";
 
 export const SCOPE_MODULE_META: Record<ScopeType, { label: string; description: string; icon: string }> = {
   pergola: {
@@ -32,6 +32,11 @@ export const SCOPE_MODULE_META: Record<ScopeType, { label: string; description: 
     label: "Lumon Glass System",
     description: "Lumon LGS/LGF sliding or fixed glazing system with 160mm railing profile",
     icon: "panels-top-left",
+  },
+  tsawwassen: {
+    label: "Lumon — Tsawwassen Methodology",
+    description: "Governing-methodology compliant Lumon shop drawing package (EE-series sheets, QC checklist, responsibility matrix)",
+    icon: "drafting-compass",
   },
 };
 

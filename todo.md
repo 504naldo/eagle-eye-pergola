@@ -628,3 +628,47 @@
 - [x] 19 vitest tests for lumonQTO and all 5 SVG drawing functions (139 total passing)
 - [x] TypeScript check passes, all 139 tests pass
 - [x] Save checkpoint
+
+## Tsawwassen Lumon Drawing Package — Governing Methodology
+
+### Standards Captured
+- [x] Read and saved governing drawing methodology from pasted_content.txt to DRAWING_STANDARDS.md
+- [x] Analyzed Lumon B.01 reference set (all 8 sheets) — elevation, section, and connection detail standards captured
+- [x] Analyzed 4 Tsawwassen site photographs — estimated geometry and constraints recorded
+
+### Layer 1 — Tsawwassen Lumon Drawing Package (Governing Methodology)
+- [x] Create shared/tsawwassenLumonGeometry.ts with TsawwassenLumonParams interface and estimated dimensions
+- [x] Implement drawTsawwassenPlan() — EE-1.2 proposed layout plan with bay/side numbering, member legend callouts, EST. dimensions, section/elevation callout bubbles, north arrow, FH/BH datums, scale bar, title block
+- [x] Implement drawTsawwassenExistingPlan() — EE-1.1 estimated existing-condition plan with timber posts, beams, existing glass posts, concrete slab, building wall, landscaping boundary
+- [x] Implement drawTsawwassenFrontElevation() — EE-2.2 proposed front elevation with FH/BH datums, sliding panel arrows, fixed panel X marks, post member tags, bay dims, door openings, scale bar, title block
+- [x] Implement drawTsawwassenExistingFrontElevation() — EE-2.1 estimated existing front elevation with timber posts, beams, existing glass panels, heaters, conduit, Milestones signage
+- [x] Implement drawTsawwassenSideElevation(side) — EE-2.2 side elevations (left and right) with end bays, door openings, retractable glazing above existing structure, depth dims
+- [x] Implement drawTsawwassenTypicalSection() — EE-3.1 LGS typical section: slab → base anchor → lower railing glass → 160mm handrail → upper sliding glass → head track → timber beam
+- [x] Implement drawTsawwassenConnectionDetails() — EE-3.2 upper connection, railing connection, lower anchor (all labelled CONCEPTUAL — FINAL BY LUMON)
+
+### Layer 2 — Sheet Organization and Title Blocks
+- [x] Implement getSheetTitleBlock(sheetNum, title, scale) — returns SVG title block with Eagle Eye branding, project name, address, drawn by, date, revision table, sheet number, drawing status
+- [x] Implement getMemberLegend() — returns SVG member legend table for Tsawwassen (12 members)
+- [x] Implement getRevisionTable() — returns SVG revision table (Rev 00 — Concept Issue — 2026-06-16)
+- [x] Implement getDisclaimerBlock() — returns SVG disclaimer block with all 6 required disclaimer lines
+- [x] Implement getNorthArrow() — returns SVG north arrow for plan sheets
+- [x] Implement getScaleBar(scale, widthFt) — returns SVG scale bar
+
+### Layer 3 — TsawwassenEditor Page
+- [x] Create client/src/pages/TsawwassenEditor.tsx with tabs: Dimensions, Drawings (all 8 views), QTO, Notes & QC
+- [x] Dimensions tab: form for all TsawwassenLumonParams fields with EST. labels and field-verify warnings
+- [x] Drawings tab: all 8 SVG sheets in scrollable grid, live update from params, sheet number labels
+- [x] QTO tab: bill of materials (glass area, post count, hardware) with EST. prefix on all quantities
+- [x] Notes & QC tab: free-form notes, open items, field verification checklist
+
+### Layer 4 — Routing & Navigation
+- [x] Add 'tsawwassen' to ScopeType in shared/scopeTypes.ts and SCOPE_MODULE_META
+- [x] Add 'tsawwassen' to scopeType enum in drizzle/schema.ts and push DB migration (0015_long_microchip.sql)
+- [x] Add 'tsawwassen' to all z.enum validators in server/routers.ts
+- [x] Add TsawwassenEditor import and ProjectRouter case in App.tsx
+- [x] Add tsawwassen scope card to Dashboard.tsx (SCOPE_META + ScopeType)
+
+### Layer 5 — QA
+- [x] TypeScript check passes (0 errors)
+- [x] 139 vitest tests passing
+- [x] Save checkpoint and deliver to user
